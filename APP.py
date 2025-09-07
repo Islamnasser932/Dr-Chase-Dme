@@ -25,8 +25,7 @@ with st.sidebar:
     )
 
 # ================== LOAD DATA ==================
-file_path = r"G:\DME\OS\DR Chase\Dr_Chase_Leads.csv"
-df = pd.read_csv(file_path, low_memory=False)
+df = pd.read_csv("Dr_Chase_Leads.csv", low_memory=False)
 df.columns = df.columns.str.strip()
 
 st.success("✅ File loaded successfully!")
@@ -776,4 +775,5 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
