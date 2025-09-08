@@ -218,7 +218,7 @@ with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=Fals
     )
 
 with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
-    Chasing Disposition = st.multiselect(
+    Chasing_Disposition = st.multiselect(
         "Select Chasing Disposition",
         options=df_cleaned["Chasing Disposition"].unique(),
         default=df_cleaned["Chasing Disposition"].unique(),
@@ -782,6 +782,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
