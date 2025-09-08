@@ -216,6 +216,13 @@ with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=Fals
         options=df_cleaned["Chaser Group"].unique(),
         default=df_cleaned["Chaser Group"].unique(),
     )
+
+with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
+    Chasing Disposition = st.multiselect(
+        "Select Chasing Disposition",
+        options=df_cleaned["Chasing Disposition"].unique(),
+        default=df_cleaned["Chasing Disposition"].unique(),
+    )
     
 with st.sidebar.expander("📅 Date Range", expanded=False):
     min_date = pd.to_datetime(df_cleaned[date_columns].min().min()).date()
@@ -775,5 +782,6 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
