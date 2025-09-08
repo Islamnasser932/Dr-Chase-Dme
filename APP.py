@@ -238,7 +238,7 @@ with st.sidebar.expander("📅 Date Range", expanded=False):
 
 # --- Apply filters using .query() ---
 df_filtered = df_cleaned.query(
-    "Client in @Client and `Chaser Name` in @Chaser_Name and `Chaser Group` in @Chaser_Group"
+    "Client in @Client and `Chaser Name` in @Chaser_Name and `Chaser Group` in @Chaser_Group and 'Chasing Disposition' in @Chasing_Disposition "
 )
 
 # Apply date filter (on Created Time by default, but you can change to Completion Date, etc.)
@@ -782,6 +782,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
