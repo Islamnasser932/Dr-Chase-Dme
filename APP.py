@@ -196,11 +196,12 @@ df_filtered = df_cleaned.copy()
 st.sidebar.header("🎛 Basic Filters")
 
 with st.sidebar.expander("👥 Client", expanded=False):
-    Client = st.multiselect(
-        "Select Client",
-        options=df_cleaned["Client"].unique(),
-        default=df_cleaned["Client"].unique(),
-    )
+    all_clients = df_cleaned["Client"].dropna().unique().tolist()
+    select_all_clients = st.checkbox("Select All Clients", value=True, key="all_clients")
+    if select_all_clients:
+        Client = st.multiselect("Select Client", options=all_clients, default=all_clients)
+    else:
+        Client = st.multiselect("Select Client", options=all_clients)
 
 
 with st.sidebar.expander("🧑‍💼 Chaser Name", expanded=False):
@@ -782,6 +783,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
