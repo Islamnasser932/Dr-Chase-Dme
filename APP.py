@@ -219,7 +219,7 @@ with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=Fals
     if select_all_Chaser_Group:
         Chaser_Group = st.multiselect("Select Chaser Group", options=all_Chaser_Group, default=all_Chaser_Group)    
     else:
-        Chaser_Group  = st.multiselect("Select  Chaser Group ", options=all_Chaser_Name)
+        Chaser_Group  = st.multiselect("Select  Chaser Group ", options=all_Chaser_Group)
 
 
 with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
@@ -228,7 +228,7 @@ with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
     if select_all_Chasing_Disposition:
         Chasing_Disposition = st.multiselect("Select Chaser Disposition", options=all_Chasing_Disposition, default=all_Chasing_Disposition)    
     else:
-        Chasing_Disposition  = st.multiselect("Select  Chaser Disposition ", options=all_Chaser_Name)
+        Chasing_Disposition  = st.multiselect("Select  Chaser Disposition ", options=all_Chasing_Disposition)
 
 
     
@@ -790,6 +790,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
