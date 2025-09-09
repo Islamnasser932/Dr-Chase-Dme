@@ -205,11 +205,13 @@ with st.sidebar.expander("👥 Client", expanded=False):
 
 
 with st.sidebar.expander("🧑‍💼 Chaser Name", expanded=False):
-    Chaser_Name = st.multiselect(
-        "Select Chaser Name",
-        options=df_cleaned["Chaser Name"].unique(),
-        default=df_cleaned["Chaser Name"].unique(),
-    )
+    all_Chaser_Name-df_cleaned["Chaser Name"].dropna().unique().tolist()
+    select_all_Chaser_Name = st.checkbox("Select All Chaser Name ", value=True, key="all_Chaser_Name")
+       if all_Chaser_Name:
+            Chaser Name = st.multiselect("Select Chaser Name"", options=all_Chaser_Name, default=all_Chaser_Name)
+        else:
+             Chaser Name  = st.multiselect("Select  Chaser Name ", options=all_Chaser_Name)
+
 
 with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=False):
     Chaser_Group = st.multiselect(
@@ -783,6 +785,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
