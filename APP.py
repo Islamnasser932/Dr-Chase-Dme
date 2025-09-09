@@ -205,7 +205,7 @@ with st.sidebar.expander("👥 Client", expanded=False):
 
 
 with st.sidebar.expander("🧑‍💼 Chaser Name", expanded=False):
-    all_Chaser_Name-df_cleaned["Chaser Name"].dropna().unique().tolist()
+    all_Chaser_Name_df_cleaned["Chaser Name"].dropna().unique().tolist()
     select_all_Chaser_Name = st.checkbox("Select All Chaser Name ", value=True, key="all_Chaser_Name")
     if select_all_Chaser_Name:
         Chaser_Name = st.multiselect("Select Chaser Name", options=all_Chaser_Name, default=all_Chaser_Name)    
