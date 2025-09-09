@@ -563,32 +563,7 @@ elif selected == "Data Analysis":
                 st.write(f"**{top_group[group_by]}** contributed the most overall "
                          f"with **{top_group['Lead Count']} leads** (~{share:.1f}%).")
             
-            # --- Extended KPI Summary ---
-            st.markdown("### 📊 Extended KPI Summary")
-            
-            total_leads = len(df_ts)
-            total_assigned = df_ts["Assigned date"].notna().sum() if "Assigned date" in df_ts.columns else 0
-            total_not_assigned = total_leads - total_assigned
-            total_approved = df_ts["Approval date"].notna().sum() if "Approval date" in df_ts.columns else 0
-            total_denied = df_ts["Denial Date"].notna().sum() if "Denial Date" in df_ts.columns else 0
-            total_completed = df_ts["Completion Date"].notna().sum() if "Completion Date" in df_ts.columns else 0
-            total_uploaded = df_ts["Upload Date"].notna().sum() if "Upload Date" in df_ts.columns else 0
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("📊 Total Leads", f"{total_leads:,}")
-                st.metric("🧑‍💼 Assigned", f"{total_assigned:,}")
-            with col2:
-                st.metric("🚫 Not Assigned", f"{total_not_assigned:,}")
-                st.metric("✔ Approved", f"{total_approved:,}")
-            with col3:
-                st.metric("❌ Denied", f"{total_denied:,}")
-                st.metric("✅ Completed", f"{total_completed:,}")
-            
-            st.metric("📤 Uploaded", f"{total_uploaded:,}")
-            
-            # --- Logic check: Uploaded but not Completed ---
-            # --- Logic check per row: Uploaded but not Completed ---
+                        # --- Logic check per row: Uploaded but not Completed ---
             if "Upload Date" in df_ts.columns and "Completion Date" in df_ts.columns:
                 invalid_rows = df_ts[df_ts["Upload Date"].notna() & df_ts["Completion Date"].isna()]
             
@@ -600,6 +575,7 @@ elif selected == "Data Analysis":
                             use_container_width=True
                         )
 
+            
       
             # 🏆 Top performers
             if group_by in ["Chaser Name", "Client"]:
@@ -829,6 +805,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
