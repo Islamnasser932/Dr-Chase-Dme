@@ -595,6 +595,36 @@ elif selected == "Data Analysis":
                             )
             
 
+                                # --- Extra checks for Uploaded Date ---
+                if "Upload Date" in df_time.columns and "Completion Date" in df_time.columns:
+                    bad_uploaded = df_time[df_time["Upload Date"].notna() & df_time["Completion Date"].isna()]
+                    if not bad_uploaded.empty:
+                        st.warning(f"⚠️ Found {len(bad_uploaded)} leads with **Upload Date** but no **Completion Date**.")
+                        with st.expander("🔍 View Leads Missing Completion Date after Upload"):
+                            st.dataframe(
+                                bad_uploaded[["MCN", "Client", "Chaser Name", "Upload Date", "Completion Date"]],
+                                use_container_width=True
+                            )
+            
+                if "Upload Date" in df_time.columns and "Assigned date" in df_time.columns:
+                    bad_uploaded_assigned = df_time[df_time["Upload Date"].notna() & df_time["Assigned date"].isna()]
+                    if not bad_uploaded_assigned.empty:
+                        st.warning(f"⚠️ Found {len(bad_uploaded_assigned)} leads with **Upload Date** but no **Assigned date**.")
+                        with st.expander("🔍 View Leads Missing Assigned Date after Upload"):
+                            st.dataframe(
+                                bad_uploaded_assigned[["MCN", "Client", "Chaser Name", "Upload Date", "Assigned date"]],
+                                use_container_width=True
+                            )
+            
+                if "Upload Date" in df_time.columns and "Approval date" in df_time.columns:
+                    bad_uploaded_approval = df_time[df_time["Upload Date"].notna() & df_time["Approval date"].isna()]
+                    if not bad_uploaded_approval.empty:
+                        st.warning(f"⚠️ Found {len(bad_uploaded_approval)} leads with **Upload Date** but no **Approval date**.")
+                        with st.expander("🔍 View Leads Missing Approval Date after Upload"):
+                            st.dataframe(
+                                bad_uploaded_approval[["MCN", "Client", "Chaser Name", "Upload Date", "Approval date"]],
+                                use_container_width=True
+                            )
 
             
       
@@ -826,6 +856,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
