@@ -546,34 +546,55 @@ elif selected == "Data Analysis":
             # 📝 Insights Summary
             st.subheader("📝 Insights Summary")
             
-            # Trend analysis
-            first_val, last_val = ts_data["Lead Count"].iloc[0], ts_data["Lead Count"].iloc[-1]
-            trend = "increased 📈" if last_val > first_val else "decreased 📉"
-            st.write(f"Overall, leads {trend} from **{first_val}** at the start to **{last_val}** at the end.")
+            # --- Subset based on selected time_col ---
+            df_time = df_ts[df_ts[time_col].notna()].copy()
+            total_time_leads = len(df_time)
             
-            peak_row = ts_data.loc[ts_data["Lead Count"].idxmax()]
-            low_row = ts_data.loc[ts_data["Lead Count"].idxmin()]
-            st.write(f"Highest leads: **{peak_row['Lead Count']}** on **{peak_row['Period'].date()}**")
-            st.write(f"Lowest leads: **{low_row['Lead Count']}** on **{low_row['Period'].date()}**")
+            st.write(f"Based on **{time_col}**, there are **{total_time_leads} leads** with this date.")
             
-            if group_by != "None":
-                contrib = ts_data.groupby(group_by)["Lead Count"].sum().reset_index()
-                top_group = contrib.sort_values("Lead Count", ascending=False).iloc[0]
-                share = top_group["Lead Count"] / contrib["Lead Count"].sum() * 100
-                st.write(f"**{top_group[group_by]}** contributed the most overall "
-                         f"with **{top_group['Lead Count']} leads** (~{share:.1f}%).")
+            if total_time_leads > 0:
+                # Calculate stats inside this subset
+                total_assigned = df_time["Assigned date"].notna().sum() if "Assigned date" in df_time.columns else 0
+                total_not_assigned = total_time_leads - total_assigned
+                
+                total_approval = df_time["Approval date"].notna().sum() if "Approval date" in df_time.columns else 0
+                total_denial = df_time["Denial Date"].notna().sum() if "Denial Date" in df_time.columns else 0
+                total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
+                total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
             
-                        # --- Logic check per row: Uploaded but not Completed ---
-            if "Upload Date" in df_ts.columns and "Completion Date" in df_ts.columns:
-                invalid_rows = df_ts[df_ts["Upload Date"].notna() & df_ts["Completion Date"].isna()]
+                # Show stats
+                st.markdown(f"""
+                - ✅ Total Leads (with {time_col}): **{total_time_leads}**
+                - 🧑‍💼 Assigned: **{total_assigned}**
+                - 🚫 Not Assigned: **{total_not_assigned}**
+                - ✔ Approved: **{total_approval}**
+                - ❌ Denied: **{total_denial}**
+                - 📤 Uploaded: **{total_uploaded}**
+                - 📌 Completed: **{total_completed}**
+                """)
+
+                # --- Row-level logic checks with expanders ---
+                if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
+                    bad_rows = df_time[df_time["Completion Date"].notna() & df_time["Assigned date"].isna()]
+                    if not bad_rows.empty:
+                        st.warning(f"⚠️ Found {len(bad_rows)} leads with **Completion Date** but no **Assigned date**.")
+                        with st.expander("🔍 View Leads Missing Assigned Date"):
+                            st.dataframe(
+                                bad_rows[["MCN", "Client", "Chaser Name", "Created Time", "Assigned date", "Completion Date"]],
+                                use_container_width=True
+                            )
             
-                if not invalid_rows.empty:
-                    st.warning(f"⚠️ Found {len(invalid_rows)} leads that have an **Upload Date** but no **Completion Date**.")
-                    with st.expander("🔍 View Problematic Leads"):
-                        st.dataframe(
-                            invalid_rows[["MCN", "Client", "Chaser Name", "Upload Date", "Completion Date"]],
-                            use_container_width=True
-                        )
+                if "Completion Date" in df_time.columns and "Approval date" in df_time.columns:
+                    bad_rows2 = df_time[df_time["Completion Date"].notna() & df_time["Approval date"].isna()]
+                    if not bad_rows2.empty:
+                        st.warning(f"⚠️ Found {len(bad_rows2)} leads with **Completion Date** but no **Approval date**.")
+                        with st.expander("🔍 View Leads Missing Approval Date"):
+                            st.dataframe(
+                                bad_rows2[["MCN", "Client", "Chaser Name", "Created Time", "Approval date", "Completion Date"]],
+                                use_container_width=True
+                            )
+            
+
 
             
       
@@ -805,6 +826,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
