@@ -588,9 +588,19 @@ elif selected == "Data Analysis":
             st.metric("📤 Uploaded", f"{total_uploaded:,}")
             
             # --- Logic check: Uploaded but not Completed ---
-            if total_uploaded > total_completed:
-                st.warning("⚠️ There are uploaded leads without completion date. This might indicate data inconsistency.")
+            # --- Logic check per row: Uploaded but not Completed ---
+            if "Upload Date" in df_ts.columns and "Completion Date" in df_ts.columns:
+                invalid_rows = df_ts[df_ts["Upload Date"].notna() & df_ts["Completion Date"].isna()]
+            
+                if not invalid_rows.empty:
+                    st.warning(f"⚠️ Found {len(invalid_rows)} leads that have an **Upload Date** but no **Completion Date**.")
+                    with st.expander("🔍 View Problematic Leads"):
+                        st.dataframe(
+                            invalid_rows[["MCN", "Client", "Chaser Name", "Upload Date", "Completion Date"]],
+                            use_container_width=True
+                        )
 
+      
             # 🏆 Top performers
             if group_by in ["Chaser Name", "Client"]:
                 st.subheader(f"🏆 Top {group_by}s by Leads")
@@ -819,6 +829,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
