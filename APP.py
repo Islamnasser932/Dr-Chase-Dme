@@ -213,20 +213,24 @@ with st.sidebar.expander("🧑‍💼 Chaser Name", expanded=False):
         Chaser_Name  = st.multiselect("Select  Chaser Name ", options=all_Chaser_Name)
              
 
-
 with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=False):
-    Chaser_Group = st.multiselect(
-        "Select Chaser Group",
-        options=df_cleaned["Chaser Group"].unique(),
-        default=df_cleaned["Chaser Group"].unique(),
-    )
+    all_Chaser_Group=df_cleaned["Chaser Group"].unique().tolist()
+    select_all_Chaser_Group = st.checkbox("Select All Chaser Group ", value=True, key="all_Chaser_Group")
+    if select_all_Chaser_Group:
+        Chaser_Group = st.multiselect("Select Chaser Group", options=all_Chaser_Group, default=all_Chaser_Group)    
+    else:
+        Chaser_Group  = st.multiselect("Select  Chaser Group ", options=all_Chaser_Name)
+
 
 with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
-    Chasing_Disposition = st.multiselect(
-        "Select Chasing Disposition",
-        options=df_cleaned["Chasing Disposition"].unique(),
-        default=df_cleaned["Chasing Disposition"].unique(),
-    )
+    all_Chasing_Disposition=df_cleaned["Chasing Disposition"].unique().tolist()
+    select_all_Chasing_Disposition = st.checkbox("Select All Chaser Disposition ", value=True, key="all_Chasing_Disposition")
+    if select_all_Chasing_Disposition:
+        Chasing_Disposition = st.multiselect("Select Chaser Disposition", options=all_Chasing_Disposition, default=all_Chasing_Disposition)    
+    else:
+        Chasing_Disposition  = st.multiselect("Select  Chaser Disposition ", options=all_Chaser_Name)
+
+
     
 with st.sidebar.expander("📅 Date Range", expanded=False):
     min_date = pd.to_datetime(df_cleaned[date_columns].min().min()).date()
@@ -786,6 +790,7 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
 
 
 
