@@ -52,16 +52,16 @@ for col in date_columns:
 st.sidebar.header("🎛 Filters")
 
 # --- Clients ---
-all_clients = df_cleaned["Client"].dropna().unique().tolist()
+all_clients = df_cleaned["Client"].unique().tolist()
 Client = st.sidebar.multiselect("Select Client(s)", all_clients, default=all_clients)
 
 # --- Chaser Names ---
-all_chasers = df_cleaned["Chaser Name"].dropna().unique().tolist()
+all_chasers = df_cleaned["Chaser Name"].unique().tolist()
 Chaser_Name = st.sidebar.multiselect("Select Chaser(s)", all_chasers, default=all_chasers)
 
 # --- Chaser Groups ---
 if "Chaser Group" in df_cleaned.columns:
-    all_groups = df_cleaned["Chaser Group"].dropna().unique().tolist()
+    all_groups = df_cleaned["Chaser Group"].unique().tolist()
     Chaser_Group = st.sidebar.multiselect("Select Chaser Group(s)", all_groups, default=all_groups)
 else:
     Chaser_Group = []
@@ -209,3 +209,4 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
