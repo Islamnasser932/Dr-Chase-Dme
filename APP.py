@@ -713,45 +713,68 @@ elif selected == "Data Analysis":
                 use_container_width=True
             )
     
-        # 📊 Lead Age Distribution – Approval
+                # 📊 Lead Age Distribution – Approval
         if "Lead Age (Approval)" in df_lead_age.columns:
             with st.expander("📊 Lead Age Distribution – Approval"):
-                approval_age = df_lead_age["Lead Age (Approval)"].dropna().apply(
-                    lambda d: "Week " + str(int(d // 7) + 1) if d >= 0 else "Invalid"
-                )
-                approval_summary = approval_age.value_counts().reset_index()
+                def categorize_weeks(d):
+                    if d >= 0:
+                        return f"Week {int(d // 7) + 1}"
+                    else:
+                        return f"Week -{abs(int(d // 7) + 1)}"
+
+                approval_age = df_lead_age["Lead Age (Approval)"].dropna().apply(categorize_weeks)
+
+                # ترتيب الأسابيع
+                categories = approval_age.unique()
+                weeks_negative = sorted([c for c in categories if "Week -" in c], key=lambda x: -int(x.split()[1]))
+                weeks_positive = sorted([c for c in categories if "Week " in c and "-" not in c], key=lambda x: int(x.split()[1]))
+                category_order = weeks_negative + weeks_positive
+
+                approval_summary = approval_age.value_counts().reindex(category_order).reset_index()
                 approval_summary.columns = ["Category", "Count"]
-    
+
                 chart_approval = (
                     alt.Chart(approval_summary)
                     .mark_bar(color="#28a745")
                     .encode(
-                        x=alt.X("Category", sort=approval_summary["Category"].tolist()),
+                        x=alt.X("Category", sort=category_order),
                         y="Count",
                         tooltip=["Category", "Count"]
                     )
                 )
                 st.altair_chart(chart_approval, use_container_width=True)
-    
+
         # 📊 Lead Age Distribution – Denial
         if "Lead Age (Denial)" in df_lead_age.columns:
             with st.expander("📊 Lead Age Distribution – Denial"):
-                denial_age = df_lead_age["Lead Age (Denial)"].dropna().apply(
-                    lambda d: "Week " + str(int(d // 7) + 1) if d >= 0 else "Invalid"
-                )
-                denial_summary = denial_age.value_counts().reset_index()
+                def categorize_weeks(d):
+                    if d >= 0:
+                        return f"Week {int(d // 7) + 1}"
+                    else:
+                        return f"Week -{abs(int(d // 7) + 1)}"
+
+                denial_age = df_lead_age["Lead Age (Denial)"].dropna().apply(categorize_weeks)
+
+                # ترتيب الأسابيع
+                categories = denial_age.unique()
+                weeks_negative = sorted([c for c in categories if "Week -" in c], key=lambda x: -int(x.split()[1]))
+                weeks_positive = sorted([c for c in categories if "Week " in c and "-" not in c], key=lambda x: int(x.split()[1]))
+                category_order = weeks_negative + weeks_positive
+
+                denial_summary = denial_age.value_counts().reindex(category_order).reset_index()
                 denial_summary.columns = ["Category", "Count"]
-    
+
                 chart_denial = (
                     alt.Chart(denial_summary)
                     .mark_bar(color="#dc3545")
                     .encode(
-                        x=alt.X("Category", sort=denial_summary["Category"].tolist()),
+                        x=alt.X("Category", sort=category_order),
                         y="Count",
                         tooltip=["Category", "Count"]
                     )
                 )
                 st.altair_chart(chart_denial, use_container_width=True)
+
     
         # 📊 Grouped Bar Chart – Approval vs Denial per Chaser
         if "Chaser Name" in df_lead_age.columns:
@@ -799,6 +822,7 @@ elif selected == "Data Analysis":
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
