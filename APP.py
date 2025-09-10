@@ -289,7 +289,7 @@ if selected == "Dataset Overview":
 
     total_leads = len(df_filtered)
 
-            # --- KPIs Section ---
+    # --- KPIs Section ---
     st.subheader("📌 Key Performance Indicators")
     
     # --- حساب القيم ---
@@ -311,8 +311,9 @@ if selected == "Dataset Overview":
     pct_approval = (total_approval / total_leads * 100) if total_leads > 0 else 0
     pct_denial = (total_denial / total_leads * 100) if total_leads > 0 else 0
     
-    # --- KPIs Layout (صف واحد) ---
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    # --- KPIs Layout (صفين) ---
+    col1, col2, col3 = st.columns(3)
+    col4, col5, col6 = st.columns(3)
     
     with col1:
         st.metric("📊 Total Leads", f"{total_leads:,}")
@@ -320,6 +321,7 @@ if selected == "Dataset Overview":
         st.metric("🧑‍💼 Assigned", f"{total_assigned:,} ({pct_assigned:.1f}%)")
     with col3:
         st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)")
+    
     with col4:
         st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")
     with col5:
@@ -341,7 +343,6 @@ if selected == "Dataset Overview":
         border_color="#444",
         box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
     )
-
 
     
         
@@ -869,6 +870,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
