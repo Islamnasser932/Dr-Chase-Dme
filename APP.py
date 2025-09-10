@@ -294,7 +294,7 @@ if selected == "Dataset Overview":
 
      # --- KPIs Section ---
     st.subheader("📌 Key Performance Indicators")
-    df_time = df_ts[df_ts[time_col].notna()].copy()
+    df_time = df_filtered[df_filtered[time_col].notna()].copy()
     total_time_leads = len(df_time)
     total_assigned = df_time["Assigned date"].notna().sum() if "Assigned date" in df_time.columns else 0
     total_not_assigned = total_time_leads - total_assigned
@@ -858,6 +858,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
