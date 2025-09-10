@@ -135,22 +135,22 @@ UPLOAD = cols_map.get("uploaded_date") or ("Upload Date" if "Upload Date" in df_
 st.sidebar.header("🎛 Filters")
 
 # Client filter with select-all
-clients = df_cleaned["Client"].dropna().unique().tolist() if "Client" in df_cleaned.columns else []
+clients = df_cleaned["Client"].unique().tolist() if "Client" in df_cleaned.columns else []
 select_all_clients = st.sidebar.checkbox("Select All Clients", value=True, key="sel_all_clients")
 Client = st.sidebar.multiselect("Client", options=clients, default=clients if select_all_clients else [])
 
 # Chaser Name filter with select-all
-chasers = df_cleaned["Chaser Name"].dropna().unique().tolist() if "Chaser Name" in df_cleaned.columns else []
+chasers = df_cleaned["Chaser Name"].unique().tolist() if "Chaser Name" in df_cleaned.columns else []
 select_all_chasers = st.sidebar.checkbox("Select All Chasers", value=True, key="sel_all_chasers")
 Chaser_Name = st.sidebar.multiselect("Chaser Name", options=chasers, default=chasers if select_all_chasers else [])
 
 # Chaser Group with select-all
-groups = df_cleaned["Chaser Group"].dropna().unique().tolist() if "Chaser Group" in df_cleaned.columns else []
+groups = df_cleaned["Chaser Group"].unique().tolist() if "Chaser Group" in df_cleaned.columns else []
 select_all_groups = st.sidebar.checkbox("Select All Groups", value=True, key="sel_all_groups")
 Chaser_Group = st.sidebar.multiselect("Chaser Group", options=groups, default=groups if select_all_groups else [])
 
 # Chasing Disposition with select-all (if present)
-disps = df_cleaned["Chasing Disposition"].dropna().unique().tolist() if "Chasing Disposition" in df_cleaned.columns else []
+disps = df_cleaned["Chasing Disposition"].unique().tolist() if "Chasing Disposition" in df_cleaned.columns else []
 select_all_disps = st.sidebar.checkbox("Select All Dispositions", value=True, key="sel_all_disps")
 Chasing_Disposition = st.sidebar.multiselect("Chasing Disposition", options=disps, default=disps if select_all_disps else [])
 
@@ -558,3 +558,4 @@ st.download_button(
     file_name="Dr_Chase_Leads_Filtered.csv",
     mime="text/csv"
 )
+
