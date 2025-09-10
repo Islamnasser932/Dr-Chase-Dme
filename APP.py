@@ -698,22 +698,12 @@ elif selected == "Data Analysis":
                 use_container_width=True
             )
     
-                              # --- دالة التصنيف بالأسابيع (سالب/موجب)
-        def categorize_weeks_signed(days):
-            if pd.isna(days):
-                return "Not Completed"
-            if days == 0:
-                return "Week 1"
-            elif days > 0:
-                return f"Week {int(days // 7) + 1}"
-            else:
-                return f"Week {int(days // 7)}"  # سالب
-        
+
                 # 📊 Lead Age Distribution – Approval
         if "Lead Age (Approval)" in df_lead_age.columns:
             with st.expander("📊 Lead Age Distribution – Approval"):
                 def categorize_weeks(d):
-                    if d >= 0:
+                    if d > 0:
                         return f"Week {int(d // 7) + 1}"
                     else:
                         return f"Week -{abs(int(d // 7) + 1)}"
@@ -772,7 +762,7 @@ elif selected == "Data Analysis":
         if "Lead Age (Denial)" in df_lead_age.columns:
             with st.expander("📊 Lead Age Distribution – Denial"):
                 def categorize_weeks(d):
-                    if d >= 0:
+                    if d > 0:
                         return f"Week {int(d // 7) + 1}"
                     else:
                         return f"Week -{abs(int(d // 7) + 1)}"
@@ -875,6 +865,7 @@ elif selected == "Data Analysis":
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
