@@ -573,26 +573,56 @@ elif selected == "Data Analysis":
         st.write(f"Based on **{time_col}**, there are **{total_time_leads} leads** with this date.")
         
         if total_time_leads > 0:
-            # Calculate stats inside this subset
             total_assigned = df_time["Assigned date"].notna().sum() if "Assigned date" in df_time.columns else 0
             total_not_assigned = total_time_leads - total_assigned
-                
+        
             total_approval = df_time["Approval date"].notna().sum() if "Approval date" in df_time.columns else 0
             total_denial = df_time["Denial Date"].notna().sum() if "Denial Date" in df_time.columns else 0
             total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
             total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
-            
-            # Show stats
-            st.markdown(f"""
-                - ✅ Total Leads (with {time_col}): **{total_time_leads}**
-                - 🧑‍💼 Assigned: **{total_assigned}**
-                - 🚫 Not Assigned: **{total_not_assigned}**
-                - ✔ Approved: **{total_approval}**
-                - ❌ Denied: **{total_denial}**
-                - 📤 Uploaded: **{total_uploaded}**
-                - 📌 Completed: **{total_completed}**
-                """)
-       
+        
+            # Percentages
+            pct_assigned = (total_assigned / total_time_leads * 100) if total_time_leads > 0 else 0
+            pct_not_assigned = (total_not_assigned / total_time_leads * 100) if total_time_leads > 0 else 0
+            pct_approval = (total_approval / total_time_leads * 100) if total_time_leads > 0 else 0
+            pct_denial = (total_denial / total_time_leads * 100) if total_time_leads > 0 else 0
+            pct_completed = (total_completed / total_time_leads * 100) if total_time_leads > 0 else 0
+            pct_uploaded = (total_uploaded / total_time_leads * 100) if total_time_leads > 0 else 0
+        
+            # --- KPI Layout ---
+            st.markdown("### 📌 Leads Summary (based on selected date)")
+            col1, col2, col3 = st.columns(3)
+            col4, col5, col6 = st.columns(3)
+        
+            with col1:
+                st.metric(f"🧑‍💼 Assigned", f"{total_assigned:,}", f"{pct_assigned:.1f}%")
+            with col2:
+                st.metric(f"🚫 Not Assigned", f"{total_not_assigned:,}", f"{pct_not_assigned:.1f}%")
+            with col3:
+                st.metric(f"✅ Completed", f"{total_completed:,}", f"{pct_completed:.1f}%")
+            with col4:
+                st.metric(f"✔ Approved", f"{total_approval:,}", f"{pct_approval:.1f}%")
+            with col5:
+                st.metric(f"❌ Denied", f"{total_denial:,}", f"{pct_denial:.1f}%")
+            with col6:
+                st.metric(f"📤 Uploaded", f"{total_uploaded:,}", f"{pct_uploaded:.1f}%")
+        
+            # Apply colors
+            style_metric_cards(
+                background_color="#0E1117",
+                border_left_color={
+                    "🧑‍💼 Assigned": "#17a2b8",
+                    "🚫 Not Assigned": "#ffc107",
+                    "✅ Completed": "#28a745",
+                    "✔ Approved": "#198754",
+                    "❌ Denied": "#dc3545",
+                    "📤 Uploaded": "#6f42c1"
+                },
+                border_color="#444",
+                box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
+            )
+        
+               
 
             # --- Row-level logic checks with expanders ---
             if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
@@ -864,6 +894,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
