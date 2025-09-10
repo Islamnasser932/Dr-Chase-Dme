@@ -818,9 +818,8 @@ if "Created Time" in df_ts.columns:
             both_dates = df_lead_age[df_lead_age["Approval date"].notna() & df_lead_age["Denial Date"].notna()]
             if not both_dates.empty:
                 st.warning(f"⚠️ Found {len(both_dates)} leads with BOTH Approval & Denial dates. Please review.")
-            
+ 
                 with st.expander("🔍 View Leads with BOTH Approval & Denial"):
-                    # خليك بس في الأعمدة اللي موجودة
                     cols_to_show = [
                         "Created Time",
                         "Approval date",
@@ -886,6 +885,7 @@ if "Created Time" in df_ts.columns:
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
