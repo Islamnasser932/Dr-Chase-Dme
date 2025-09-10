@@ -468,432 +468,214 @@ if selected == "Dataset Overview":
 
 
 
-elif selected == "Data Analysis":
-    st.title("📊 Data Analysis – Advanced Insights")
-    st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
+    # ================== Lead Age Analysis ==================
+    st.subheader("⏳ Lead Age Analysis")
+    st.info("How long it takes to close leads. Distribution by weeks, plus average and median by Chaser and Client.")
 
-    # --- Allowed columns for analysis ---
-    allowed_columns = [
-        "Chaser Name",
-        "Chaser Group",
-        "Date of Sale (Date)",
-        "Created Time (Date)",
-        "Assigned date (Date)",
-        "Approval date (Date)",
-        "Denial Date (Date)",
-        "Completion Date (Date)",
-        "Upload Date (Date)",
-        "Client",
-        "Chasing Disposition",
-        "Insurance",
-        "Type Of Sale",
-        "Products",
-        "Days Spent As Pending QA"
-    ]
-    
-    # Keep only available ones from dataset
-    available_columns = [c for c in allowed_columns if c in df_filtered.columns]
-    
-    if not available_columns:
-        st.warning("⚠️ None of the predefined analysis columns are available in the dataset.")
-    else:
-        time_col = st.selectbox("Select column for analysis", available_columns)
-    
-        # Convert to datetime if column looks like a date
-        if "date" in time_col.lower():
-            df_filtered[time_col] = pd.to_datetime(df_filtered[time_col], errors="coerce", dayfirst=True)
-    
-            today = pd.Timestamp.now().normalize()
-            future_mask = df_filtered[time_col] > today
-            if future_mask.any():
-                st.warning(f"⚠️ Detected {future_mask.sum()} rows with future {time_col} values.")
-                if st.checkbox("Show rows with future dates"):
-                    st.dataframe(df_filtered.loc[future_mask])
-    
-            df_ts = df_filtered.loc[~future_mask].copy()
-        else:
-            df_ts = df_filtered.copy()
+    if "Created Time" in df_ts.columns and "Completion Date" in df_ts.columns:
+        df_lead_age = df_ts.copy()
+        df_lead_age["Lead Age (Days)"] = (
+            (df_lead_age["Completion Date"] - df_lead_age["Created Time"]).dt.days
+        )
 
-    # --- Search filters ---
-    st.subheader("🔍 Search Filter")
-    # 1) Search by MCN
-    mcn_search = st.text_input("Enter MCN (optional)").strip()
-    if mcn_search:
-        df_ts = df_ts[df_ts["MCN"].astype(str).str.contains(mcn_search, case=False, na=False)]
-
-        # 2) Search by Chaser Name / Client
-    search_term = st.text_input("Enter Chaser Name or Client (partial match allowed)").strip().lower()
-        if search_term:
-            df_ts = df_ts[
-                df_ts["Chaser Name"].str.lower().str.contains(search_term, na=False)
-                | df_ts["Client"].str.lower().str.contains(search_term, na=False)
-            ]
-
-        # --- Aggregation frequency ---
-        freq = st.radio("Aggregation level:", ["Daily", "Weekly", "Monthly"], horizontal=True)
-        period_map = {"Daily": "D", "Weekly": "W", "Monthly": "M"}
-        df_ts["Period"] = df_ts[time_col].dt.to_period(period_map[freq]).dt.to_timestamp()
-
-        # --- Grouping option ---
-        group_by = st.selectbox("Break down by:", ["None", "Client", "Chaser Name", "Chaser Group"])
-        if group_by == "None":
-            ts_data = df_ts.groupby("Period").size().reset_index(name="Lead Count")
-        else:
-            ts_data = df_ts.groupby(["Period", group_by]).size().reset_index(name="Lead Count")
-
-        if not ts_data.empty:
-            # 📈 Historical Time Series
-            st.subheader("📈 Historical Time Series")
-
-            if group_by == "None":
-                chart = (
-                    alt.Chart(ts_data)
-                    .mark_line(point=True, color="#007bff")
-                    .encode(x="Period:T", y="Lead Count", tooltip=["Period:T", "Lead Count"])
-                    .properties(height=400)
-                )
+        # Categorize into weeks
+        def categorize_weeks(days):
+            if pd.isna(days):
+                return "Not Completed"
+            elif days <= 7:
+                return "Week 1"
+            elif days <= 14:
+                return "Week 2"
+            elif days <= 21:
+                return "Week 3"
+            elif days <= 28:
+                return "Week 4"
+            elif days <= 35:
+                return "Week 5"
+            elif days <= 42:
+                return "Week 6"
+            elif days <= 49:
+                return "Week 7"
+            elif days <= 56:
+                return "Week 8"
+            elif days <= 63:
+                return "Week 9"
+            elif days <= 70:
+                return "Week 10"
+            elif days <= 77:
+                return "Week 11"
+            elif days <= 84:
+                return "Week 12"
+            elif days <= 91:
+                return "Week 13"
+            elif days <= 98:
+                return "Week 14"
+            elif days <= 105:
+                return "Week 15"
+            elif days <= 112:
+                return "Week 16"
             else:
-                chart = (
-                    alt.Chart(ts_data)
-                    .mark_line(point=True)
-                    .encode(
-                        x="Period:T",
-                        y="Lead Count",
-                        color=group_by,
-                        tooltip=["Period:T", "Lead Count", group_by]
-                    )
-                    .properties(height=400)
-                )
-            st.altair_chart(chart, use_container_width=True)
+                return "Week 17"
 
-            # 📝 Insights Summary
-            st.subheader("📝 Insights Summary")
-            st.info("High-level insights based on the selected date column: assigned, approvals, denials, and warnings if data is inconsistent.")
-            
-            # --- Subset based on selected time_col ---
-            df_time = df_ts[df_ts[time_col].notna()].copy()
-            total_time_leads = len(df_time)
-            
-            st.write(f"Based on **{time_col}**, there are **{total_time_leads} leads** with this date.")
-            
-            if total_time_leads > 0:
-                # Calculate stats inside this subset
-                total_assigned = df_time["Assigned date"].notna().sum() if "Assigned date" in df_time.columns else 0
-                total_not_assigned = total_time_leads - total_assigned
-                
-                total_approval = df_time["Approval date"].notna().sum() if "Approval date" in df_time.columns else 0
-                total_denial = df_time["Denial Date"].notna().sum() if "Denial Date" in df_time.columns else 0
-                total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
-                total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
-            
-                # Show stats
-                st.markdown(f"""
-                - ✅ Total Leads (with {time_col}): **{total_time_leads}**
-                - 🧑‍💼 Assigned: **{total_assigned}**
-                - 🚫 Not Assigned: **{total_not_assigned}**
-                - ✔ Approved: **{total_approval}**
-                - ❌ Denied: **{total_denial}**
-                - 📤 Uploaded: **{total_uploaded}**
-                - 📌 Completed: **{total_completed}**
-                """)
+        df_lead_age["Lead Age Category"] = df_lead_age["Lead Age (Days)"].apply(categorize_weeks)
 
-                # --- Row-level logic checks with expanders ---
-                if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
-                    bad_rows = df_time[df_time["Completion Date"].notna() & df_time["Assigned date"].isna()]
-                    if not bad_rows.empty:
-                        st.warning(f"⚠️ Found {len(bad_rows)} leads with **Completion Date** but no **Assigned date**.")
-                        with st.expander("🔍 View Leads Missing Assigned Date"):
-                            st.dataframe(
-                                bad_rows[["MCN", "Client", "Chaser Name", "Created Time", "Assigned date", "Completion Date"]],
-                                use_container_width=True
-                            )
-            
-                if "Completion Date" in df_time.columns and "Approval date" in df_time.columns:
-                    bad_rows2 = df_time[df_time["Completion Date"].notna() & df_time["Approval date"].isna()]
-                    if not bad_rows2.empty:
-                        st.warning(f"⚠️ Found {len(bad_rows2)} leads with **Completion Date** but no **Approval date**.")
-                        with st.expander("🔍 View Leads Missing Approval Date"):
-                            st.dataframe(
-                                bad_rows2[["MCN", "Client", "Chaser Name", "Created Time", "Approval date", "Completion Date"]],
-                                use_container_width=True
-                            )
-            
+        # 📋 Full lead age table
+        st.markdown("### 📋 Full Lead Age Table")
+        st.dataframe(
+            df_lead_age[[
+                "Created Time",
+                "Completion Date",
+                "Lead Age (Days)",
+                "Lead Age Category",
+                "Chaser Name",
+                "Client",
+                "MCN"
+            ]],
+            use_container_width=True
+        )
+        
+        # 📊 Lead Age Distribution
+        st.markdown("### 📊 Lead Age Distribution")
 
-                                # --- Extra checks for Uploaded Date ---
-                if "Upload Date" in df_time.columns and "Completion Date" in df_time.columns:
-                    bad_uploaded = df_time[df_time["Upload Date"].notna() & df_time["Completion Date"].isna()]
-                    if not bad_uploaded.empty:
-                        st.warning(f"⚠️ Found {len(bad_uploaded)} leads with **Upload Date** but no **Completion Date**.")
-                        with st.expander("🔍 View Leads Missing Completion Date after Upload"):
-                            st.dataframe(
-                                bad_uploaded[["MCN", "Client", "Chaser Name", "Upload Date", "Completion Date"]],
-                                use_container_width=True
-                            )
-            
-                if "Upload Date" in df_time.columns and "Assigned date" in df_time.columns:
-                    bad_uploaded_assigned = df_time[df_time["Upload Date"].notna() & df_time["Assigned date"].isna()]
-                    if not bad_uploaded_assigned.empty:
-                        st.warning(f"⚠️ Found {len(bad_uploaded_assigned)} leads with **Upload Date** but no **Assigned date**.")
-                        with st.expander("🔍 View Leads Missing Assigned Date after Upload"):
-                            st.dataframe(
-                                bad_uploaded_assigned[["MCN", "Client", "Chaser Name", "Upload Date", "Assigned date"]],
-                                use_container_width=True
-                            )
-            
-                if "Upload Date" in df_time.columns and "Approval date" in df_time.columns:
-                    bad_uploaded_approval = df_time[df_time["Upload Date"].notna() & df_time["Approval date"].isna()]
-                    if not bad_uploaded_approval.empty:
-                        st.warning(f"⚠️ Found {len(bad_uploaded_approval)} leads with **Upload Date** but no **Approval date**.")
-                        with st.expander("🔍 View Leads Missing Approval Date after Upload"):
-                            st.dataframe(
-                                bad_uploaded_approval[["MCN", "Client", "Chaser Name", "Upload Date", "Approval date"]],
-                                use_container_width=True
-                            )
+        # Not Completed first
+        categories = df_lead_age["Lead Age Category"].dropna().unique()
+        weeks = sorted([c for c in categories if c.startswith("Week")], key=lambda x: int(x.split()[1]))
+        category_order = ["Not Completed"] + weeks  
 
-            
-      
-            # 🏆 Top performers
-            if group_by in ["Chaser Name", "Client"]:
-                st.subheader(f"🏆 Top {group_by}s by Leads")
-                top_table = ts_data.groupby(group_by)["Lead Count"].sum().reset_index()
-                top_table = top_table.sort_values("Lead Count", ascending=False).head(5)
-                st.table(top_table)
-
-        # ================== Lead Age Analysis ==================
-        st.subheader("⏳ Lead Age Analysis")
-        st.info("How long it takes to close leads. Distribution by weeks, plus average and median by Chaser and Client.")
-
-
-        if "Created Time" in df_ts.columns and "Completion Date" in df_ts.columns:
-            df_lead_age = df_ts.copy()
-            df_lead_age["Lead Age (Days)"] = (
-                (df_lead_age["Completion Date"] - df_lead_age["Created Time"]).dt.days
-            )
-
-            # Categorize into weeks
-            def categorize_weeks(days):
-                if pd.isna(days):
-                    return "Not Completed"
-                elif days <= 7:
-                    return "Week 1"
-                elif days <= 14:
-                    return "Week 2"
-                elif days <= 21:
-                    return "Week 3"
-                elif days <= 28:
-                    return "Week 4"
-                elif days <= 35:
-                    return "Week 5"
-                elif days <= 42:
-                    return "Week 6"
-                elif days <= 49:
-                    return "Week 7"
-                elif days <= 56:
-                    return "Week 8"
-                elif days <= 63:
-                    return "Week 9"
-                elif days <= 70:
-                    return "Week 10"
-                elif days <= 77:
-                    return "Week 11"
-                elif days <= 84:
-                    return "Week 12"
-                elif days <= 91:
-                    return "Week 13"
-                elif days <= 98:
-                    return "Week 14"
-                elif days <= 105:
-                    return "Week 15"
-                elif days <= 112:
-                    return "Week 16"
-                else:
-                    return "Week 17"
-
-            df_lead_age["Lead Age Category"] = df_lead_age["Lead Age (Days)"].apply(categorize_weeks)
-
-
-             # 📋 Full lead age table
-            st.markdown("### 📋 Full Lead Age Table")
-            st.dataframe(
-                df_lead_age[["Created Time", "Completion Date", "Lead Age (Days)", "Lead Age Category", "Chaser Name", "Client", "MCN"]],
-                use_container_width=True
-            )
-            
-            # 📊 Lead Age Distribution
-            st.markdown("### 📊 Lead Age Distribution")
-
-            # Not Completed first
-            categories = df_lead_age["Lead Age Category"].dropna().unique()
-            weeks = sorted([c for c in categories if c.startswith("Week")], key=lambda x: int(x.split()[1]))
-            category_order = ["Not Completed"] + weeks  
-            
-            color_scale = alt.Scale(
+        color_scale = alt.Scale(
             domain=["Not Completed"] + weeks,
             range=["#C99927"] + ["#16e261"] * len(weeks)
-             )
+        )
 
-            age_summary = (
-                df_lead_age["Lead Age Category"]
-                .value_counts()
-                .reindex(category_order)   
-                .reset_index()
+        age_summary = (
+            df_lead_age["Lead Age Category"]
+            .value_counts()
+            .reindex(category_order)
+            .reset_index()
+        )
+        age_summary.columns = ["Lead Age Category", "Count"]
+
+        st.table(age_summary)
+
+        chart_age = (
+            alt.Chart(age_summary)
+            .mark_bar()
+            .encode(
+                x=alt.X("Lead Age Category", sort=category_order),
+                y="Count",
+                color=alt.Color("Lead Age Category", scale=color_scale, legend=None),
+                tooltip=["Lead Age Category", "Count"]
             )
-            age_summary.columns = ["Lead Age Category", "Count"]
+        )
+        st.altair_chart(chart_age, use_container_width=True)
 
-            st.table(age_summary)
+        # 📊 Average + Median lead age per Chaser / Client
+        st.markdown("### 📊 Average & Median Lead Age by Chaser / Client")
 
-            chart_age = (
-                alt.Chart(age_summary)
-                .mark_bar()
-                .encode(
-                    x=alt.X("Lead Age Category", sort=category_order),
-                    y="Count",
-                    color=alt.Color("Lead Age Category", scale=color_scale, legend=None),
-                    tooltip=["Lead Age Category", "Count"]
+        st.info("""
+        - 📈 If **Median is low** but **Average is high** → Most leads are closed quickly, but a few leads are extremely delayed.  
+        - ⏳ If **Both are high** → The team generally takes **longer** to close leads.  
+        - 🚀 If **Both are low** → Excellent performance; leads are closed **consistently fast**.
+        ---
+        - 🟢 Who usually closes leads **faster** (lower Median).  
+        - 🔴 Who sometimes delays leads too much (**high Average compared to Median**).
+        """)
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if "Chaser Name" in df_lead_age.columns:
+                avg_chaser = df_lead_age.groupby("Chaser Name")["Lead Age (Days)"].agg(["mean", "median"]).reset_index()
+                avg_chaser.columns = ["Chaser Name", "Average Age (Days)", "Median Age (Days)"]
+                avg_chaser = avg_chaser.sort_values("Median Age (Days)")
+
+                # Color formatting
+                def highlight_chaser(val, colname):
+                    if pd.isna(val):
+                        return ""
+                    if val == avg_chaser[colname].min():
+                        return "background-color: #67C090"  # green
+                    elif val == avg_chaser[colname].max():
+                        return "background-color: #E62727"  # red
+                    return ""
+
+                st.dataframe(
+                    avg_chaser.style.applymap(lambda v: highlight_chaser(v, "Median Age (Days)"), subset=["Median Age (Days)"])
                 )
-            )
-            st.altair_chart(chart_age, use_container_width=True)
 
+                # Chart
+                chart_chaser = (
+                    alt.Chart(avg_chaser)
+                    .mark_bar()
+                    .encode(
+                        x="Chaser Name",
+                        y="Median Age (Days)",
+                        tooltip=["Chaser Name", "Average Age (Days)", "Median Age (Days)"]
+                    )
+                )
+                st.altair_chart(chart_chaser, use_container_width=True)
 
+                # 📦 Boxplot of Lead Age by Chaser
+                st.markdown("### 📦 Lead Age Spread by Chaser")
+                box_chart_chaser = (
+                    alt.Chart(df_lead_age.dropna(subset=["Lead Age (Days)"]))
+                    .mark_boxplot(extent="min-max")
+                    .encode(
+                        x="Chaser Name",
+                        y="Lead Age (Days):Q",
+                        color="Chaser Name",
+                        tooltip=["Chaser Name", "Lead Age (Days)"]
+                    )
+                    .properties(height=400)
+                )
+                st.altair_chart(box_chart_chaser, use_container_width=True)
 
-            
-            # 📊 Average + Median lead age per Chaser / Client
-            st.markdown("### 📊 Average & Median Lead Age by Chaser / Client")
-            # 📖 Explanation with Emojis
-            st.info("""
-            
-            - 📈 If **Median is low** but **Average is high** → Most leads are closed quickly, but a few leads are extremely delayed.  
-            - ⏳ If **Both are high** → The team generally takes **longer** to close leads.  
-            - 🚀 If **Both are low** → Excellent performance; leads are closed **consistently fast**.
-            ---
-            - 🟢 Who usually closes leads **faster** (lower Median).  
-            - 🔴 Who sometimes delays leads too much (**high Average compared to Median**).
-            """)
-            col1, col2 = st.columns(2)
+        with col2:
+            if "Client" in df_lead_age.columns:
+                avg_client = df_lead_age.groupby("Client")["Lead Age (Days)"].agg(["mean", "median"]).reset_index()
+                avg_client.columns = ["Client", "Average Age (Days)", "Median Age (Days)"]
+                avg_client = avg_client.sort_values("Median Age (Days)")
 
-            with col1:
-                if "Chaser Name" in df_lead_age.columns:
-                    avg_chaser = df_lead_age.groupby("Chaser Name")["Lead Age (Days)"].agg(["mean", "median"]).reset_index()
-                    avg_chaser.columns = ["Chaser Name", "Average Age (Days)", "Median Age (Days)"]
-                    avg_chaser = avg_chaser.sort_values("Median Age (Days)")
-
-                    # Color formatting
-                    def highlight_chaser(val, colname):
-                        if pd.isna(val):
-                            return ""
-                        if val == avg_chaser[colname].min():
-                            return "background-color: #67C090"  # green
-                        elif val == avg_chaser[colname].max():
-                            return "background-color: #E62727"  # red
+                # Color formatting
+                def highlight_client(val, colname):
+                    if pd.isna(val):
                         return ""
+                    if val == avg_client[colname].min():
+                        return "background-color: #67C090"  # green
+                    elif val == avg_client[colname].max():
+                        return "background-color: #E62727"  # red
+                    return ""
 
-                    st.dataframe(
-                        avg_chaser.style.applymap(lambda v: highlight_chaser(v, "Median Age (Days)"), subset=["Median Age (Days)"])
+                st.dataframe(
+                    avg_client.style.applymap(lambda v: highlight_client(v, "Median Age (Days)"), subset=["Median Age (Days)"])
+                )
+
+                # Chart
+                chart_client = (
+                    alt.Chart(avg_client)
+                    .mark_bar()
+                    .encode(
+                        x="Client",
+                        y="Median Age (Days)",
+                        tooltip=["Client", "Average Age (Days)", "Median Age (Days)"]
                     )
+                )
+                st.altair_chart(chart_client, use_container_width=True)
 
-                    # Chart
-                    chart_chaser = (
-                        alt.Chart(avg_chaser)
-                        .mark_bar()
-                        .encode(
-                            x="Chaser Name",
-                            y="Median Age (Days)",
-                            tooltip=["Chaser Name", "Average Age (Days)", "Median Age (Days)"]
-                        )
+                # 📦 Boxplot of Lead Age by Client
+                st.markdown("### 📦 Lead Age Spread by Client")
+                box_chart_client = (
+                    alt.Chart(df_lead_age.dropna(subset=["Lead Age (Days)"]))
+                    .mark_boxplot(extent="min-max")
+                    .encode(
+                        x="Client",
+                        y="Lead Age (Days):Q",
+                        color="Client",
+                        tooltip=["Client", "Lead Age (Days)"]
                     )
-                    st.altair_chart(chart_chaser, use_container_width=True)
+                    .properties(height=400)
+                )
+                st.altair_chart(box_chart_client, use_container_width=True)
 
-                            # 📦 Boxplot of Lead Age by Chaser
-                    st.markdown("### 📦 Lead Age Spread by Chaser")
-                    box_chart_chaser = (
-                        alt.Chart(df_lead_age.dropna(subset=["Lead Age (Days)"]))
-                        .mark_boxplot(extent="min-max")
-                        .encode(
-                            x="Chaser Name",
-                            y="Lead Age (Days):Q",
-                            color="Chaser Name",
-                            tooltip=["Chaser Name", "Lead Age (Days)"]
-                        )
-                        .properties(height=400)
-                    )
-                    st.altair_chart(box_chart_chaser, use_container_width=True)
-
-    
-            
-            with col2:
-                if "Client" in df_lead_age.columns:
-                    avg_client = df_lead_age.groupby("Client")["Lead Age (Days)"].agg(["mean", "median"]).reset_index()
-                    avg_client.columns = ["Client", "Average Age (Days)", "Median Age (Days)"]
-                    avg_client = avg_client.sort_values("Median Age (Days)")
-
-                    # Color formatting
-                    def highlight_client(val, colname):
-                        if pd.isna(val):
-                            return ""
-                        if val == avg_client[colname].min():
-                            return "background-color: #67C090"  # green
-                        elif val == avg_client[colname].max():
-                            return "background-color: #E62727"  # red
-                        return ""
-
-                    st.dataframe(
-                        avg_client.style.applymap(lambda v: highlight_client(v, "Median Age (Days)"), subset=["Median Age (Days)"])
-                    )
-
-                    # Chart
-                    chart_client = (
-                        alt.Chart(avg_client)
-                        .mark_bar()
-                        .encode(
-                            x="Client",
-                            y="Median Age (Days)",
-                            tooltip=["Client", "Average Age (Days)", "Median Age (Days)"]
-                        )
-                    )
-                    st.altair_chart(chart_client, use_container_width=True)
-                    
-                    
-                     # 📦 Boxplot of Lead Age by Client
-                    st.markdown("### 📦 Lead Age Spread by Client")
-                    box_chart_client = (
-                        alt.Chart(df_lead_age.dropna(subset=["Lead Age (Days)"]))
-                        .mark_boxplot(extent="min-max")
-                        .encode(
-                            x="Client",
-                            y="Lead Age (Days):Q",
-                            color="Client",
-                            tooltip=["Client", "Lead Age (Days)"]
-                        )
-                        .properties(height=400)
-                    )
-                    st.altair_chart(box_chart_client, use_container_width=True)
-
-        else:
-            st.info("Created Time and Completion Date columns are required for lead age analysis.")
-            
-                               
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    else:
+        st.info("Created Time and Completion Date columns are required for lead age analysis.")
