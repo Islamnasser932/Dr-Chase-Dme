@@ -813,9 +813,6 @@ if "Created Time" in df_ts.columns:
                     ]],
                     use_container_width=True
                 )
-
-    df_lead_age = df_ts.copy()
-
           
     
         # 📊 Grouped Bar Chart – Approval vs Denial per Chaser
@@ -864,6 +861,7 @@ if "Created Time" in df_ts.columns:
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
