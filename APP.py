@@ -701,120 +701,93 @@ elif selected == "Data Analysis":
                 use_container_width=True
             )
     
-                       # 📊 Lead Age Distribution – Approval
+                              # --- دالة التصنيف بالأسابيع (سالب/موجب)
+        def categorize_weeks_signed(days):
+            if pd.isna(days):
+                return "Not Completed"
+            if days == 0:
+                return "Week 1"
+            elif days > 0:
+                return f"Week {int(days // 7) + 1}"
+            else:
+                return f"Week {int(days // 7)}"  # سالب
+        
+        # ================== Lead Age Distribution – Approval ==================
         if "Lead Age (Approval)" in df_lead_age.columns:
             with st.expander("📊 Lead Age Distribution – Approval"):
-                def categorize_weeks(d):
-                    if d >= 0:
-                        return f"Week {int(d // 7) + 1}"
-                    else:
-                        return f"Week -{abs(int(d // 7) + 1)}"
-
-                df_lead_age["Approval Category"] = df_lead_age["Lead Age (Approval)"].dropna().apply(categorize_weeks)
-
-                # ترتيب الأسابيع
-                categories = df_lead_age["Approval Category"].dropna().unique()
-                weeks_negative = sorted([c for c in categories if "Week -" in c], key=lambda x: -int(x.split()[1]))
-                weeks_positive = sorted([c for c in categories if "Week " in c and "-" not in c], key=lambda x: int(x.split()[1]))
-                category_order = weeks_negative + weeks_positive
-
-                approval_summary = (
-                    df_lead_age["Approval Category"]
-                    .value_counts()
-                    .reindex(category_order)
-                    .reset_index()
-                )
+                df_lead_age["Approval Category"] = df_lead_age["Lead Age (Approval)"].apply(categorize_weeks_signed)
+        
+                approval_summary = df_lead_age["Approval Category"].value_counts().reset_index()
                 approval_summary.columns = ["Category", "Count"]
-
-                # لون مختلف للسالب
-                approval_summary["Color"] = approval_summary["Category"].apply(
-                    lambda x: "#FFA500" if "Week -" in x else "#28a745"
-                )
-
+        
+                # ترتيب الأسابيع: سالب → موجب
+                def sort_key(cat):
+                    if cat.startswith("Week "):
+                        return int(cat.split()[1])  # يحول Week -2 -> -2
+                    return 999
+                approval_summary = approval_summary.sort_values(by="Category", key=lambda x: x.map(sort_key))
+        
                 chart_approval = (
                     alt.Chart(approval_summary)
-                    .mark_bar()
+                    .mark_bar(color="#28a745")
                     .encode(
-                        x=alt.X("Category", sort=category_order),
+                        x=alt.X("Category", sort=approval_summary["Category"].tolist()),
                         y="Count",
-                        color=alt.Color("Color:N", scale=None, legend=None),
                         tooltip=["Category", "Count"]
                     )
                 )
-                st.altair_chart(chart_approval, use_container_width=True)
-
-                # جدول leads في الأسابيع السالبة
-                negative_approval = df_lead_age[df_lead_age["Approval Category"].str.contains("Week -", na=False)]
-                if not negative_approval.empty:
-                    st.warning(f"⚠️ Found {len(negative_approval)} approvals with negative week categories.")
+        
+                # خط فاصل عند Week 0
+                rule = alt.Chart(pd.DataFrame({'Category': ["Week 0"]})).mark_rule(color='white', strokeDash=[5,5]).encode(x='Category')
+        
+                st.altair_chart(chart_approval + rule, use_container_width=True)
+        
+                # جدول للحالات السالبة
+                neg_rows = df_lead_age[df_lead_age["Approval Category"].str.contains("Week -", na=False)]
+                if not neg_rows.empty:
+                    st.warning(f"⚠️ Found {len(neg_rows)} approvals with negative week categories.")
                     st.dataframe(
-                        negative_approval[[
-                            "Created Time",
-                            "Approval date",
-                            "Lead Age (Approval)",
-                            "Approval Category",
-                            "Chaser Name",
-                            "Client",
-                            "MCN"
+                        neg_rows[[
+                            "Created Time", "Approval date", "Lead Age (Approval)",
+                            "Approval Category", "Chaser Name", "Client", "MCN"
                         ]],
                         use_container_width=True
                     )
-
-        # 📊 Lead Age Distribution – Denial
+        
+        # ================== Lead Age Distribution – Denial ==================
         if "Lead Age (Denial)" in df_lead_age.columns:
             with st.expander("📊 Lead Age Distribution – Denial"):
-                def categorize_weeks(d):
-                    if d >= 0:
-                        return f"Week {int(d // 7) + 1}"
-                    else:
-                        return f"Week -{abs(int(d // 7) + 1)}"
-
-                df_lead_age["Denial Category"] = df_lead_age["Lead Age (Denial)"].dropna().apply(categorize_weeks)
-
-                # ترتيب الأسابيع
-                categories = df_lead_age["Denial Category"].dropna().unique()
-                weeks_negative = sorted([c for c in categories if "Week -" in c], key=lambda x: -int(x.split()[1]))
-                weeks_positive = sorted([c for c in categories if "Week " in c and "-" not in c], key=lambda x: int(x.split()[1]))
-                category_order = weeks_negative + weeks_positive
-
-                denial_summary = (
-                    df_lead_age["Denial Category"]
-                    .value_counts()
-                    .reindex(category_order)
-                    .reset_index()
-                )
+                df_lead_age["Denial Category"] = df_lead_age["Lead Age (Denial)"].apply(categorize_weeks_signed)
+        
+                denial_summary = df_lead_age["Denial Category"].value_counts().reset_index()
                 denial_summary.columns = ["Category", "Count"]
-
-                # لون مختلف للسالب
-                denial_summary["Color"] = denial_summary["Category"].apply(
-                    lambda x: "#FFA500" if "Week -" in x else "#dc3545"
-                )
-
+        
+                # ترتيب الأسابيع: سالب → موجب
+                denial_summary = denial_summary.sort_values(by="Category", key=lambda x: x.map(sort_key))
+        
                 chart_denial = (
                     alt.Chart(denial_summary)
-                    .mark_bar()
+                    .mark_bar(color="#dc3545")
                     .encode(
-                        x=alt.X("Category", sort=category_order),
+                        x=alt.X("Category", sort=denial_summary["Category"].tolist()),
                         y="Count",
-                        color=alt.Color("Color:N", scale=None, legend=None),
                         tooltip=["Category", "Count"]
                     )
                 )
-                st.altair_chart(chart_denial, use_container_width=True)
-
-                # جدول leads في الأسابيع السالبة
-                negative_denial = df_lead_age[df_lead_age["Denial Category"].str.contains("Week -", na=False)]
-                if not negative_denial.empty:
-                    st.warning(f"⚠️ Found {len(negative_denial)} denials with negative week categories.")
+        
+                # خط فاصل عند Week 0
+                rule = alt.Chart(pd.DataFrame({'Category': ["Week 0"]})).mark_rule(color='white', strokeDash=[5,5]).encode(x='Category')
+        
+                st.altair_chart(chart_denial + rule, use_container_width=True)
+        
+                # جدول للحالات السالبة
+                neg_rows = df_lead_age[df_lead_age["Denial Category"].str.contains("Week -", na=False)]
+                if not neg_rows.empty:
+                    st.warning(f"⚠️ Found {len(neg_rows)} denials with negative week categories.")
                     st.dataframe(
-                        negative_denial[[
-                            "Created Time",
-                            "Denial Date",
-                            "Lead Age (Denial)",
-                            "Denial Category",
-                            "Chaser Name",
-                            "Client",
-                            "MCN"
+                        neg_rows[[
+                            "Created Time", "Denial Date", "Lead Age (Denial)",
+                            "Denial Category", "Chaser Name", "Client", "MCN"
                         ]],
                         use_container_width=True
                     )
@@ -867,6 +840,7 @@ elif selected == "Data Analysis":
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
