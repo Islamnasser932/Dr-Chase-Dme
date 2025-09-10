@@ -331,8 +331,16 @@ if selected == "Dataset Overview":
     
     # --- Style metric cards ---
     style_metric_cards(
-        background_color="#121270",  # Dark blue background
-        border_left_color="#f20045", # Pink/red accent bar
+        background_color="#0E1117",  # Dark blue background
+        border_left_color={
+            "📊 Total Leads": "#00BFFF",         # Blue
+            "🧑‍💼 Assigned": "#17a2b8",         # Cyan
+            "🚫 Not Assigned": "#ffc107",       # Yellow
+            "✅ Completed": "#28a745",           # Green
+            "📤 Uploaded": "#6f42c1",           # Purple
+            "✔ Approved / ❌ Denied": "#dc3545"  # Red
+        },
+        border_color="#444",
         box_shadow="3px 3px 10px rgba(0,0,0,0.3)"  # soft shadow
     )
         
@@ -862,6 +870,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
