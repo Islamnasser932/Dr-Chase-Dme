@@ -468,6 +468,194 @@ if selected == "Dataset Overview":
 
 
 
+    elif selected == "Data Analysis":
+    st.title("📊 Data Analysis – Advanced Insights")
+    st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
+
+    # --- Allowed columns for analysis ---
+    allowed_columns = [
+        "Chaser Name",
+        "Chaser Group",
+        "Date of Sale (Date)",
+        "Created Time (Date)",
+        "Assigned date (Date)",
+        "Approval date (Date)",
+        "Denial Date (Date)",
+        "Completion Date (Date)",
+        "Upload Date (Date)",
+        "Client",
+        "Chasing Disposition",
+        "Insurance",
+        "Type Of Sale",
+        "Products",
+        "Days Spent As Pending QA"
+    ]
+    
+    # Keep only available ones from dataset
+    available_columns = [c for c in allowed_columns if c in df_filtered.columns]
+    
+    if not available_columns:
+        st.warning("⚠️ None of the predefined analysis columns are available in the dataset.")
+    else:
+        time_col = st.selectbox("Select column for analysis", available_columns)
+    
+        # Convert to datetime if column looks like a date
+        if "date" in time_col.lower():
+            df_filtered[time_col] = pd.to_datetime(df_filtered[time_col], errors="coerce", dayfirst=True)
+    
+            today = pd.Timestamp.now().normalize()
+            future_mask = df_filtered[time_col] > today
+            if future_mask.any():
+                st.warning(f"⚠️ Detected {future_mask.sum()} rows with future {time_col} values.")
+                if st.checkbox("Show rows with future dates"):
+                    st.dataframe(df_filtered.loc[future_mask])
+    
+            df_ts = df_filtered.loc[~future_mask].copy()
+        else:
+            df_ts = df_filtered.copy()
+
+    # --- Search filters ---
+    st.subheader("🔍 Search Filter")
+    # 1) Search by MCN
+    mcn_search = st.text_input("Enter MCN (optional)").strip()
+    if mcn_search:
+        df_ts = df_ts[df_ts["MCN"].astype(str).str.contains(mcn_search, case=False, na=False)]
+
+    # 2) Search by Chaser Name / Client
+    search_term = st.text_input("Enter Chaser Name or Client (partial match allowed)").strip().lower()
+    if search_term:
+        df_ts = df_ts[
+            df_ts["Chaser Name"].str.lower().str.contains(search_term, na=False)
+            | df_ts["Client"].str.lower().str.contains(search_term, na=False)
+        ]
+
+    # --- Aggregation frequency ---
+    freq = st.radio("Aggregation level:", ["Daily", "Weekly", "Monthly"], horizontal=True)
+    period_map = {"Daily": "D", "Weekly": "W", "Monthly": "M"}
+    df_ts["Period"] = df_ts[time_col].dt.to_period(period_map[freq]).dt.to_timestamp()
+
+    # --- Grouping option ---
+    group_by = st.selectbox("Break down by:", ["None", "Client", "Chaser Name", "Chaser Group"])
+    if group_by == "None":
+        ts_data = df_ts.groupby("Period").size().reset_index(name="Lead Count")
+    else:
+        ts_data = df_ts.groupby(["Period", group_by]).size().reset_index(name="Lead Count")
+
+    if not ts_data.empty:
+        # 📈 Historical Time Series
+        st.subheader("📈 Historical Time Series")
+
+        if group_by == "None":
+            chart = (
+                alt.Chart(ts_data)
+                .mark_line(point=True, color="#007bff")
+                .encode(x="Period:T", y="Lead Count", tooltip=["Period:T", "Lead Count"])
+                .properties(height=400)
+            )
+        else:
+            chart = (
+                alt.Chart(ts_data)
+                .mark_line(point=True)
+                .encode(
+                    x="Period:T",
+                    y="Lead Count",
+                    color=group_by,
+                    tooltip=["Period:T", "Lead Count", group_by]
+                )
+                .properties(height=400)
+            )
+        st.altair_chart(chart, use_container_width=True)
+
+        # 📝 Insights Summary
+        st.subheader("📝 Insights Summary")
+        st.info("High-level insights based on the selected date column: assigned, approvals, denials, and warnings if data is inconsistent.")
+        
+        # --- Subset based on selected time_col ---
+        df_time = df_ts[df_ts[time_col].notna()].copy()
+        total_time_leads = len(df_time)
+        
+        st.write(f"Based on **{time_col}**, there are **{total_time_leads} leads** with this date.")
+        
+        if total_time_leads > 0:
+            # Calculate stats inside this subset
+            total_assigned = df_time["Assigned date"].notna().sum() if "Assigned date" in df_time.columns else 0
+            total_not_assigned = total_time_leads - total_assigned
+            
+            total_approval = df_time["Approval date"].notna().sum() if "Approval date" in df_time.columns else 0
+            total_denial = df_time["Denial Date"].notna().sum() if "Denial Date" in df_time.columns else 0
+            total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
+            total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
+        
+            # Show stats
+            st.markdown(f"""
+            - ✅ Total Leads (with {time_col}): **{total_time_leads}**
+            - 🧑‍💼 Assigned: **{total_assigned}**
+            - 🚫 Not Assigned: **{total_not_assigned}**
+            - ✔ Approved: **{total_approval}**
+            - ❌ Denied: **{total_denial}**
+            - 📤 Uploaded: **{total_uploaded}**
+            - 📌 Completed: **{total_completed}**
+            """)
+
+            # --- Row-level logic checks with expanders ---
+            if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
+                bad_rows = df_time[df_time["Completion Date"].notna() & df_time["Assigned date"].isna()]
+                if not bad_rows.empty:
+                    st.warning(f"⚠️ Found {len(bad_rows)} leads with **Completion Date** but no **Assigned date**.")
+                    with st.expander("🔍 View Leads Missing Assigned Date"):
+                        st.dataframe(
+                            bad_rows[["MCN", "Client", "Chaser Name", "Created Time", "Assigned date", "Completion Date"]],
+                            use_container_width=True
+                        )
+        
+            if "Completion Date" in df_time.columns and "Approval date" in df_time.columns:
+                bad_rows2 = df_time[df_time["Completion Date"].notna() & df_time["Approval date"].isna()]
+                if not bad_rows2.empty:
+                    st.warning(f"⚠️ Found {len(bad_rows2)} leads with **Completion Date** but no **Approval date**.")
+                    with st.expander("🔍 View Leads Missing Approval Date"):
+                        st.dataframe(
+                            bad_rows2[["MCN", "Client", "Chaser Name", "Created Time", "Approval date", "Completion Date"]],
+                            use_container_width=True
+                        )
+        
+            # --- Extra checks for Uploaded Date ---
+            if "Upload Date" in df_time.columns and "Completion Date" in df_time.columns:
+                bad_uploaded = df_time[df_time["Upload Date"].notna() & df_time["Completion Date"].isna()]
+                if not bad_uploaded.empty:
+                    st.warning(f"⚠️ Found {len(bad_uploaded)} leads with **Upload Date** but no **Completion Date**.")
+                    with st.expander("🔍 View Leads Missing Completion Date after Upload"):
+                        st.dataframe(
+                            bad_uploaded[["MCN", "Client", "Chaser Name", "Upload Date", "Completion Date"]],
+                            use_container_width=True
+                        )
+        
+            if "Upload Date" in df_time.columns and "Assigned date" in df_time.columns:
+                bad_uploaded_assigned = df_time[df_time["Upload Date"].notna() & df_time["Assigned date"].isna()]
+                if not bad_uploaded_assigned.empty:
+                    st.warning(f"⚠️ Found {len(bad_uploaded_assigned)} leads with **Upload Date** but no **Assigned date**.")
+                    with st.expander("🔍 View Leads Missing Assigned Date after Upload"):
+                        st.dataframe(
+                            bad_uploaded_assigned[["MCN", "Client", "Chaser Name", "Upload Date", "Assigned date"]],
+                            use_container_width=True
+                        )
+        
+            if "Upload Date" in df_time.columns and "Approval date" in df_time.columns:
+                bad_uploaded_approval = df_time[df_time["Upload Date"].notna() & df_time["Approval date"].isna()]
+                if not bad_uploaded_approval.empty:
+                    st.warning(f"⚠️ Found {len(bad_uploaded_approval)} leads with **Upload Date** but no **Approval date**.")
+                    with st.expander("🔍 View Leads Missing Approval Date after Upload"):
+                        st.dataframe(
+                            bad_uploaded_approval[["MCN", "Client", "Chaser Name", "Upload Date", "Approval date"]],
+                            use_container_width=True
+                        )
+
+        # 🏆 Top performers
+        if group_by in ["Chaser Name", "Client"]:
+            st.subheader(f"🏆 Top {group_by}s by Leads")
+            top_table = ts_data.groupby(group_by)["Lead Count"].sum().reset_index()
+            top_table = top_table.sort_values("Lead Count", ascending=False).head(5)
+            st.table(top_table)
+
     # ================== Lead Age Analysis ==================
     st.subheader("⏳ Lead Age Analysis")
     st.info("How long it takes to close leads. Distribution by weeks, plus average and median by Chaser and Client.")
