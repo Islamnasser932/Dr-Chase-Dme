@@ -329,21 +329,21 @@ if selected == "Dataset Overview":
         st.metric("📤 Uploaded", f"{total_uploaded:,} ({pct_uploaded:.1f}%)")
         
     
-    # --- Style ---
-    style_metric_cards(
-        background_color="#0E1117",
-        border_left_color={
-            "📊 Total Leads": "#00BFFF",         # Blue
-            "🧑‍💼 Assigned": "#17a2b8",         # Cyan
-            "🚫 Not Assigned": "#ffc107",       # Yellow
-            "✅ Completed": "#28a745",           # Green
-            "📤 Uploaded": "#6f42c1",           # Purple
-            "✔ Approved / ❌ Denied": "#dc3545"  # Red
-        },
-        border_color="#444",
-        box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
-    )
-    
+        # --- Style ---
+        style_metric_cards(
+            background_color="#0E1117",
+            border_left_color={
+                "📊 Total Leads": "#00BFFF",         # Blue
+                "🧑‍💼 Assigned": "#17a2b8",         # Cyan
+                "🚫 Not Assigned": "#ffc107",       # Yellow
+                "✅ Completed": "#28a745",           # Green
+                "📤 Uploaded": "#6f42c1",           # Purple
+                "✔ Approved / ❌ Denied": "#dc3545"  # Red
+            },
+            border_color="#444",
+            box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
+        )
+        
         
         
     
@@ -870,6 +870,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
