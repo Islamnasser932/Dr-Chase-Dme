@@ -320,10 +320,11 @@ if selected == "Dataset Overview":
 
     with col2:
         st.metric("🧑‍💼 Assigned", f"{total_assigned:,} ({pct_assigned:.1f}%)")
-        st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")
+        st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)")
+        
 
     with col3:
-        st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)")
+        st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")  
         st.metric("📤 Uploaded", f"{total_uploaded:,} ({pct_uploaded:.1f}%)")
         
 
@@ -853,6 +854,7 @@ elif selected == "Data Analysis":
             st.info("Created Time and Completion Date columns are required for lead age analysis.")
             
                                
+
 
 
 
