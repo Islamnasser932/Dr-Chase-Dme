@@ -849,17 +849,6 @@ elif selected == "Data Analysis":
 
 
 
-# ================== DOWNLOAD ==================
-st.download_button(
-    label="💾 Download Filtered CSV",
-    data=df_cleaned.to_csv(index=False).encode("utf-8"),
-    file_name="Dr_Chase_Leads_Filtered.csv",
-    mime="text/csv"
-)
-
-
-
-
 
 
 
