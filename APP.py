@@ -516,8 +516,7 @@ elif selected == "Data Analysis":
 
     # --- Search filters ---
     st.subheader("🔍 Search Filter")
-
-        # 1) Search by MCN
+    # 1) Search by MCN
         mcn_search = st.text_input("Enter MCN (optional)").strip()
         if mcn_search:
             df_ts = df_ts[df_ts["MCN"].astype(str).str.contains(mcn_search, case=False, na=False)]
@@ -873,6 +872,7 @@ elif selected == "Data Analysis":
             st.info("Created Time and Completion Date columns are required for lead age analysis.")
             
                                
+
 
 
 
