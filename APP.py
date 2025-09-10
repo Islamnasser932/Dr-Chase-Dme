@@ -816,25 +816,7 @@ if "Created Time" in df_ts.columns:
 
     df_lead_age = df_ts.copy()
 
-            # 🚨 Check for leads with both Approval & Denial
-        both_dates = df_lead_age[df_lead_age["Approval date"].notna() & df_lead_age["Denial Date"].notna()]
-        if not both_dates.empty:
-            st.warning(f"⚠️ Found {len(both_dates)} leads with BOTH Approval & Denial dates. Please review.")
-            with st.expander("🔍 View Leads with BOTH Approval & Denial"):
-                st.dataframe(
-                    both_dates[[
-                        "Created Time",
-                        "Approval date",
-                        "Denial Date",
-                        "Lead Age (Approval)",
-                        "Lead Age (Denial)",
-                        "Chaser Name",
-                        "Client",
-                        "MCN"
-                    ]],
-                    use_container_width=True
-                )
-
+          
     
         # 📊 Grouped Bar Chart – Approval vs Denial per Chaser
         if "Chaser Name" in df_lead_age.columns:
@@ -882,6 +864,7 @@ if "Created Time" in df_ts.columns:
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
