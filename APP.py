@@ -292,48 +292,45 @@ if selected == "Dataset Overview":
 
     total_leads = len(df_filtered)
 
-     # --- KPIs Section ---
+
+        # --- KPIs Section ---
     st.subheader("📌 Key Performance Indicators")
-    df_time = df_filtered[df_filtered[time_col].notna()].copy()
-    total_time_leads = len(df_time)
-    total_assigned = df_time["Assigned date"].notna().sum() if "Assigned date" in df_time.columns else 0
-    total_not_assigned = total_time_leads - total_assigned
-    total_approval = df_time["Approval date"].notna().sum() if "Approval date" in df_time.columns else 0
-    total_denial = df_time["Denial Date"].notna().sum() if "Denial Date" in df_time.columns else 0
-    total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
-    total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
-
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-
+    
+    # حساب القيم
+    total_leads = len(df_filtered)
+    total_completed = df_filtered["Completion Date"].notna().sum() if "Completion Date" in df_filtered.columns else 0
+    total_assigned = df_filtered["Assigned date"].notna().sum() if "Assigned date" in df_filtered.columns else 0
+    total_uploaded = df_filtered["Upload Date"].notna().sum() if "Upload Date" in df_filtered.columns else 0
+    total_approval = df_filtered["Approval date"].notna().sum() if "Approval date" in df_filtered.columns else 0
+    total_denial = df_filtered["Denial Date"].notna().sum() if "Denial Date" in df_filtered.columns else 0
+    total_not_assigned = total_leads - total_assigned
+    
+    # --- KPIs Cards ---
+    col1, col2, col3 = st.columns(3)
+    col4, col5, col6 = st.columns(3)
+    
     with col1:
-        st.metric("📊 Total Leads", total_time_leads)
+        st.metric("📊 Total Leads", total_leads)
     with col2:
-        st.metric("🧑‍💼 Assigned", total_assigned)
+        st.metric("✅ Completed", total_completed)
     with col3:
-        st.metric("🚫 Not Assigned", total_not_assigned)
+        st.metric("🧑‍💼 Assigned", total_assigned)
     with col4:
-        st.metric("✔ Approved", total_approval)
+        st.metric("🚫 Not Assigned", total_not_assigned)
     with col5:
-        st.metric("❌ Denied", total_denial)
+        st.metric("✔ Approved", total_approval)
     with col6:
-        st.metric("📌 Completed", total_completed)
-
-    # ✅ Apply custom styling to KPI cards
+        st.metric("❌ Denied", total_denial)
+    
+    # ✅ Apply custom style
     style_metric_cards(
-        background_color="#0E1117",   # خلفية غامقة
-        border_left_color="#00BFFF",  # لون شريط جانبي أزرق
-        border_color="#444",          # إطار ناعم
+        background_color="#0E1117",   # خلفية dashboard غامقة
+        border_left_color="#00BFFF",  # أزرق للـ Total
+        border_color="#444",
         box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
     )
-        
-
-    # --- Style metric cards ---
-    style_metric_cards(
-        background_color="#121270",  # Dark blue background
-        border_left_color="#f20045", # Pink/red accent bar
-        box_shadow="3px 3px 10px rgba(0,0,0,0.3)"  # soft shadow
-    )
     
+        
     
     
     # --- Dates summary (table) ---
@@ -858,6 +855,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
