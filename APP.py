@@ -467,8 +467,7 @@ if selected == "Dataset Overview":
 
 
 
-
-    elif selected == "Data Analysis":
+elif selected == "Data Analysis":
     st.title("📊 Data Analysis – Advanced Insights")
     st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
 
@@ -867,3 +866,4 @@ if selected == "Dataset Overview":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
