@@ -572,13 +572,13 @@ elif selected == "Data Analysis":
         
         st.write(f"Based on **{time_col}**, there are **{total_time_leads} leads** with this date.")
         
-         if total_time_leads > 0:
+        if total_time_leads > 0:
             total_assigned = df_time["Assigned date"].notna().sum() if "Assigned date" in df_time.columns else 0
             total_not_assigned = total_time_leads - total_assigned
             total_approval = df_time["Approval date"].notna().sum() if "Approval date" in df_time.columns else 0
             total_denial = df_time["Denial Date"].notna().sum() if "Denial Date" in df_time.columns else 0
-             total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
-             total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
+            total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
+            total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
             
             # Show stats
             st.markdown(f"""
@@ -863,6 +863,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
