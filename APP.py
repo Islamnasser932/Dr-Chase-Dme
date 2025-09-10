@@ -473,50 +473,49 @@ elif selected == "Data Analysis":
     st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
 
     # --- Allowed columns for analysis ---
-        allowed_columns = [
-            "Chaser Name",
-            "Chaser Group",
-            "Date of Sale (Date)",
-            "Created Time (Date)",
-            "Assigned date (Date)",
-            "Approval date (Date)",
-            "Denial Date (Date)",
-            "Completion Date (Date)",
-            "Upload Date (Date)",
-            "Client",
-            "Chasing Disposition",
-            "Insurance",
-            "Type Of Sale",
-            "Products",
-            "Days Spent As Pending QA"
-        ]
-        
-        # Keep only available ones from dataset
-        available_columns = [c for c in allowed_columns if c in df_filtered.columns]
-        
-        if not available_columns:
-            st.warning("⚠️ None of the predefined analysis columns are available in the dataset.")
+    allowed_columns = [
+        "Chaser Name",
+        "Chaser Group",
+        "Date of Sale (Date)",
+        "Created Time (Date)",
+        "Assigned date (Date)",
+        "Approval date (Date)",
+        "Denial Date (Date)",
+        "Completion Date (Date)",
+        "Upload Date (Date)",
+        "Client",
+        "Chasing Disposition",
+        "Insurance",
+        "Type Of Sale",
+        "Products",
+        "Days Spent As Pending QA"
+    ]
+    
+    # Keep only available ones from dataset
+    available_columns = [c for c in allowed_columns if c in df_filtered.columns]
+    
+    if not available_columns:
+        st.warning("⚠️ None of the predefined analysis columns are available in the dataset.")
+    else:
+        time_col = st.selectbox("Select column for analysis", available_columns)
+    
+        # Convert to datetime if column looks like a date
+        if "date" in time_col.lower():
+            df_filtered[time_col] = pd.to_datetime(df_filtered[time_col], errors="coerce", dayfirst=True)
+    
+            today = pd.Timestamp.now().normalize()
+            future_mask = df_filtered[time_col] > today
+            if future_mask.any():
+                st.warning(f"⚠️ Detected {future_mask.sum()} rows with future {time_col} values.")
+                if st.checkbox("Show rows with future dates"):
+                    st.dataframe(df_filtered.loc[future_mask])
+    
+            df_ts = df_filtered.loc[~future_mask].copy()
         else:
-            time_col = st.selectbox("Select column for analysis", available_columns)
-        
-            # Convert to datetime if column looks like a date
-            if "date" in time_col.lower():
-                df_filtered[time_col] = pd.to_datetime(df_filtered[time_col], errors="coerce", dayfirst=True)
-        
-                today = pd.Timestamp.now().normalize()
-                future_mask = df_filtered[time_col] > today
-                if future_mask.any():
-                    st.warning(f"⚠️ Detected {future_mask.sum()} rows with future {time_col} values.")
-                    if st.checkbox("Show rows with future dates"):
-                        st.dataframe(df_filtered.loc[future_mask])
-        
-                df_ts = df_filtered.loc[~future_mask].copy()
-            else:
-                df_ts = df_filtered.copy()
+            df_ts = df_filtered.copy()
 
-
-        # --- Search filters ---
-        st.subheader("🔍 Search Filter")
+    # --- Search filters ---
+    st.subheader("🔍 Search Filter")
 
         # 1) Search by MCN
         mcn_search = st.text_input("Enter MCN (optional)").strip()
@@ -874,6 +873,7 @@ elif selected == "Data Analysis":
             st.info("Created Time and Completion Date columns are required for lead age analysis.")
             
                                
+
 
 
 
