@@ -474,7 +474,6 @@ if selected == "Dataset Overview":
 elif selected == "Data Analysis":
     st.title("📊 Data Analysis – Advanced Insights")
     st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
-    
 
     # --- Allowed columns for analysis ---
     allowed_columns = [
@@ -486,7 +485,7 @@ elif selected == "Data Analysis":
         "Upload Date (Date)",
         "Date of Sale (Date)",
     ]
-    table(df_filtered)
+    
     # Keep only available ones from dataset
     available_columns = [c for c in allowed_columns if c in df_filtered.columns]
     
@@ -510,7 +509,30 @@ elif selected == "Data Analysis":
         else:
             df_ts = df_filtered.copy()
 
-        
+    # --- Function for tabular view ---
+    def table(df_filtered):
+        with st.expander("📊 Tabular"):
+            shwdata = st.multiselect(
+                "Filter Columns:",
+                df_filtered.columns,
+                default=["MCN","Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)","Assigned date (Date)",
+                         "Approval date (Date)","Denial Date (Date)","Completion Date (Date)",
+                         "Upload Date (Date)","Client","Chasing Disposition","Insurance","Type Of Sale","Products"]  # show first 6 columns by default
+            )
+            st.dataframe(df_filtered[shwdata], use_container_width=True)
+
+    # --- Inside your DR Chase Leads app ---
+    if selected == "Data Analysis":
+        st.markdown(f""" The dataset contains **{len(df_filtered)} rows**
+                        and **{len(df_filtered.columns)} columns**.
+                    """)
+        # Show tabular selector
+        table(df_filtered)
+
+                
+
+    total_leads = len(df_filtered)
+  
     # --- Aggregation frequency ---
     freq = st.radio("Aggregation level:", ["Daily", "Weekly", "Monthly"], horizontal=True)
     period_map = {"Daily": "D", "Weekly": "W", "Monthly": "M"}
@@ -885,6 +907,7 @@ if "Created Time" in df_ts.columns:
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
