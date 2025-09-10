@@ -818,24 +818,24 @@ if "Created Time" in df_ts.columns:
             both_dates = df_lead_age[df_lead_age["Approval date"].notna() & df_lead_age["Denial Date"].notna()]
             if not both_dates.empty:
                 st.warning(f"⚠️ Found {len(both_dates)} leads with BOTH Approval & Denial dates. Please review.")
- 
-                with st.expander("🔍 View Leads with BOTH Approval & Denial"):
-                    cols_to_show = [
-                        "Created Time",
-                        "Approval date",
-                        "Denial Date",
-                        "Lead Age (Approval)",
-                        "Lead Age (Denial)",
-                        "Chaser Name",
-                        "Client",
-                        "MCN"
-                    ]
-                    available_cols = [c for c in cols_to_show if c in both_dates.columns]
-            
-                    st.dataframe(
-                        both_dates[available_cols],
-                        use_container_width=True
-                    )
+                    with st.expander("🔍 View Leads with BOTH Approval & Denial"):
+                        cols_to_show = 
+                        [
+                            "Created Time",
+                            "Approval date",
+                            "Denial Date",
+                            "Lead Age (Approval)",
+                            "Lead Age (Denial)",
+                            "Chaser Name",
+                            "Client",
+                            "MCN"
+                        ]
+                        available_cols = [c for c in cols_to_show if c in both_dates.columns]
+                
+                        st.dataframe(
+                            both_dates[available_cols],
+                            use_container_width=True
+                        )
             
 
     
@@ -885,6 +885,7 @@ if "Created Time" in df_ts.columns:
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
