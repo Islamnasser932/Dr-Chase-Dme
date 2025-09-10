@@ -270,7 +270,7 @@ if selected == "Dataset Overview":
             shwdata = st.multiselect(
                 "Filter Columns:",
                 df_filtered.columns,
-                default=["Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)","Assigned date (Date)",
+                default=["MCN","Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)","Assigned date (Date)",
                          "Approval date (Date)","Denial Date (Date)","Completion Date (Date)",
                          "Upload Date (Date)","Client","Chasing Disposition","Insurance","Type Of Sale","Products"]  # show first 6 columns by default
             )
@@ -854,6 +854,7 @@ elif selected == "Data Analysis":
             st.info("Created Time and Completion Date columns are required for lead age analysis.")
             
                                
+
 
 
 
