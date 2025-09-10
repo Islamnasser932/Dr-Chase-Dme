@@ -306,7 +306,7 @@ if selected == "Dataset Overview":
     pct_completed = (total_completed / total_leads * 100) if total_leads > 0 else 0
     pct_assigned = (total_assigned / total_leads * 100) if total_leads > 0 else 0
     pct_not_assigned = (total_not_assigned / total_leads * 100) if total_leads > 0 else 0
-    pct_uploaded = (total_uploaded / total_leads * 100) if total_leads > 0 else 0
+    pct_uploaded = (total_uploaded / total_completed * 100) if total_completed > 0 else 0
     pct_approval = (total_approval / total_leads * 100) if total_leads > 0 else 0
     pct_denial = (total_denial / total_leads * 100) if total_leads > 0 else 0
 
@@ -315,15 +315,17 @@ if selected == "Dataset Overview":
 
     with col1:
         st.metric("📊 Total Leads", f"{total_leads:,}")
-        st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")
+        st.metric("✔ Approvals / ❌ Denials", f"{total_approval:,} ({pct_approval:.1f}%) / {total_denial:,} ({pct_denial:.1f}%)")
+        
 
     with col2:
         st.metric("🧑‍💼 Assigned", f"{total_assigned:,} ({pct_assigned:.1f}%)")
-        st.metric("📤 Uploaded", f"{total_uploaded:,} ({pct_uploaded:.1f}%)")
+        st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")
 
     with col3:
         st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)")
-        st.metric("✔ Approvals / ❌ Denials", f"{total_approval:,} ({pct_approval:.1f}%) / {total_denial:,} ({pct_denial:.1f}%)")
+        st.metric("📤 Uploaded", f"{total_uploaded:,} ({pct_uploaded:.1f}%)")
+        
 
     # --- Style metric cards ---
     style_metric_cards(
@@ -851,6 +853,7 @@ elif selected == "Data Analysis":
             st.info("Created Time and Completion Date columns are required for lead age analysis.")
             
                                
+
 
 
 
