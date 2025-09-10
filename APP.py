@@ -473,13 +473,13 @@ elif selected == "Data Analysis":
 
     # --- Allowed columns for analysis ---
     allowed_columns = [
-        "Date of Sale (Date)",
         "Created Time (Date)",
         "Assigned date (Date)",
         "Approval date (Date)",
         "Denial Date (Date)",
         "Completion Date (Date)",
         "Upload Date (Date)",
+        "Date of Sale (Date)",
     ]
     
     # Keep only available ones from dataset
@@ -858,5 +858,6 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
