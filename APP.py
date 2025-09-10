@@ -652,153 +652,151 @@ elif selected == "Data Analysis":
             top_table = top_table.sort_values("Lead Count", ascending=False).head(5)
             st.table(top_table)
         
-           # ================== Lead Age Analysis ==================
+          # ================== Lead Age Analysis ==================
     st.subheader("⏳ Lead Age Analysis")
-    st.info("Analysis of how long it takes for leads to get Approved / Denied. Includes weekly distribution, averages/medians, and grouped comparisons.")
+    st.info("How long it takes to approve or deny leads. Distribution by weeks, plus average and median by Chaser and Client.")
     
     if "Created Time" in df_ts.columns:
         df_lead_age = df_ts.copy()
     
-        # حساب Lead Age من Approval و Denial
+        # ================== Approval Age ==================
         if "Approval date" in df_lead_age.columns:
             df_lead_age["Lead Age (Approval)"] = (
                 (df_lead_age["Approval date"] - df_lead_age["Created Time"]).dt.days
             )
+    
+            def categorize_weeks_approval(days):
+                if pd.isna(days):
+                    return "Not Approved"
+                elif days >= 0:
+                    return f"Week {int(days // 7) + 1}"
+                else:
+                    return f"Week -{abs(int(days // 7) + 1)}"
+    
+            df_lead_age["Approval Age Category"] = df_lead_age["Lead Age (Approval)"].apply(categorize_weeks_approval)
+    
+            # جدول leads اللي Approval قبل Created
+            bad_approval = df_lead_age[df_lead_age["Lead Age (Approval)"] < 0]
+            if not bad_approval.empty:
+                st.warning(f"⚠️ Found {len(bad_approval)} leads with Approval Date earlier than Created Time.")
+                with st.expander("🔍 View Leads with Negative Approval Age"):
+                    st.dataframe(
+                        bad_approval[["MCN", "Client", "Chaser Name", "Created Time", "Approval date", "Lead Age (Approval)", "Approval Age Category"]],
+                        use_container_width=True
+                    )
+    
+            # توزيع Approval
+            st.markdown("### 📊 Lead Age Distribution – Approval")
+            categories = df_lead_age["Approval Age Category"].dropna().unique()
+            weeks_negative = sorted([c for c in categories if "Week -" in c], key=lambda x: int(x.split()[1]))
+            weeks_positive = sorted([c for c in categories if "Week " in c and "-" not in c], key=lambda x: int(x.split()[1]))
+            category_order = weeks_negative + weeks_positive + ["Not Approved"]
+    
+            age_summary_approval = (
+                df_lead_age["Approval Age Category"]
+                .value_counts()
+                .reindex(category_order)
+                .reset_index()
+            )
+            age_summary_approval.columns = ["Approval Age Category", "Count"]
+    
+            with st.expander("📋 View Approval Distribution Data"):
+                st.table(age_summary_approval)
+    
+            chart_approval = (
+                alt.Chart(age_summary_approval)
+                .mark_bar()
+                .encode(
+                    x=alt.X("Approval Age Category", sort=category_order),
+                    y="Count",
+                    tooltip=["Approval Age Category", "Count"],
+                    color=alt.Color("Approval Age Category", legend=None)
+                )
+            )
+            st.altair_chart(chart_approval, use_container_width=True)
+    
+        # ================== Denial Age ==================
         if "Denial Date" in df_lead_age.columns:
             df_lead_age["Lead Age (Denial)"] = (
                 (df_lead_age["Denial Date"] - df_lead_age["Created Time"]).dt.days
             )
     
-        # --- KPIs Section ---
-        total_approved = df_lead_age["Approval date"].notna().sum()
-        total_denied = df_lead_age["Denial Date"].notna().sum()
-        avg_approval_age = df_lead_age["Lead Age (Approval)"].mean(skipna=True)
-        avg_denial_age = df_lead_age["Lead Age (Denial)"].mean(skipna=True)
+            def categorize_weeks_denial(days):
+                if pd.isna(days):
+                    return "Not Denied"
+                elif days >= 0:
+                    return f"Week {int(days // 7) + 1}"
+                else:
+                    return f"Week -{abs(int(days // 7) + 1)}"
     
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("✔️ Total Approved", f"{total_approved:,}")
-        with col2:
-            st.metric("❌ Total Denied", f"{total_denied:,}")
-        with col3:
-            st.metric("⏳ Avg Approval Age", f"{avg_approval_age:.1f} days" if not pd.isna(avg_approval_age) else "N/A")
-        with col4:
-            st.metric("⏳ Avg Denial Age", f"{avg_denial_age:.1f} days" if not pd.isna(avg_denial_age) else "N/A")
+            df_lead_age["Denial Age Category"] = df_lead_age["Lead Age (Denial)"].apply(categorize_weeks_denial)
     
-        style_metric_cards(
-            background_color="#0E1117",
-            border_left_color={
-                "✔️ Total Approved": "#28a745",
-                "❌ Total Denied": "#dc3545",
-                "⏳ Avg Approval Age": "#17a2b8",
-                "⏳ Avg Denial Age": "#ffc107",
-            },
-            border_color="#444",
-            box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
-        )
+            # جدول leads اللي Denial قبل Created
+            bad_denial = df_lead_age[df_lead_age["Lead Age (Denial)"] < 0]
+            if not bad_denial.empty:
+                st.warning(f"⚠️ Found {len(bad_denial)} leads with Denial Date earlier than Created Time.")
+                with st.expander("🔍 View Leads with Negative Denial Age"):
+                    st.dataframe(
+                        bad_denial[["MCN", "Client", "Chaser Name", "Created Time", "Denial Date", "Lead Age (Denial)", "Denial Age Category"]],
+                        use_container_width=True
+                    )
     
-        # 📋 Full Lead Age Table (hidden by default)
-        with st.expander("📋 View Full Lead Age Table"):
-            st.dataframe(
-                df_lead_age[[
-                    "Created Time",
-                    "Approval date",
-                    "Denial Date",
-                    "Lead Age (Approval)",
-                    "Lead Age (Denial)",
-                    "Chaser Name",
-                    "Client",
-                    "MCN"
-                ]],
-                use_container_width=True
+            # توزيع Denial
+            st.markdown("### 📊 Lead Age Distribution – Denial")
+            categories = df_lead_age["Denial Age Category"].dropna().unique()
+            weeks_negative = sorted([c for c in categories if "Week -" in c], key=lambda x: int(x.split()[1]))
+            weeks_positive = sorted([c for c in categories if "Week " in c and "-" not in c], key=lambda x: int(x.split()[1]))
+            category_order = weeks_negative + weeks_positive + ["Not Denied"]
+    
+            age_summary_denial = (
+                df_lead_age["Denial Age Category"]
+                .value_counts()
+                .reindex(category_order)
+                .reset_index()
+            )
+            age_summary_denial.columns = ["Denial Age Category", "Count"]
+    
+            with st.expander("📋 View Denial Distribution Data"):
+                st.table(age_summary_denial)
+    
+            chart_denial = (
+                alt.Chart(age_summary_denial)
+                .mark_bar()
+                .encode(
+                    x=alt.X("Denial Age Category", sort=category_order),
+                    y="Count",
+                    tooltip=["Denial Age Category", "Count"],
+                    color=alt.Color("Denial Age Category", legend=None)
+                )
+            )
+            st.altair_chart(chart_denial, use_container_width=True)
+    
+        # ================== Approval vs Denial Comparison ==================
+        if "Approval Age Category" in df_lead_age.columns and "Denial Age Category" in df_lead_age.columns:
+            st.markdown("### ⚖️ Approval vs Denial – Comparison by Chaser")
+    
+            comp_data = df_lead_age.melt(
+                id_vars=["Chaser Name"],
+                value_vars=["Approval Age Category", "Denial Age Category"],
+                var_name="Type",
+                value_name="Category"
             )
     
-        # 📊 Lead Age Distribution – Approval
-        if "Lead Age (Approval)" in df_lead_age.columns:
-            with st.expander("📊 Lead Age Distribution – Approval"):
-                approval_age = df_lead_age["Lead Age (Approval)"].dropna().apply(
-                    lambda d: "Week " + str(int(d // 7) + 1) if d >= 0 else "Invalid"
-                )
-                approval_summary = approval_age.value_counts().reset_index()
-                approval_summary.columns = ["Category", "Count"]
-    
-                chart_approval = (
-                    alt.Chart(approval_summary)
-                    .mark_bar(color="#28a745")
-                    .encode(
-                        x=alt.X("Category", sort=approval_summary["Category"].tolist()),
-                        y="Count",
-                        tooltip=["Category", "Count"]
-                    )
-                )
-                st.altair_chart(chart_approval, use_container_width=True)
-    
-        # 📊 Lead Age Distribution – Denial
-        if "Lead Age (Denial)" in df_lead_age.columns:
-            with st.expander("📊 Lead Age Distribution – Denial"):
-                denial_age = df_lead_age["Lead Age (Denial)"].dropna().apply(
-                    lambda d: "Week " + str(int(d // 7) + 1) if d >= 0 else "Invalid"
-                )
-                denial_summary = denial_age.value_counts().reset_index()
-                denial_summary.columns = ["Category", "Count"]
-    
-                chart_denial = (
-                    alt.Chart(denial_summary)
-                    .mark_bar(color="#dc3545")
-                    .encode(
-                        x=alt.X("Category", sort=denial_summary["Category"].tolist()),
-                        y="Count",
-                        tooltip=["Category", "Count"]
-                    )
-                )
-                st.altair_chart(chart_denial, use_container_width=True)
-    
-        # 📊 Grouped Bar Chart – Approval vs Denial per Chaser
-        if "Chaser Name" in df_lead_age.columns:
-            st.markdown("### 📊 Approval vs Denial Lead Age by Chaser")
-            grouped_chaser = pd.melt(
-                df_lead_age,
-                id_vars=["Chaser Name"],
-                value_vars=["Lead Age (Approval)", "Lead Age (Denial)"],
-                var_name="Type",
-                value_name="Days"
-            ).dropna()
-    
-            chart_grouped_chaser = (
-                alt.Chart(grouped_chaser)
+            chart_comp = (
+                alt.Chart(comp_data.dropna())
                 .mark_bar()
                 .encode(
                     x="Chaser Name",
-                    y="mean(Days)",
+                    y="count()",
                     color="Type",
-                    tooltip=["Chaser Name", "Type", "mean(Days)"]
+                    column="Category",
+                    tooltip=["Chaser Name", "Type", "Category", "count()"]
                 )
             )
-            st.altair_chart(chart_grouped_chaser, use_container_width=True)
+            st.altair_chart(chart_comp, use_container_width=True)
     
-        # 📊 Grouped Bar Chart – Approval vs Denial per Client
-        if "Client" in df_lead_age.columns:
-            st.markdown("### 📊 Approval vs Denial Lead Age by Client")
-            grouped_client = pd.melt(
-                df_lead_age,
-                id_vars=["Client"],
-                value_vars=["Lead Age (Approval)", "Lead Age (Denial)"],
-                var_name="Type",
-                value_name="Days"
-            ).dropna()
-    
-            chart_grouped_client = (
-                alt.Chart(grouped_client)
-                .mark_bar()
-                .encode(
-                    x="Client",
-                    y="mean(Days)",
-                    color="Type",
-                    tooltip=["Client", "Type", "mean(Days)"]
-                )
-            )
-            st.altair_chart(chart_grouped_client, use_container_width=True)
-    
+    else:
+        st.info("Created Time column is required for lead age analysis.")
 
 
         # 📊 Average + Median lead age per Chaser / Client
@@ -911,6 +909,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
