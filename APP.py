@@ -473,8 +473,6 @@ elif selected == "Data Analysis":
 
     # --- Allowed columns for analysis ---
     allowed_columns = [
-        "Chaser Name",
-        "Chaser Group",
         "Date of Sale (Date)",
         "Created Time (Date)",
         "Assigned date (Date)",
@@ -482,12 +480,6 @@ elif selected == "Data Analysis":
         "Denial Date (Date)",
         "Completion Date (Date)",
         "Upload Date (Date)",
-        "Client",
-        "Chasing Disposition",
-        "Insurance",
-        "Type Of Sale",
-        "Products",
-        "Days Spent As Pending QA"
     ]
     
     # Keep only available ones from dataset
@@ -866,4 +858,5 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
