@@ -907,8 +907,9 @@ elif selected == "Data Analysis":
                 )
                 st.altair_chart(box_chart_client, use_container_width=True)
 
-    else:
-        st.info("Created Time and Completion Date columns are required for lead age analysis.")
+            else:
+                st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
