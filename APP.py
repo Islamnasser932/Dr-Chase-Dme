@@ -474,6 +474,7 @@ if selected == "Dataset Overview":
 elif selected == "Data Analysis":
     st.title("📊 Data Analysis – Advanced Insights")
     st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
+    
 
     # --- Allowed columns for analysis ---
     allowed_columns = [
@@ -485,7 +486,7 @@ elif selected == "Data Analysis":
         "Upload Date (Date)",
         "Date of Sale (Date)",
     ]
-    
+    table(df_filtered)
     # Keep only available ones from dataset
     available_columns = [c for c in allowed_columns if c in df_filtered.columns]
     
@@ -884,6 +885,7 @@ if "Created Time" in df_ts.columns:
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
