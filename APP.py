@@ -289,9 +289,9 @@ if selected == "Dataset Overview":
 
     total_leads = len(df_filtered)
 
-        # --- KPIs Section ---
+            # --- KPIs Section ---
     st.subheader("📌 Key Performance Indicators")
-
+    
     # --- حساب القيم ---
     total_leads = len(df_filtered)
     total_completed = df_filtered["Completion Date"].notna().sum() if "Completion Date" in df_filtered.columns else 0
@@ -311,18 +311,17 @@ if selected == "Dataset Overview":
     pct_approval = (total_approval / total_leads * 100) if total_leads > 0 else 0
     pct_denial = (total_denial / total_leads * 100) if total_leads > 0 else 0
     
-    # --- KPIs Layout ---
-    col1, col2, col3 = st.columns(3)
-    col4, col5, col6 = st.columns(3)
+    # --- KPIs Layout (صف واحد) ---
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     
     with col1:
         st.metric("📊 Total Leads", f"{total_leads:,}")
     with col2:
-        st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")
-    with col3:
         st.metric("🧑‍💼 Assigned", f"{total_assigned:,} ({pct_assigned:.1f}%)")
-    with col4:
+    with col3:
         st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)")
+    with col4:
+        st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")
     with col5:
         st.metric("📤 Uploaded", f"{total_uploaded:,} ({pct_uploaded:.1f}%)")
     with col6:
@@ -332,16 +331,17 @@ if selected == "Dataset Overview":
     style_metric_cards(
         background_color="#0E1117",
         border_left_color={
-            "📊 Total Leads": "#00BFFF",     # Blue
-            "✅ Completed": "#28a745",       # Green
-            "🧑‍💼 Assigned": "#17a2b8",     # Cyan
-            "🚫 Not Assigned": "#ffc107",   # Yellow
-            "📤 Uploaded": "#6f42c1",       # Purple
-            "✔ Approved / ❌ Denied": "#dc3545"  # Red
+            "📊 Total Leads": "#00BFFF",       # Blue
+            "🧑‍💼 Assigned": "#17a2b8",       # Cyan
+            "🚫 Not Assigned": "#ffc107",     # Yellow
+            "✅ Completed": "#28a745",         # Green
+            "📤 Uploaded": "#6f42c1",         # Purple
+            "✔ Approved / ❌ Denied": "#dc3545" # Red
         },
         border_color="#444",
         box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
     )
+
 
     
         
@@ -869,6 +869,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
