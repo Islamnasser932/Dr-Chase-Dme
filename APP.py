@@ -472,8 +472,7 @@ elif selected == "Data Analysis":
     st.title("📊 Data Analysis – Advanced Insights")
     st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
 
-
-        # --- Allowed columns for analysis ---
+    # --- Allowed columns for analysis ---
         allowed_columns = [
             "Chaser Name",
             "Chaser Group",
@@ -875,6 +874,7 @@ elif selected == "Data Analysis":
             st.info("Created Time and Completion Date columns are required for lead age analysis.")
             
                                
+
 
 
 
