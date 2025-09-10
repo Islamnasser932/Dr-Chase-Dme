@@ -813,7 +813,7 @@ if "Created Time" in df_ts.columns:
                     ]],
                     use_container_width=True
                 )
-             df_lead_age = df_ts.copy()
+            df_lead_age = df_ts.copy()
                     # 🚨 Check for leads with both Approval & Denial
             both_dates = df_lead_age[df_lead_age["Approval date"].notna() & df_lead_age["Denial Date"].notna()]
             if not both_dates.empty:
@@ -886,6 +886,7 @@ if "Created Time" in df_ts.columns:
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
