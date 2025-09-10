@@ -651,21 +651,28 @@ elif selected == "Data Analysis":
             top_table = ts_data.groupby(group_by)["Lead Count"].sum().reset_index()
             top_table = top_table.sort_values("Lead Count", ascending=False).head(5)
             st.table(top_table)
-
-    # ================== Lead Age Analysis ==================
+    
+        # ================== Lead Age Analysis ==================
     st.subheader("⏳ Lead Age Analysis")
-    st.info("How long it takes to close leads. Distribution by weeks, plus average and median by Chaser and Client.")
-
-    if "Created Time" in df_ts.columns and "Completion Date" in df_ts.columns:
+    st.info("How long it takes to get approval/denial for leads. Distribution by weeks, plus average and median by Chaser and Client.")
+    
+    if "Created Time" in df_ts.columns:
         df_lead_age = df_ts.copy()
-        df_lead_age["Lead Age (Days)"] = (
-            (df_lead_age["Completion Date"] - df_lead_age["Created Time"]).dt.days
-        )
-
-        # Categorize into weeks
-        def categorize_weeks(days):
+    
+        # حساب Lead Age من Approval و Denial
+        if "Approval date" in df_lead_age.columns:
+            df_lead_age["Lead Age (Approval)"] = (
+                (df_lead_age["Approval date"] - df_lead_age["Created Time"]).dt.days
+            )
+        if "Denial Date" in df_lead_age.columns:
+            df_lead_age["Lead Age (Denial)"] = (
+                (df_lead_age["Denial Date"] - df_lead_age["Created Time"]).dt.days
+            )
+    
+        # تصنيف بالأسابيع
+        def categorize_weeks(days, label_not):
             if pd.isna(days):
-                return "Not Completed"
+                return label_not
             elif days <= 7:
                 return "Week 1"
             elif days <= 14:
@@ -699,59 +706,76 @@ elif selected == "Data Analysis":
             elif days <= 112:
                 return "Week 16"
             else:
-                return "Week 17"
-
-        df_lead_age["Lead Age Category"] = df_lead_age["Lead Age (Days)"].apply(categorize_weeks)
-
+                return "Week 17+"
+    
+        df_lead_age["Approval Age Category"] = df_lead_age["Lead Age (Approval)"].apply(
+            lambda x: categorize_weeks(x, "Not Approved")
+        )
+        df_lead_age["Denial Age Category"] = df_lead_age["Lead Age (Denial)"].apply(
+            lambda x: categorize_weeks(x, "Not Denied")
+        )
+    
         # 📋 Full lead age table
         st.markdown("### 📋 Full Lead Age Table")
         st.dataframe(
             df_lead_age[[
                 "Created Time",
-                "Completion Date",
-                "Lead Age (Days)",
-                "Lead Age Category",
+                "Approval date",
+                "Denial Date",
+                "Lead Age (Approval)",
+                "Approval Age Category",
+                "Lead Age (Denial)",
+                "Denial Age Category",
                 "Chaser Name",
                 "Client",
                 "MCN"
             ]],
             use_container_width=True
         )
-        
-        # 📊 Lead Age Distribution
-        st.markdown("### 📊 Lead Age Distribution")
-
-        # Not Completed first
-        categories = df_lead_age["Lead Age Category"].dropna().unique()
-        weeks = sorted([c for c in categories if c.startswith("Week")], key=lambda x: int(x.split()[1]))
-        category_order = ["Not Completed"] + weeks  
-
-        color_scale = alt.Scale(
-            domain=["Not Completed"] + weeks,
-            range=["#C99927"] + ["#16e261"] * len(weeks)
-        )
-
-        age_summary = (
-            df_lead_age["Lead Age Category"]
-            .value_counts()
-            .reindex(category_order)
+    
+        # 📊 Distribution for Approval
+        st.markdown("### 📊 Lead Age Distribution – Approval")
+        approval_summary = (
+            df_lead_age["Approval Age Category"].value_counts()
+            .reindex(["Not Approved"] + [f"Week {i}" for i in range(1, 18)], fill_value=0)
             .reset_index()
         )
-        age_summary.columns = ["Lead Age Category", "Count"]
-
-        st.table(age_summary)
-
-        chart_age = (
-            alt.Chart(age_summary)
+        approval_summary.columns = ["Approval Age Category", "Count"]
+        st.table(approval_summary)
+    
+        chart_approval = (
+            alt.Chart(approval_summary)
             .mark_bar()
             .encode(
-                x=alt.X("Lead Age Category", sort=category_order),
+                x=alt.X("Approval Age Category", sort=["Not Approved"] + [f"Week {i}" for i in range(1, 18)]),
                 y="Count",
-                color=alt.Color("Lead Age Category", scale=color_scale, legend=None),
-                tooltip=["Lead Age Category", "Count"]
+                color=alt.Color("Approval Age Category", legend=None),
+                tooltip=["Approval Age Category", "Count"]
             )
         )
-        st.altair_chart(chart_age, use_container_width=True)
+        st.altair_chart(chart_approval, use_container_width=True)
+    
+        # 📊 Distribution for Denial
+        st.markdown("### 📊 Lead Age Distribution – Denial")
+        denial_summary = (
+            df_lead_age["Denial Age Category"].value_counts()
+            .reindex(["Not Denied"] + [f"Week {i}" for i in range(1, 18)], fill_value=0)
+            .reset_index()
+        )
+        denial_summary.columns = ["Denial Age Category", "Count"]
+        st.table(denial_summary)
+    
+        chart_denial = (
+            alt.Chart(denial_summary)
+            .mark_bar()
+            .encode(
+                x=alt.X("Denial Age Category", sort=["Not Denied"] + [f"Week {i}" for i in range(1, 18)]),
+                y="Count",
+                color=alt.Color("Denial Age Category", legend=None),
+                tooltip=["Denial Age Category", "Count"]
+            )
+        )
+        st.altair_chart(chart_denial, use_container_width=True)
 
         # 📊 Average + Median lead age per Chaser / Client
         st.markdown("### 📊 Average & Median Lead Age by Chaser / Client")
@@ -863,6 +887,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
