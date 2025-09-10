@@ -296,39 +296,60 @@ if selected == "Dataset Overview":
         # --- KPIs Section ---
     st.subheader("📌 Key Performance Indicators")
     
-    # حساب القيم
+    # --- Dataset Summary / Description ---
+# --- Dataset Summary / KPIs ---
+    st.subheader("📑 Dataset Summary")
+
     total_leads = len(df_filtered)
+
+    # Use dates to calculate counts
     total_completed = df_filtered["Completion Date"].notna().sum() if "Completion Date" in df_filtered.columns else 0
     total_assigned = df_filtered["Assigned date"].notna().sum() if "Assigned date" in df_filtered.columns else 0
     total_uploaded = df_filtered["Upload Date"].notna().sum() if "Upload Date" in df_filtered.columns else 0
     total_approval = df_filtered["Approval date"].notna().sum() if "Approval date" in df_filtered.columns else 0
     total_denial = df_filtered["Denial Date"].notna().sum() if "Denial Date" in df_filtered.columns else 0
+
+    # Derived metrics
     total_not_assigned = total_leads - total_assigned
-    
-    # --- KPIs Cards ---
+
+    # Percentages
+    pct_completed = (total_completed / total_leads * 100) if total_leads > 0 else 0
+    pct_assigned = (total_assigned / total_leads * 100) if total_leads > 0 else 0
+    pct_not_assigned = (total_not_assigned / total_leads * 100) if total_leads > 0 else 0
+    pct_uploaded = (total_uploaded / total_completed * 100) if total_completed > 0 else 0
+    pct_approval = (total_approval / total_leads * 100) if total_leads > 0 else 0
+    pct_denial = (total_denial / total_leads * 100) if total_leads > 0 else 0
+
+    # --- Display KPIs in styled cards ---
     col1, col2, col3 = st.columns(3)
-    col4, col5, col6 = st.columns(3)
-    
+
     with col1:
-        st.metric("📊 Total Leads", total_leads)
+        st.metric("📊 Total Leads", f"{total_leads:,}")
+        st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")
+
     with col2:
-        st.metric("✅ Completed", total_completed)
+        st.metric("🧑‍💼 Assigned", f"{total_assigned:,} ({pct_assigned:.1f}%)")
+        st.metric("📤 Uploaded", f"{total_uploaded:,} ({pct_uploaded:.1f}%)")
+
     with col3:
-        st.metric("🧑‍💼 Assigned", total_assigned)
-    with col4:
-        st.metric("🚫 Not Assigned", total_not_assigned)
-    with col5:
-        st.metric("✔ Approved", total_approval)
-    with col6:
-        st.metric("❌ Denied", total_denial)
+        st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)")
+        st.metric("✔ Approvals / ❌ Denials", f"{total_approval:,} ({pct_approval:.1f}%) / {total_denial:,} ({pct_denial:.1f}%)")
+
     
-    # ✅ Apply custom style
     style_metric_cards(
-        background_color="#0E1117",   # خلفية dashboard غامقة
-        border_left_color="#00BFFF",  # أزرق للـ Total
+        background_color="#0E1117",
+        border_left_color= {
+            "📊 Total Leads": "#00BFFF",   # أزرق
+            "✅ Completed": "#28a745",     # أخضر
+            "🧑‍💼 Assigned": "#17a2b8",   # سماوي
+            "🚫 Not Assigned": "#ffc107", # أصفر
+            "✔ Approved": "#198754",      # أخضر داكن
+            "❌ Denied": "#dc3545"        # أحمر
+        },
         border_color="#444",
         box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
     )
+
     
         
     
@@ -855,6 +876,7 @@ elif selected == "Data Analysis":
 
     else:
         st.info("Created Time and Completion Date columns are required for lead age analysis.")
+
 
 
 
