@@ -517,12 +517,12 @@ elif selected == "Data Analysis":
     # --- Search filters ---
     st.subheader("🔍 Search Filter")
     # 1) Search by MCN
-        mcn_search = st.text_input("Enter MCN (optional)").strip()
-        if mcn_search:
-            df_ts = df_ts[df_ts["MCN"].astype(str).str.contains(mcn_search, case=False, na=False)]
+    mcn_search = st.text_input("Enter MCN (optional)").strip()
+    if mcn_search:
+        df_ts = df_ts[df_ts["MCN"].astype(str).str.contains(mcn_search, case=False, na=False)]
 
         # 2) Search by Chaser Name / Client
-        search_term = st.text_input("Enter Chaser Name or Client (partial match allowed)").strip().lower()
+    search_term = st.text_input("Enter Chaser Name or Client (partial match allowed)").strip().lower()
         if search_term:
             df_ts = df_ts[
                 df_ts["Chaser Name"].str.lower().str.contains(search_term, na=False)
@@ -872,6 +872,7 @@ elif selected == "Data Analysis":
             st.info("Created Time and Completion Date columns are required for lead age analysis.")
             
                                
+
 
 
 
