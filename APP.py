@@ -260,8 +260,8 @@ if isinstance(date_range, tuple) and len(date_range) == 2:
 
 # ================== MAIN DASHBOARD ==================
 if selected == "Dataset Overview":
-    st.title("📊 DR Chase Leads Dashboard")
-    st.info("Use the filters below to explore the dataset.")
+    st.title("📋 Dataset Overview – General Inspection")
+    st.info("This page is for **quick inspection** of the dataset, showing key metrics, summaries, and descriptions of columns.")
 
     # --- Column filter ---
 # --- Function for tabular view ---
@@ -360,6 +360,7 @@ if selected == "Dataset Overview":
 
     # --- Column Descriptions ---
     st.subheader("📖 Column Descriptions")
+    st.info("Choose a column to see what it represents and explore its distribution.")
 
         # ✅ Restrict to specific columns
     description_columns = [
@@ -465,8 +466,9 @@ if selected == "Dataset Overview":
 
 
 elif selected == "Data Analysis":
-    st.title("📊 DR Chase Leads Dashboard - Data Analysis")
-    st.info("Advanced analysis: time series with search filter, insights, and lead age analysis.")
+    st.title("📊 Data Analysis – Advanced Insights")
+    st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
+
 
     # --- Candidate date columns ---
     date_candidates = [
@@ -545,6 +547,7 @@ elif selected == "Data Analysis":
 
             # 📝 Insights Summary
             st.subheader("📝 Insights Summary")
+            st.info("High-level insights based on the selected date column: assigned, approvals, denials, and warnings if data is inconsistent.")
             
             # --- Subset based on selected time_col ---
             df_time = df_ts[df_ts[time_col].notna()].copy()
@@ -637,6 +640,8 @@ elif selected == "Data Analysis":
 
         # ================== Lead Age Analysis ==================
         st.subheader("⏳ Lead Age Analysis")
+        st.info("How long it takes to close leads. Distribution by weeks, plus average and median by Chaser and Client.")
+
 
         if "Created Time" in df_ts.columns and "Completion Date" in df_ts.columns:
             df_lead_age = df_ts.copy()
@@ -846,6 +851,7 @@ elif selected == "Data Analysis":
             st.info("Created Time and Completion Date columns are required for lead age analysis.")
             
                                
+
 
 
 
