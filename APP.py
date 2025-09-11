@@ -626,7 +626,7 @@ elif selected == "Data Analysis":
                         )
 
             # 🚨 Leads pending too long
-            if 'df_lead_age' in locals() and "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
+            if "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
                 today = pd.Timestamp.now().normalize()
                 
                 # احسب المدة من تاريخ الإنشاء لليوم
@@ -634,7 +634,7 @@ elif selected == "Data Analysis":
                     today - pd.to_datetime(df_lead_age["Created Time (Date)"], errors="coerce")
                 ).dt.days
             
-                # فلترة leads اللي عدى عليها أكتر من 7 أيام ولسه Pending Fax / Dr Call
+                # فلترة leads اللي عدى عليها أكتر من 7 أيام ولسه Pending
                 pending_mask = (
                     (df_lead_age["Days Since Created"] > 7) &
                     (df_lead_age["Chasing Disposition"].isin(["Pending Fax", "Pending Dr Call"]))
@@ -658,6 +658,7 @@ elif selected == "Data Analysis":
                             ]],
                             use_container_width=True
                         )
+
 
             # --- Row-level logic checks with expanders ---
             if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
@@ -964,6 +965,7 @@ elif selected == "Data Analysis":
                 )
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
+
 
 
 
