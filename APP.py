@@ -578,42 +578,68 @@ elif selected == "Data Analysis":
             top_table = top_table.sort_values("Lead Count", ascending=False).head(40)
             st.table(top_table)
             
-                # ================== Chasing Disposition Distribution ==================
+                   # ================== Chasing Disposition Distribution ==================
         if "Chasing Disposition" in df_ts.columns:
             st.subheader("📊 Chasing Disposition Distribution")
-        
-            disp_counts = df_ts["Chasing Disposition"].value_counts().reset_index()
-            disp_counts.columns = ["Chasing Disposition", "Count"]
-        
-            chart_type = st.radio("Choose chart type:", ["Bar", "Pie"], horizontal=True)
-        
-            if chart_type == "Bar":
-                chart_disp = (
-                    alt.Chart(disp_counts)
-                    .mark_bar()
-                    .encode(
-                        x=alt.X("Chasing Disposition", sort="-y"),
-                        y="Count",
-                        color="Chasing Disposition",
-                        tooltip=["Chasing Disposition", "Count"]
-                    )
-                    .properties(height=400)
+
+            # --- اختيارات المتركس اللي نعرضها ---
+            metric_option = st.selectbox(
+                "Select metric to display by Chasing Disposition:",
+                [
+                    "Total Leads (with Created Time (Date))",
+                    "Total Assigned",
+                    "Not Assigned",
+                    "Total Approved",
+                    "Total Denied",
+                    "Total Completed",
+                    "Total Uploaded"
+                ]
+            )
+
+            # --- حساب المتركس حسب كل Chasing Disposition ---
+            metrics_by_disp = df_ts.groupby("Chasing Disposition").agg({
+                "Created Time (Date)": "count",
+                "Assigned date": lambda x: x.notna().sum(),
+                "Approval date": lambda x: x.notna().sum(),
+                "Denial Date": lambda x: x.notna().sum(),
+                "Completion Date": lambda x: x.notna().sum(),
+                "Upload Date": lambda x: x.notna().sum(),
+            }).reset_index()
+
+            metrics_by_disp["Not Assigned"] = (
+                metrics_by_disp["Created Time (Date)"] - metrics_by_disp["Assigned date"]
+            )
+
+            # --- ربط الاختيارات بالاعمدة ---
+            metric_map = {
+                "Total Leads (with Created Time (Date))": "Created Time (Date)",
+                "Total Assigned": "Assigned date",
+                "Not Assigned": "Not Assigned",
+                "Total Approved": "Approval date",
+                "Total Denied": "Denial Date",
+                "Total Completed": "Completion Date",
+                "Total Uploaded": "Upload Date"
+            }
+
+            selected_col = metric_map[metric_option]
+
+            # --- جهز البيانات ---
+            chart_data = metrics_by_disp[["Chasing Disposition", selected_col]].rename(columns={selected_col: "Count"})
+
+            # --- Bar chart only ---
+            chart_disp = (
+                alt.Chart(chart_data)
+                .mark_bar()
+                .encode(
+                    x=alt.X("Chasing Disposition", sort="-y"),
+                    y="Count",
+                    color="Chasing Disposition",
+                    tooltip=["Chasing Disposition", "Count"]
                 )
-                st.altair_chart(chart_disp, use_container_width=True)
-        
-            elif chart_type == "Pie":
-                chart_disp = (
-                    alt.Chart(disp_counts)
-                    .mark_arc()
-                    .encode(
-                        theta="Count",
-                        color="Chasing Disposition",
-                        tooltip=["Chasing Disposition", "Count"]
-                    )
-                    .properties(height=400)
-                )
-                st.altair_chart(chart_disp, use_container_width=True)
-        
+                .properties(height=400)
+            )
+            st.altair_chart(chart_disp, use_container_width=True)
+
                 # ================== Client Distribution ==================
         if "Client" in df_ts.columns:
             st.subheader("👥 Client Distribution")
@@ -1145,6 +1171,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
