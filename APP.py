@@ -910,39 +910,7 @@ elif selected == "Data Analysis":
 
 					
 				
-	# 🚨 Leads pending too long
-	if 'df_lead_age' in locals() and "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
-	    today = pd.Timestamp.now().normalize()
-	    
-	    # احسب المدة من تاريخ الإنشاء لليوم
-	    df_lead_age["Days Since Created"] = (
-	        today - pd.to_datetime(df_lead_age["Created Time (Date)"], errors="coerce")
-	    ).dt.days
-	
-	    # فلترة leads اللي عدى عليها أكتر من 7 أيام ولسه Pending
-	    pending_mask = (
-	        (df_lead_age["Days Since Created"] > 7) &
-	        (df_lead_age["Chasing Disposition"].isin(["Pending Fax", "Pending Dr Call"]))
-	    )
-	    pending_leads = df_lead_age[pending_mask]
-	
-	    if not pending_leads.empty:
-	        st.warning(f"⚠️ Found {len(pending_leads)} leads pending for more than 7 days (Fax/Dr Call).")
-	        with st.expander("🔍 View Pending Leads > 7 Days"):
-	            st.dataframe(
-	                pending_leads[[
-	                    "MCN",
-	                    "Created Time (Date)",
-	                    "Days Since Created",
-	                    "Chasing Disposition",
-	                    "Assigned date (Date)",
-	                    "Upload Date (Date)",
-	                    "Completion Date (Date)",
-	                    "Chaser Name",
-	                    "Client"
-	                ]],
-	                use_container_width=True
-	            )
+
 
 
 
@@ -974,6 +942,7 @@ elif selected == "Data Analysis":
 	
 	
 	
+
 
 
 
