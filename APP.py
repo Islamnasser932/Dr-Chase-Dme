@@ -656,11 +656,11 @@ elif selected == "Data Analysis":
 
                 
                 # 🚨 Leads pending too long
-            if "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
+            if "Created Time" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
                 today = pd.Timestamp.now().normalize()
                 
                 # احسب المدة من تاريخ الإنشاء لليوم
-                df_lead_age["Days Since Created"] = (today - pd.to_datetime(df_lead_age["Created Time (Date)"], errors="coerce")).dt.days
+                df_lead_age["Days Since Created"] = (today - pd.to_datetime(df_lead_age["Created Time"], errors="coerce")).dt.days
             
                 # فلترة leads اللي عدى عليها أكتر من 7 أيام ولسه Pending
                 pending_mask = (
@@ -969,6 +969,7 @@ elif selected == "Data Analysis":
     
     
     
+
 
 
 
