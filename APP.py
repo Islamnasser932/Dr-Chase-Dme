@@ -681,7 +681,13 @@ elif selected == "Data Analysis":
                     .properties(height=400)
                 )
                 st.altair_chart(chart_client, use_container_width=True)
-
+                
+        # 🏆 Top performers
+        if group_by in ["Chaser Name", "Client"]:
+            st.subheader(f"🏆 Top {group_by}s by Leads")
+            top_table = ts_data.groupby(group_by)["Lead Count"].sum().reset_index()
+            top_table = top_table.sort_values("Lead Count", ascending=False).head(40)
+            st.table(top_table)
 
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
@@ -830,12 +836,7 @@ elif selected == "Data Analysis":
                 
                
             
-        # 🏆 Top performers
-        if group_by in ["Chaser Name", "Client"]:
-            st.subheader(f"🏆 Top {group_by}s by Leads")
-            top_table = ts_data.groupby(group_by)["Lead Count"].sum().reset_index()
-            top_table = top_table.sort_values("Lead Count", ascending=False).head(40)
-            st.table(top_table)
+
         
         # ================== Lead Age Analysis ==================
     st.subheader("⏳ Lead Age Analysis")
@@ -1145,6 +1146,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
