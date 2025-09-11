@@ -975,9 +975,40 @@ elif selected == "Data Analysis":
 
 
 
-
-
-
+            # ================== DUPLICATES CHECK ==================
+    st.subheader("🔍 Duplicate Leads by MCN")
+    
+    if "MCN" in df_filtered.columns:
+        # نجيب الـ MCN اللي مكرر أكتر من مرة
+        duplicate_mcn = df_filtered[df_filtered.duplicated(subset=["MCN"], keep=False)]
+    
+        if not duplicate_mcn.empty:
+            st.warning(f"⚠️ Found {duplicate_mcn['MCN'].nunique()} unique MCNs with duplicates "
+                       f"(total {len(duplicate_mcn)} rows).")
+            
+            with st.expander("📋 View Duplicate Leads by MCN"):
+                st.dataframe(
+                    duplicate_mcn.sort_values("MCN"),
+                    use_container_width=True
+                )
+    
+            # لو عايز تعمل Grouped Table عشان تشوف كل الأرقام تحت كل MCN
+            grouped_duplicates = duplicate_mcn.groupby("MCN").size().reset_index(name="Count")
+            st.markdown("### 📊 Duplicate MCN Summary")
+            st.dataframe(grouped_duplicates.sort_values("Count", ascending=False), use_container_width=True)
+    
+            # تحميل النتائج في CSV
+            csv = duplicate_mcn.to_csv(index=False).encode("utf-8")
+            st.download_button("⬇ Download Duplicates CSV", data=csv, file_name="duplicate_leads.csv", mime="text/csv")
+    
+        else:
+            st.success("✅ No duplicate MCNs found in the dataset.")
+    else:
+        st.info("ℹ️ Column **MCN** not found in dataset.")
+    
+    
+    
+    
 
 
 
