@@ -1006,68 +1006,69 @@ elif selected == "Data Analysis":
 
 
 
-# ================== DUPLICATES CHECK WITH PRODUCT ==================
-st.subheader("🔍 Duplicate Leads by MCN (Considering Product)")
-
-if "MCN" in df_filtered.columns and "Products" in df_filtered.columns:
-    # --- Duplicates with same Product ---
-    dup_same_product = df_filtered[df_filtered.duplicated(subset=["MCN", "Products"], keep=False)]
-
-    if not dup_same_product.empty:
-        st.warning(f"⚠️ Found {dup_same_product['MCN'].nunique()} unique MCNs duplicated with SAME Product "
-                   f"(total {len(dup_same_product)} rows).")
-
-        cols_to_show = [
-            "MCN","Products","Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)",
-            "Assigned date (Date)","Approval date (Date)","Denial Date (Date)",
-            "Completion Date (Date)","Upload Date (Date)","Client",
-            "Chasing Disposition","Insurance","Type Of Sale"
-        ]
-        available_cols = [c for c in cols_to_show if c in dup_same_product.columns]
-
-        with st.expander("📋 View Duplicate Leads (Same Product)"):
-            st.dataframe(
-                dup_same_product.sort_values(["MCN", "Products"])[available_cols],
-                use_container_width=True
-            )
-
-        # 📊 Group by MCN + key dates
-        if all(c in dup_same_product.columns for c in ["Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]):
-            grouped_same = (
-                dup_same_product.groupby(
-                    ["MCN", "Products", "Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]
-                ).size().reset_index(name="Count")
-            )
-            st.markdown("### 📊 Duplicate MCN (Same Product) Grouped by Key Dates")
-            st.dataframe(grouped_same.sort_values("Count", ascending=False), use_container_width=True)
-
+    # ================== DUPLICATES CHECK WITH PRODUCT ==================
+    st.subheader("🔍 Duplicate Leads by MCN (Considering Product)")
+    
+    if "MCN" in df_filtered.columns and "Products" in df_filtered.columns:
+        # --- Duplicates with same Product ---
+        dup_same_product = df_filtered[df_filtered.duplicated(subset=["MCN", "Products"], keep=False)]
+    
+        if not dup_same_product.empty:
+            st.warning(f"⚠️ Found {dup_same_product['MCN'].nunique()} unique MCNs duplicated with SAME Product "
+                       f"(total {len(dup_same_product)} rows).")
+    
+            cols_to_show = [
+                "MCN","Products","Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)",
+                "Assigned date (Date)","Approval date (Date)","Denial Date (Date)",
+                "Completion Date (Date)","Upload Date (Date)","Client",
+                "Chasing Disposition","Insurance","Type Of Sale"
+            ]
+            available_cols = [c for c in cols_to_show if c in dup_same_product.columns]
+    
+            with st.expander("📋 View Duplicate Leads (Same Product)"):
+                st.dataframe(
+                    dup_same_product.sort_values(["MCN", "Products"])[available_cols],
+                    use_container_width=True
+                )
+    
+            # 📊 Group by MCN + key dates
+            if all(c in dup_same_product.columns for c in ["Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]):
+                grouped_same = (
+                    dup_same_product.groupby(
+                        ["MCN", "Products", "Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]
+                    ).size().reset_index(name="Count")
+                )
+                st.markdown("### 📊 Duplicate MCN (Same Product) Grouped by Key Dates")
+                st.dataframe(grouped_same.sort_values("Count", ascending=False), use_container_width=True)
+    
+        else:
+            st.success("✅ No duplicate MCNs found with SAME product.")
+    
+        # --- Duplicates with different Product ---
+        dup_diff_product = (
+            df_filtered[df_filtered.duplicated(subset=["MCN"], keep=False)]
+            .drop_duplicates(subset=["MCN", "Products"])
+        )
+    
+        dup_diff_product_grouped = dup_diff_product.groupby("MCN")["Products"].nunique().reset_index()
+        dup_diff_product_grouped = dup_diff_product_grouped[dup_diff_product_grouped["Products"] > 1]
+    
+        if not dup_diff_product_grouped.empty:
+            st.info(f"ℹ️ Found {len(dup_diff_product_grouped)} MCNs with DIFFERENT Products (not real dups).")
+    
+            with st.expander("📋 View MCNs with Different Products"):
+                merged = dup_diff_product.merge(dup_diff_product_grouped[["MCN"]], on="MCN")
+                st.dataframe(
+                    merged.sort_values(["MCN", "Products"])[available_cols],
+                    use_container_width=True
+                )
+    
     else:
-        st.success("✅ No duplicate MCNs found with SAME product.")
-
-    # --- Duplicates with different Product ---
-    dup_diff_product = (
-        df_filtered[df_filtered.duplicated(subset=["MCN"], keep=False)]
-        .drop_duplicates(subset=["MCN", "Products"])
-    )
-
-    dup_diff_product_grouped = dup_diff_product.groupby("MCN")["Products"].nunique().reset_index()
-    dup_diff_product_grouped = dup_diff_product_grouped[dup_diff_product_grouped["Products"] > 1]
-
-    if not dup_diff_product_grouped.empty:
-        st.info(f"ℹ️ Found {len(dup_diff_product_grouped)} MCNs with DIFFERENT Products (not real dups).")
-
-        with st.expander("📋 View MCNs with Different Products"):
-            merged = dup_diff_product.merge(dup_diff_product_grouped[["MCN"]], on="MCN")
-            st.dataframe(
-                merged.sort_values(["MCN", "Products"])[available_cols],
-                use_container_width=True
-            )
-
-else:
-    st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
+        st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
 
     
     
+
 
 
 
