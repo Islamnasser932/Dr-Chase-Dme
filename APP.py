@@ -599,7 +599,10 @@ elif selected == "Data Analysis":
                 - 📤 Uploaded: **{total_uploaded}**
                 """)        
             
-            
+            st.subheader("🚨 Data Quality Warnings")
+            today = pd.Timestamp.now().normalize()
+
+
             # 🚨 Leads with Pending Shipping but no Upload Date
             if "Chasing Disposition" in df_filtered.columns and "Upload Date" in df_filtered.columns:
                 mask_shipping = (
@@ -963,6 +966,7 @@ elif selected == "Data Analysis":
                 )
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
+
 
 
 
