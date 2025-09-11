@@ -605,6 +605,83 @@ elif selected == "Data Analysis":
                     .properties(height=400)
                 )
                 st.altair_chart(chart_disp, use_container_width=True)
+        
+                # ================== Client Distribution ==================
+        if "Client" in df_ts.columns:
+            st.subheader("👥 Client Distribution")
+        
+            # --- اختيارات المتركس اللي نعرضها ---
+            metric_option = st.selectbox(
+                "Select metric to display by Client:",
+                [
+                    "Total Leads (with Created Time (Date))",
+                    "Total Assigned",
+                    "Not Assigned",
+                    "Total Approved",
+                    "Total Denied",
+                    "Total Completed",
+                    "Total Uploaded"
+                ]
+            )
+        
+            # --- حساب المتركس حسب كل Client ---
+            metrics_by_client = df_ts.groupby("Client").agg({
+                "Created Time (Date)": "count",
+                "Assigned date": lambda x: x.notna().sum(),
+                "Approval date": lambda x: x.notna().sum(),
+                "Denial Date": lambda x: x.notna().sum(),
+                "Completion Date": lambda x: x.notna().sum(),
+                "Upload Date": lambda x: x.notna().sum(),
+            }).reset_index()
+        
+            metrics_by_client["Not Assigned"] = metrics_by_client["Created Time (Date)"] - metrics_by_client["Assigned date"]
+        
+            # --- ربط الاختيارات بالاعمدة ---
+            metric_map = {
+                "Total Leads (with Created Time (Date))": "Created Time (Date)",
+                "Total Assigned": "Assigned date",
+                "Not Assigned": "Not Assigned",
+                "Total Approved": "Approval date",
+                "Total Denied": "Denial Date",
+                "Total Completed": "Completion Date",
+                "Total Uploaded": "Upload Date"
+            }
+        
+            selected_col = metric_map[metric_option]
+        
+            # --- جهز البيانات ---
+            chart_data = metrics_by_client[["Client", selected_col]].rename(columns={selected_col: "Count"})
+        
+            # --- اختيار نوع الشارت ---
+            chart_type = st.radio("Choose chart type:", ["Bar", "Pie"], horizontal=True, key="client_chart")
+        
+            if chart_type == "Bar":
+                chart_client = (
+                    alt.Chart(chart_data)
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("Client", sort="-y"),
+                        y="Count",
+                        color="Client",
+                        tooltip=["Client", "Count"]
+                    )
+                    .properties(height=400)
+                )
+                st.altair_chart(chart_client, use_container_width=True)
+        
+            elif chart_type == "Pie":
+                chart_client = (
+                    alt.Chart(chart_data)
+                    .mark_arc()
+                    .encode(
+                        theta="Count",
+                        color="Client",
+                        tooltip=["Client", "Count"]
+                    )
+                    .properties(height=400)
+                )
+                st.altair_chart(chart_client, use_container_width=True)
+
 
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
@@ -1068,6 +1145,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
