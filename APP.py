@@ -405,7 +405,7 @@ if selected == "Dataset Overview":
     }
 
     desc = column_descriptions.get(selected_col, "No description available for this column.")
-    st.info(f"**{selected_col}**: {desc}")
+    
 
     # --- Force date conversion for known date columns ---
     date_columns = [
@@ -1068,6 +1068,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
