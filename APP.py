@@ -911,7 +911,7 @@ elif selected == "Data Analysis":
 					
 				
 # 🚨 Leads pending too long
-if "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
+if "Created Time" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
     today = pd.Timestamp.now().normalize()
     
     # احسب المدة من تاريخ الإنشاء لليوم
@@ -967,6 +967,7 @@ if "Chasing Disposition" in df_filtered.columns and "Upload Date" in df_filtered
                 ]],
                 use_container_width=True
             )
+
 
 
 
