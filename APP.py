@@ -578,7 +578,7 @@ elif selected == "Data Analysis":
             top_table = top_table.sort_values("Lead Count", ascending=False).head(40)
             st.table(top_table)
             
-                   # ================== Chasing Disposition Distribution ==================
+                          # ================== Chasing Disposition Distribution ==================
         if "Chasing Disposition" in df_ts.columns:
             st.subheader("📊 Chasing Disposition Distribution")
 
@@ -639,6 +639,7 @@ elif selected == "Data Analysis":
                 .properties(height=400)
             )
             st.altair_chart(chart_disp, use_container_width=True)
+
 
                 # ================== Client Distribution ==================
         if "Client" in df_ts.columns:
@@ -1171,6 +1172,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
