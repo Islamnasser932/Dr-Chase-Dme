@@ -570,6 +570,14 @@ elif selected == "Data Analysis":
             )
         st.altair_chart(chart, use_container_width=True)
 
+
+        # 🏆 Top performers
+        if group_by in ["Chaser Name", "Client"]:
+            st.subheader(f"🏆 Top {group_by}s by Leads")
+            top_table = ts_data.groupby(group_by)["Lead Count"].sum().reset_index()
+            top_table = top_table.sort_values("Lead Count", ascending=False).head(40)
+            st.table(top_table)
+            
                 # ================== Chasing Disposition Distribution ==================
         if "Chasing Disposition" in df_ts.columns:
             st.subheader("📊 Chasing Disposition Distribution")
@@ -682,12 +690,7 @@ elif selected == "Data Analysis":
                 )
                 st.altair_chart(chart_client, use_container_width=True)
                 
-        # 🏆 Top performers
-        if group_by in ["Chaser Name", "Client"]:
-            st.subheader(f"🏆 Top {group_by}s by Leads")
-            top_table = ts_data.groupby(group_by)["Lead Count"].sum().reset_index()
-            top_table = top_table.sort_values("Lead Count", ascending=False).head(40)
-            st.table(top_table)
+        
 
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
@@ -1142,6 +1145,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
