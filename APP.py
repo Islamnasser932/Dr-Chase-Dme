@@ -570,6 +570,42 @@ elif selected == "Data Analysis":
             )
         st.altair_chart(chart, use_container_width=True)
 
+                # ================== Chasing Disposition Distribution ==================
+        if "Chasing Disposition" in df_ts.columns:
+            st.subheader("📊 Chasing Disposition Distribution")
+        
+            disp_counts = df_ts["Chasing Disposition"].value_counts().reset_index()
+            disp_counts.columns = ["Chasing Disposition", "Count"]
+        
+            chart_type = st.radio("Choose chart type:", ["Bar", "Pie"], horizontal=True)
+        
+            if chart_type == "Bar":
+                chart_disp = (
+                    alt.Chart(disp_counts)
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("Chasing Disposition", sort="-y"),
+                        y="Count",
+                        color="Chasing Disposition",
+                        tooltip=["Chasing Disposition", "Count"]
+                    )
+                    .properties(height=400)
+                )
+                st.altair_chart(chart_disp, use_container_width=True)
+        
+            elif chart_type == "Pie":
+                chart_disp = (
+                    alt.Chart(disp_counts)
+                    .mark_arc()
+                    .encode(
+                        theta="Count",
+                        color="Chasing Disposition",
+                        tooltip=["Chasing Disposition", "Count"]
+                    )
+                    .properties(height=400)
+                )
+                st.altair_chart(chart_disp, use_container_width=True)
+
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
         st.info("High-level insights based on the selected date column: assigned, approvals, denials, and warnings if data is inconsistent.")
@@ -1032,6 +1068,7 @@ else:
 
     
     
+
 
 
 
