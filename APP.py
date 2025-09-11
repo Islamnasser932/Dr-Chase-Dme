@@ -928,11 +928,15 @@ elif selected == "Data Analysis":
                             "Created Time (Date)",
                             "Days Since Created",
                             "Chasing Disposition",
+                            "Assigned date (Date)",
+                            "Upload Date (Date)",
+                            "Completion Date (Date)",
                             "Chaser Name",
                             "Client"
                         ]],
                         use_container_width=True
                     )
+
 
     
     
@@ -942,6 +946,7 @@ elif selected == "Data Analysis":
     
     
     
+
 
 
 
