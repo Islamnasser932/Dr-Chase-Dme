@@ -626,7 +626,7 @@ elif selected == "Data Analysis":
                         )
 
             # 🚨 Leads pending too long
-            if "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
+            if "df_lead_age" in locals() and "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
                 today = pd.Timestamp.now().normalize()
                 
                 # احسب المدة من تاريخ الإنشاء لليوم
@@ -965,6 +965,7 @@ elif selected == "Data Analysis":
                 )
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
+
 
 
 
