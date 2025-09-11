@@ -661,20 +661,20 @@ elif selected == "Data Analysis":
             st.table(top_table)
         
             # ================== Lead Age Analysis ==================
-st.subheader("⏳ Lead Age Analysis")
-st.info("Analysis of how long it takes for leads to get Approved / Denied. Includes weekly distribution, averages/medians, and grouped comparisons.")
-
-if "Created Time" in df_ts.columns:
-    df_lead_age = df_ts.copy()
-
-    # حساب Lead Age من Approval و Denial
-    if "Approval date" in df_lead_age.columns:
-        df_lead_age["Lead Age (Approval)"] = (
-            (df_lead_age["Approval date"] - df_lead_age["Created Time"]).dt.days
-        )
-    if "Denial Date" in df_lead_age.columns:
-        df_lead_age["Lead Age (Denial)"] = (
-            (df_lead_age["Denial Date"] - df_lead_age["Created Time"]).dt.days
+    st.subheader("⏳ Lead Age Analysis")
+    st.info("Analysis of how long it takes for leads to get Approved / Denied. Includes weekly distribution, averages/medians, and grouped comparisons.")
+    
+    if "Created Time" in df_ts.columns:
+        df_lead_age = df_ts.copy()
+    
+        # حساب Lead Age من Approval و Denial
+        if "Approval date" in df_lead_age.columns:
+            df_lead_age["Lead Age (Approval)"] = (
+                (df_lead_age["Approval date"] - df_lead_age["Created Time"]).dt.days
+            )
+        if "Denial Date" in df_lead_age.columns:
+            df_lead_age["Lead Age (Denial)"] = (
+                (df_lead_age["Denial Date"] - df_lead_age["Created Time"]).dt.days
         )
 
     # --- KPIs Section ---
@@ -907,6 +907,7 @@ if "Created Time" in df_ts.columns:
             )
             st.altair_chart(chart_grouped_client, use_container_width=True)
     
+
 
 
 
