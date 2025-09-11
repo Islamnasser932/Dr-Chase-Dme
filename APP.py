@@ -944,6 +944,30 @@ if "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_
                 use_container_width=True
             )
 
+# 🚨 Leads with Pending Shipping but no Upload Date
+if "Chasing Disposition" in df_filtered.columns and "Upload Date" in df_filtered.columns:
+    pending_shipping = df_filtered[
+        (df_filtered["Chasing Disposition"].str.lower() == "pending shipping")
+        & (df_filtered["Upload Date"].isna())
+    ]
+
+    if not pending_shipping.empty:
+        st.warning(f"⚠️ Found {len(pending_shipping)} leads with **Pending Shipping** but missing **Upload Date**.")
+        with st.expander("🔍 View Pending Shipping Leads Without Upload Date"):
+            st.dataframe(
+                pending_shipping[[
+                    "MCN",
+                    "Created Time (Date)",
+                    "Assigned date (Date)",
+                    "Completion Date (Date)",
+                    "Upload Date (Date)",
+                    "Chasing Disposition",
+                    "Chaser Name",
+                    "Client"
+                ]],
+                use_container_width=True
+            )
+
 
 
 
