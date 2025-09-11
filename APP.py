@@ -833,10 +833,6 @@ elif selected == "Data Analysis":
                         )
 
 
-                
-               
-            
-
         
         # ================== Lead Age Analysis ==================
     st.subheader("⏳ Lead Age Analysis")
@@ -1146,6 +1142,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
