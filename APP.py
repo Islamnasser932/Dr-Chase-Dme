@@ -909,7 +909,7 @@ elif selected == "Data Analysis":
 
 
 # 🚨 Leads pending too long
-if "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
+if 'df_lead_age' in locals() and "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_lead_age.columns:
     today = pd.Timestamp.now().normalize()
     
     # احسب المدة من تاريخ الإنشاء لليوم
@@ -917,7 +917,7 @@ if "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_
         today - pd.to_datetime(df_lead_age["Created Time (Date)"], errors="coerce")
     ).dt.days
 
-    # فلترة leads اللي عدى عليها أكتر من 7 أيام ولسه Pending
+    # فلترة leads اللي عدى عليها أكتر من 7 أيام ولسه Pending Fax / Dr Call
     pending_mask = (
         (df_lead_age["Days Since Created"] > 7) &
         (df_lead_age["Chasing Disposition"].isin(["Pending Fax", "Pending Dr Call"]))
@@ -943,17 +943,13 @@ if "Created Time (Date)" in df_lead_age.columns and "Chasing Disposition" in df_
             )
 
 
-
-
-	
-
-
 # 🚨 Leads with Pending Shipping but no Upload Date
 if "Chasing Disposition" in df_filtered.columns and "Upload Date" in df_filtered.columns:
-    pending_shipping = df_filtered[
-        (df_filtered["Chasing Disposition"].str.lower() == "pending shipping")
-        & (df_filtered["Upload Date"].isna())
-    ]
+    mask_shipping = (
+        df_filtered["Chasing Disposition"].str.lower().eq("pending shipping")
+        & df_filtered["Upload Date"].isna()
+    )
+    pending_shipping = df_filtered[mask_shipping]
 
     if not pending_shipping.empty:
         st.warning(f"⚠️ Found {len(pending_shipping)} leads with **Pending Shipping** but missing **Upload Date**.")
@@ -971,26 +967,6 @@ if "Chasing Disposition" in df_filtered.columns and "Upload Date" in df_filtered
                 ]],
                 use_container_width=True
             )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
