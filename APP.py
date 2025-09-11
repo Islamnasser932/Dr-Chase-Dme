@@ -670,11 +670,11 @@ elif selected == "Data Analysis":
         # حساب Lead Age من Approval و Denial
         if "Approval date" in df_lead_age.columns:
             df_lead_age["Lead Age (Approval)"] = (
-                (df_lead_age["Approval date (Date)"] - df_lead_age["Created Time (Date)"]).dt.days
+                (df_lead_age["Approval date"] - df_lead_age["Created Time"]).dt.days
             )
         if "Denial Date" in df_lead_age.columns:
             df_lead_age["Lead Age (Denial)"] = (
-                (df_lead_age["Approval date (Date)"] - df_lead_age["Created Time (Date)"]).dt.days
+                (df_lead_age["Denial Date"] - df_lead_age["Created Time"]).dt.days
             )
     
         # --- KPIs Section ---
@@ -906,6 +906,7 @@ elif selected == "Data Analysis":
     
     
     
+
 
 
 
