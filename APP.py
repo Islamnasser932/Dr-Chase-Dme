@@ -936,7 +936,7 @@ elif selected == "Data Analysis":
                         ]],
                         use_container_width=True
                     )
-        
+                
         # 🚨 Leads with Pending Shipping but no Upload Date
         if "Chasing Disposition" in df_filtered.columns and "Upload Date" in df_filtered.columns:
             pending_shipping = df_filtered[
@@ -946,28 +946,28 @@ elif selected == "Data Analysis":
         
             if not pending_shipping.empty:
                 st.warning(f"⚠️ Found {len(pending_shipping)} leads with **Pending Shipping** but missing **Upload Date**.")
-                with st.expander("🔍 View Pending Leads > 7 Days"):
+                with st.expander("🔍 View Pending Shipping Leads Without Upload Date"):
                     st.dataframe(
-                        pending_leads[[
+                        pending_shipping[[
                             "MCN",
                             "Created Time (Date)",
-                            "Days Since Created",
-                            "Chasing Disposition",
                             "Assigned date (Date)",
-                            "Upload Date (Date)",
                             "Completion Date (Date)",
+                            "Upload Date (Date)",
+                            "Chasing Disposition",
                             "Chaser Name",
                             "Client"
                         ]],
                         use_container_width=True
                     )
+        
+            
+            
             
     
     
     
-    
-    
-    
+
 
 
 
