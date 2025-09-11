@@ -782,22 +782,22 @@ elif selected == "Data Analysis":
                     )
                 )
                 st.altair_chart(chart_approval, use_container_width=True)
-    
-                negative_approval = df_lead_age[df_lead_age["Approval Category"].str.contains("Week -", na=False)]
-                if not negative_approval.empty:
-                    st.warning(f"⚠️ Found {len(negative_approval)} approvals with negative week categories.")
-                    st.dataframe(
-                        negative_approval[[
-                            "Created Time (Date)",
-                            "Approval date",
-                            "Lead Age (Approval)",
-                            "Approval Category",
-                            "Chaser Name",
-                            "Client",
-                            "MCN"
-                        ]],
-                        use_container_width=True
-                    )
+                if "Approval Category" in df_lead_age.columns:
+                    negative_approval = df_lead_age[df_lead_age["Approval Category"].str.contains("Week -", na=False)]
+                    if not negative_approval.empty:
+                        st.warning(f"⚠️ Found {len(negative_approval)} approvals with negative week categories.")
+                        st.dataframe(
+                            negative_approval[[
+                                "Created Time (Date)",
+                                "Approval date",
+                                "Lead Age (Approval)",
+                                "Approval Category",
+                                "Chaser Name",
+                                "Client",
+                                "MCN"
+                            ]],
+                            use_container_width=True
+                        )
     
         # 📊 Lead Age Distribution – Denial
         if "Lead Age (Denial)" in df_lead_age.columns:
@@ -832,22 +832,22 @@ elif selected == "Data Analysis":
                     )
                 )
                 st.altair_chart(chart_denial, use_container_width=True)
-    
-                negative_denial = df_lead_age[df_lead_age["Denial Category"].str.contains("Week -", na=False)]
-                if not negative_denial.empty:
-                    st.warning(f"⚠️ Found {len(negative_denial)} denials with negative week categories.")
-                    st.dataframe(
-                        negative_denial[[
-                            "Created Time (Date)",
-                            "Denial Date",
-                            "Lead Age (Denial)",
-                            "Denial Category",
-                            "Chaser Name",
-                            "Client",
-                            "MCN"
-                        ]],
-                        use_container_width=True
-                    )
+                if "Denial Category" in df_lead_age.columns:
+                    negative_denial = df_lead_age[df_lead_age["Denial Category"].str.contains("Week -", na=False)]
+                    if not negative_denial.empty:
+                        st.warning(f"⚠️ Found {len(negative_denial)} denials with negative week categories.")
+                        st.dataframe(
+                            negative_denial[[
+                                "Created Time (Date)",
+                                "Denial Date",
+                                "Lead Age (Denial)",
+                                "Denial Category",
+                                "Chaser Name",
+                                "Client",
+                                "MCN"
+                            ]],
+                            use_container_width=True
+                        )
     
         # 📊 Grouped Bar Chart – Approval vs Denial per Chaser
         if "Chaser Name" in df_lead_age.columns:
@@ -906,6 +906,7 @@ elif selected == "Data Analysis":
     
     
     
+
 
 
 
