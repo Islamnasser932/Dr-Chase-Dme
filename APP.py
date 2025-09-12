@@ -690,34 +690,19 @@ elif selected == "Data Analysis":
             # --- اختيار نوع الشارت ---
             chart_type = st.radio("Choose chart type:", ["Bar", "Pie"], horizontal=True, key="client_chart")
         
-            if chart_type == "Bar":
-                chart_client = (
-                    alt.Chart(chart_data)
-                    .mark_bar()
-                    .encode(
-                        x=alt.X("Client", sort="-y"),
-                        y="Count",
-                        color="Client",
-                        tooltip=["Client", "Count"]
-                    )
-                    .properties(height=400)
+
+            chart_disp = (
+                alt.Chart(chart_data)
+                .mark_bar()
+                .encode(
+                    x=alt.X("Client", sort="-y"),
+                    y="Count",
+                    color="Client",
+                    tooltip=["Client", "Count"]
                 )
-                st.altair_chart(chart_client, use_container_width=True)
-        
-            elif chart_type == "Pie":
-                chart_client = (
-                    alt.Chart(chart_data)
-                    .mark_arc()
-                    .encode(
-                        theta="Count",
-                        color="Client",
-                        tooltip=["Client", "Count"]
-                    )
-                    .properties(height=400)
-                )
-                st.altair_chart(chart_client, use_container_width=True)
-                
-        
+                .properties(height=400)
+            )
+            st.altair_chart(chart_disp, use_container_width=True)
 
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
@@ -1172,6 +1157,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
