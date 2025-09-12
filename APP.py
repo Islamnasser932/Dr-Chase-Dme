@@ -687,10 +687,6 @@ elif selected == "Data Analysis":
             # --- جهز البيانات ---
             chart_data = metrics_by_client[["Client", selected_col]].rename(columns={selected_col: "Count"})
         
-            # --- اختيار نوع الشارت ---
-            chart_type = st.radio("Choose chart type:", ["Bar", "Pie"], horizontal=True, key="client_chart")
-        
-
             chart_disp = (
                 alt.Chart(chart_data)
                 .mark_bar()
@@ -1157,6 +1153,7 @@ elif selected == "Data Analysis":
 
     
     
+
 
 
 
