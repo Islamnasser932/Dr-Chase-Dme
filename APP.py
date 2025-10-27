@@ -1152,7 +1152,7 @@ elif selected == "Data Analysis":
 
         
         
-            # ================== DUPLICATES CHECK WITH PRODUCT (MODIFIED: Removed View All Duplicate Columns) ==================
+            # ================== DUPLICATES CHECK WITH PRODUCT (MODIFIED: Removed Grouped by Key Dates) ==================
         st.subheader("🔍 Duplicate Leads by MCN (Considering Product)")
         
         if "MCN" in df_filtered.columns and "Products" in df_filtered.columns:
@@ -1185,17 +1185,7 @@ elif selected == "Data Analysis":
                     use_container_width=True
                 )
                 
-                # 📌 تم حذف الجدول: "📋 View All Duplicate Columns" 
-
-                # 📊 Group by MCN + key dates
-                if all(c in dup_same_product.columns for c in ["Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]):
-                    grouped_same = (
-                        dup_same_product.groupby(
-                            ["MCN", "Products", "Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]
-                        ).size().reset_index(name="Count")
-                    )
-                    st.markdown("### 📊 Duplicate MCN (Same Product) Grouped by Key Dates")
-                    st.dataframe(grouped_same.sort_values("Count", ascending=False), use_container_width=True)
+                # 📌 تم حذف الجدول: "📊 Duplicate MCN (Same Product) Grouped by Key Dates" 
         
             else:
                 st.success("✅ No duplicate MCNs found with SAME product.")
