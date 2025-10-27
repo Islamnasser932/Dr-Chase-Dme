@@ -555,8 +555,27 @@ elif selected == "Data Analysis":
         # 📈 Historical Time Series
         st.subheader("📈 Historical Time Series")
 
-        # (Chart logic remains unchanged from original, but uses fixed df_ts)
-        # ...
+        if group_by == "None":
+            chart = (
+                alt.Chart(ts_data)
+                .mark_line(point=True, color="#007bff")
+                .encode(x="Period:T", y="Lead Count", tooltip=["Period:T", "Lead Count"])
+                .properties(height=400)
+            )
+        else:
+            chart = (
+                alt.Chart(ts_data)
+                .mark_line(point=True)
+                .encode(
+                    x="Period:T",
+                    y="Lead Count",
+                    color=group_by,
+                    tooltip=["Period:T", "Lead Count", group_by]
+                )
+                .properties(height=400)
+            )
+        st.altair_chart(chart, use_container_width=True)
+
 
         # 🏆 Top performers
         if group_by in ["Chaser Name", "Client"]:
@@ -566,7 +585,7 @@ elif selected == "Data Analysis":
             st.table(top_table)
         
         
-        # ================== Chasing Disposition Distribution (MODIFIED: Added Total Count Metric) ==================
+        # ================== Chasing Disposition Distribution (MODIFIED: Compact Metric) ==================
         if "Chasing Disposition" in df_ts.columns:
             st.subheader("📊 Chasing Disposition Distribution")
 
@@ -615,9 +634,13 @@ elif selected == "Data Analysis":
             # --- جهز البيانات ---
             chart_data = metrics_by_disp[["Chasing Disposition", selected_col]].rename(columns={selected_col: "Count"})
 
-            # ✅ إضافة مؤشر إجمالي العدد الكلي
+            # ✅ إضافة مؤشر إجمالي العدد الكلي في عمود ضيق
             total_selected_metric = chart_data["Count"].sum()
-            st.metric(label=f"Total Count for: {metric_option}", value=f"{total_selected_metric:,}")
+            
+            # 📌 التعديل لتصغير حجم المؤشر باستخدام الأعمدة
+            col_metric, col_spacer = st.columns([1, 4]) # 1:4 ratio for small metric and large spacer
+            with col_metric:
+                st.metric(label=f"Total Count for: {metric_option}", value=f"{total_selected_metric:,}")
             
             # ✅ حساب النسبة المئوية وتسمية البيانات (Data Label)
             total_for_percentage = total_selected_metric
@@ -645,10 +668,10 @@ elif selected == "Data Analysis":
             
             # --- Text Layer (Data Label) ---
             text = chart_disp.mark_text(
-                align='center',    # محاذاة النص في المنتصف أفقياً
-                baseline='bottom', # وضع النص فوق العمود مباشرة
-                dy=-5,             # إزاحة للأعلى قليلاً
-                color='white',     # لون النص
+                align='center',    
+                baseline='bottom', 
+                dy=-5,             
+                color='white',     
                 fontSize=12
             ).encode(
                 text=alt.Text("Label") 
@@ -659,7 +682,7 @@ elif selected == "Data Analysis":
             st.altair_chart(final_chart, use_container_width=True)
 
 
-            # ================== Client Distribution (MODIFIED: Added Total Count Metric) ==================
+            # ================== Client Distribution (MODIFIED: Compact Metric) ==================
         if "Client" in df_ts.columns:
             st.subheader("👥 Client Distribution")
         
@@ -692,16 +715,28 @@ elif selected == "Data Analysis":
             metrics_by_client["Not Assigned"] = metrics_by_client["Created Time (Date)"] - metrics_by_client["Assigned date"]
         
             # --- ربط الاختيارات بالاعمدة ---
-            # (نفس الخريطة المستخدمة في Chasing Disposition)
+            metric_map = {
+                "Total Leads (with Created Time (Date))": "Created Time (Date)",
+                "Total Assigned": "Assigned date",
+                "Not Assigned": "Not Assigned",
+                "Total Approved": "Approval date",
+                "Total Denied": "Denial Date",
+                "Total Completed": "Completion Date",
+                "Total Uploaded": "Upload Date"
+            }
             
             selected_col_client = metric_map[metric_option_client]
         
             # --- جهز البيانات ---
             chart_data_client = metrics_by_client[["Client", selected_col_client]].rename(columns={selected_col_client: "Count"})
 
-            # ✅ إضافة مؤشر إجمالي العدد الكلي
+            # ✅ إضافة مؤشر إجمالي العدد الكلي في عمود ضيق
             total_selected_metric_client = chart_data_client["Count"].sum()
-            st.metric(label=f"Total Count for: {metric_option_client}", value=f"{total_selected_metric_client:,}")
+            
+            # 📌 التعديل لتصغير حجم المؤشر باستخدام الأعمدة
+            col_metric_client, col_spacer_client = st.columns([1, 4]) 
+            with col_metric_client:
+                st.metric(label=f"Total Count for: {metric_option_client}", value=f"{total_selected_metric_client:,}")
             
             # ✅ حساب النسبة المئوية وتسمية البيانات (Data Label)
             total_for_percentage_client = total_selected_metric_client
@@ -728,10 +763,10 @@ elif selected == "Data Analysis":
 
             # --- Text Layer (Data Label) ---
             text_client = chart_disp_client.mark_text(
-                align='center',    # محاذاة النص في المنتصف أفقياً
-                baseline='bottom', # وضع النص فوق العمود مباشرة
-                dy=-5,             # إزاحة للأعلى قليلاً
-                color='white',     # لون النص
+                align='center',    
+                baseline='bottom', 
+                dy=-5,             
+                color='white',     
                 fontSize=12
             ).encode(
                 text=alt.Text("Label") 
@@ -742,7 +777,7 @@ elif selected == "Data Analysis":
 
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
-        # ... (بقية قسم Data Analysis كما هو) ...
+        
         df_time = df_ts[df_ts[original_time_col].notna()].copy()
         total_time_leads = len(df_time)
         
