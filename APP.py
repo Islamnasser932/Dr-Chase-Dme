@@ -222,7 +222,7 @@ def table(df_filtered):
         st.dataframe(df_filtered[shwdata], use_container_width=True)
 
 
-# ================== SIDEBAR FILTERS (FIXED: Date Range Robustness) ==================
+# ================== SIDEBAR FILTERS ==================
 st.sidebar.header("🎛 Basic Filters")
 
 # --- Client Filter ---
@@ -265,7 +265,7 @@ with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
         Chasing_Disposition  = st.multiselect("Select  Chaser Disposition ", options=all_Chasing_Disposition)
 
 
-# --- Date Range Filter (FIXED) ---
+# --- Date Range Filter ---
 with st.sidebar.expander("📅 Date Range", expanded=False):
     date_cols_for_range = [
         "Created Time", "Assigned date", "Completion Date", "Approval date",
@@ -276,14 +276,12 @@ with st.sidebar.expander("📅 Date Range", expanded=False):
     
     date_range = None
     if valid_date_cols:
-        # Get min/max from datetime64[ns] columns to avoid TypeError
         all_dates = pd.concat([df_cleaned[c].dropna() for c in valid_date_cols])
         
         if not all_dates.empty:
             min_ts = all_dates.min()
             max_ts = all_dates.max()
             
-            # Convert Timestamp to datetime.date for st.date_input
             min_date = min_ts.date()
             max_date = max_ts.date()
             
@@ -1154,40 +1152,64 @@ elif selected == "Data Analysis":
 
         
         
-            # ================== DUPLICATES CHECK WITH PRODUCT ==================
+            # ================== DUPLICATES CHECK WITH PRODUCT (MODIFIED) ==================
         st.subheader("🔍 Duplicate Leads by MCN (Considering Product)")
         
         if "MCN" in df_filtered.columns and "Products" in df_filtered.columns:
-            # --- Duplicates with same Product ---
-            dup_same_product = df_filtered[df_filtered.duplicated(subset=["MCN", "Products"], keep=False)]
+            # --- Duplicates with same MCN and same Product ---
+            dup_same_product = df_filtered[df_filtered.duplicated(subset=["MCN", "Products"], keep=False)].copy()
         
             if not dup_same_product.empty:
                 st.warning(f"⚠️ Found {dup_same_product['MCN'].nunique()} unique MCNs duplicated with SAME Product "
                              f"(total {len(dup_same_product)} rows).")
+                
+                # ✅ الأعمدة المطلوبة في الجدول الجديد
+                required_cols = [
+                    "MCN", 
+                    "Products", 
+                    "Created Time", 
+                    "Date of Sale", 
+                    "Dr Name", 
+                    "Client", 
+                    "Chaser Name", 
+                    "Chasing Disposition"
+                ]
+                
+                # تصفية الأعمدة المتوفرة فقط
+                available_dup_cols = [c for c in required_cols if c in dup_same_product.columns]
+                
+                # **الجدول الجديد المطلوب**
+                st.markdown("### 📋 Duplicate Leads (MCN & Product) Details")
+                st.dataframe(
+                    dup_same_product.sort_values(["MCN", "Products", "Created Time"])[available_dup_cols],
+                    use_container_width=True
+                )
         
-                cols_to_show = [
+                # الجدول القديم (Grouped by Key Dates) - تم دمجه في الجزء الجديد
+                cols_to_show_old = [
                     "MCN","Products","Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)",
                     "Assigned date (Date)","Approval date (Date)","Denial Date (Date)",
                     "Completion Date (Date)","Upload Date (Date)","Client",
                     "Chasing Disposition","Insurance","Type Of Sale"
                 ]
-                available_cols = [c for c in cols_to_show if c in dup_same_product.columns]
-        
-                with st.expander("📋 View Duplicate Leads (Same Product)"):
+                available_cols_old = [c for c in cols_to_show_old if c in dup_same_product.columns]
+                
+                with st.expander("📋 View All Duplicate Columns"):
                     st.dataframe(
-                        dup_same_product.sort_values(["MCN", "Products"])[available_cols],
+                        dup_same_product.sort_values(["MCN", "Products"])[available_cols_old],
                         use_container_width=True
                     )
-        
-                    # 📊 Group by MCN + key dates
-                    if all(c in dup_same_product.columns for c in ["Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]):
-                        grouped_same = (
-                            dup_same_product.groupby(
-                                ["MCN", "Products", "Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]
-                            ).size().reset_index(name="Count")
-                        )
-                        st.markdown("### 📊 Duplicate MCN (Same Product) Grouped by Key Dates")
-                        st.dataframe(grouped_same.sort_values("Count", ascending=False), use_container_width=True)
+
+
+                # 📊 Group by MCN + key dates
+                if all(c in dup_same_product.columns for c in ["Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]):
+                    grouped_same = (
+                        dup_same_product.groupby(
+                            ["MCN", "Products", "Upload Date (Date)", "Completion Date (Date)", "Assigned date (Date)"]
+                        ).size().reset_index(name="Count")
+                    )
+                    st.markdown("### 📊 Duplicate MCN (Same Product) Grouped by Key Dates")
+                    st.dataframe(grouped_same.sort_values("Count", ascending=False), use_container_width=True)
         
             else:
                 st.success("✅ No duplicate MCNs found with SAME product.")
@@ -1205,9 +1227,11 @@ elif selected == "Data Analysis":
                 st.info(f"ℹ️ Found {len(dup_diff_product_grouped)} MCNs with DIFFERENT Products (not real dups).")
         
                 with st.expander("📋 View MCNs with Different Products"):
+                    # نستخدم الأعمدة المتوفرة من القائمة القديمة
+                    available_cols_for_diff_dups = [c for c in cols_to_show_old if c in dup_diff_product.columns]
                     merged = dup_diff_product.merge(dup_diff_product_grouped[["MCN"]], on="MCN")
                     st.dataframe(
-                        merged.sort_values(["MCN", "Products"])[available_cols],
+                        merged.sort_values(["MCN", "Products"])[available_cols_for_diff_dups],
                         use_container_width=True
                     )
         
