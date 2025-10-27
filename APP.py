@@ -566,22 +566,23 @@ elif selected == "Data Analysis":
             st.table(top_table)
         
         
-        # ================== Chasing Disposition Distribution (MODIFIED FOR AESTHETICS) ==================
+        # ================== Chasing Disposition Distribution (MODIFIED: Added Total Count Metric) ==================
         if "Chasing Disposition" in df_ts.columns:
             st.subheader("📊 Chasing Disposition Distribution")
 
             # --- اختيارات المتركس اللي نعرضها ---
+            metric_options_disp = [
+                "Total Leads (with Created Time (Date))",
+                "Total Assigned",
+                "Not Assigned",
+                "Total Approved",
+                "Total Denied",
+                "Total Completed",
+                "Total Uploaded"
+            ]
             metric_option = st.selectbox(
                 "Select metric to display by Chasing Disposition:",
-                [
-                    "Total Leads (with Created Time (Date))",
-                    "Total Assigned",
-                    "Not Assigned",
-                    "Total Approved",
-                    "Total Denied",
-                    "Total Completed",
-                    "Total Uploaded"
-                ]
+                metric_options_disp
             )
 
             # --- حساب المتركس حسب كل Chasing Disposition ---
@@ -610,21 +611,23 @@ elif selected == "Data Analysis":
             }
 
             selected_col = metric_map[metric_option]
-
+            
             # --- جهز البيانات ---
             chart_data = metrics_by_disp[["Chasing Disposition", selected_col]].rename(columns={selected_col: "Count"})
 
-            # ✅ حساب النسبة المئوية وتسمية البيانات (كما طلب في الصورة)
-            total_for_percentage = chart_data["Count"].sum() 
+            # ✅ إضافة مؤشر إجمالي العدد الكلي
+            total_selected_metric = chart_data["Count"].sum()
+            st.metric(label=f"Total Count for: {metric_option}", value=f"{total_selected_metric:,}")
+            
+            # ✅ حساب النسبة المئوية وتسمية البيانات (Data Label)
+            total_for_percentage = total_selected_metric
             
             if total_for_percentage > 0:
                 chart_data["Percentage"] = (chart_data["Count"] / total_for_percentage * 100).round(1)
-                # نستخدم فقط العدد للتسمية الرئيسية (للتطابق مع الصورة المطلوبة)
                 chart_data["Label"] = chart_data["Count"].apply(lambda x: f'{x:,}') 
-                # نحتفظ بالنسبة المئوية في التولتيب
             else:
                 chart_data["Percentage"] = 0.0
-                chart_data["Label"] = chart_data["Count"].apply(lambda x: f'{x:,}') 
+                chart_data["Label"] = chart_data["Count"].apply(lambda x: f'{x:,}')
 
 
             # --- Bar chart ---
@@ -641,7 +644,6 @@ elif selected == "Data Analysis":
             )
             
             # --- Text Layer (Data Label) ---
-            # ✅ التعديل الرئيسي هنا: إزالة الدوران، وتعديل المحاذاة ليكون النص فوق العمود
             text = chart_disp.mark_text(
                 align='center',    # محاذاة النص في المنتصف أفقياً
                 baseline='bottom', # وضع النص فوق العمود مباشرة
@@ -649,7 +651,7 @@ elif selected == "Data Analysis":
                 color='white',     # لون النص
                 fontSize=12
             ).encode(
-                text=alt.Text("Label") # استخدام حقل Label الذي يحتوي على العدد
+                text=alt.Text("Label") 
             )
 
             # --- Final Chart ---
@@ -657,22 +659,23 @@ elif selected == "Data Analysis":
             st.altair_chart(final_chart, use_container_width=True)
 
 
-            # ================== Client Distribution ==================
+            # ================== Client Distribution (MODIFIED: Added Total Count Metric) ==================
         if "Client" in df_ts.columns:
             st.subheader("👥 Client Distribution")
         
             # --- اختيارات المتركس اللي نعرضها ---
-            metric_option = st.selectbox(
+            metric_options_client = [
+                "Total Leads (with Created Time (Date))",
+                "Total Assigned",
+                "Not Assigned",
+                "Total Approved",
+                "Total Denied",
+                "Total Completed",
+                "Total Uploaded"
+            ]
+            metric_option_client = st.selectbox(
                 "Select metric to display by Client:",
-                [
-                    "Total Leads (with Created Time (Date))",
-                    "Total Assigned",
-                    "Not Assigned",
-                    "Total Approved",
-                    "Total Denied",
-                    "Total Completed",
-                    "Total Uploaded"
-                ],
+                metric_options_client,
                 key="client_metric"
             )
         
@@ -689,39 +692,57 @@ elif selected == "Data Analysis":
             metrics_by_client["Not Assigned"] = metrics_by_client["Created Time (Date)"] - metrics_by_client["Assigned date"]
         
             # --- ربط الاختيارات بالاعمدة ---
-            metric_map = {
-                "Total Leads (with Created Time (Date))": "Created Time (Date)",
-                "Total Assigned": "Assigned date",
-                "Not Assigned": "Not Assigned",
-                "Total Approved": "Approval date",
-                "Total Denied": "Denial Date",
-                "Total Completed": "Completion Date",
-                "Total Uploaded": "Upload Date"
-            }
-        
-            selected_col = metric_map[metric_option]
+            # (نفس الخريطة المستخدمة في Chasing Disposition)
+            
+            selected_col_client = metric_map[metric_option_client]
         
             # --- جهز البيانات ---
-            chart_data = metrics_by_client[["Client", selected_col]].rename(columns={selected_col: "Count"})
+            chart_data_client = metrics_by_client[["Client", selected_col_client]].rename(columns={selected_col_client: "Count"})
+
+            # ✅ إضافة مؤشر إجمالي العدد الكلي
+            total_selected_metric_client = chart_data_client["Count"].sum()
+            st.metric(label=f"Total Count for: {metric_option_client}", value=f"{total_selected_metric_client:,}")
+            
+            # ✅ حساب النسبة المئوية وتسمية البيانات (Data Label)
+            total_for_percentage_client = total_selected_metric_client
+            
+            if total_for_percentage_client > 0:
+                chart_data_client["Percentage"] = (chart_data_client["Count"] / total_for_percentage_client * 100).round(1)
+                chart_data_client["Label"] = chart_data_client["Count"].apply(lambda x: f'{x:,}') 
+            else:
+                chart_data_client["Percentage"] = 0.0
+                chart_data_client["Label"] = chart_data_client["Count"].apply(lambda x: f'{x:,}')
         
-            chart_disp = (
-                alt.Chart(chart_data)
+            # --- Bar chart ---
+            chart_disp_client = (
+                alt.Chart(chart_data_client)
                 .mark_bar()
                 .encode(
                     x=alt.X("Client", sort="-y"),
-                    y="Count",
+                    y=alt.Y("Count", title=selected_col_client.replace(" (Date)", "")),
                     color="Client",
-                    tooltip=["Client", "Count"]
+                    tooltip=["Client", "Count", alt.Tooltip("Percentage", format=".1f", title="Percentage (%)")]
                 )
                 .properties(height=400)
             )
-            st.altair_chart(chart_disp, use_container_width=True)
+
+            # --- Text Layer (Data Label) ---
+            text_client = chart_disp_client.mark_text(
+                align='center',    # محاذاة النص في المنتصف أفقياً
+                baseline='bottom', # وضع النص فوق العمود مباشرة
+                dy=-5,             # إزاحة للأعلى قليلاً
+                color='white',     # لون النص
+                fontSize=12
+            ).encode(
+                text=alt.Text("Label") 
+            )
+            
+            final_chart_client = chart_disp_client + text_client
+            st.altair_chart(final_chart_client, use_container_width=True)
 
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
-        st.info("High-level insights based on the selected date column: assigned, approvals, denials, and warnings if data is inconsistent.")
-        
-        # --- Subset based on selected time_col ---
+        # ... (بقية قسم Data Analysis كما هو) ...
         df_time = df_ts[df_ts[original_time_col].notna()].copy()
         total_time_leads = len(df_time)
         
