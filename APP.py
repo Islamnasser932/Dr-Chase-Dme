@@ -4,6 +4,7 @@ import altair as alt
 import re
 from streamlit_option_menu import option_menu
 from streamlit_extras.metric_cards import style_metric_cards
+import math 
 
 # ================== PAGE CONFIG ==================
 st.set_page_config(
@@ -12,28 +13,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# ================== SIDEBAR MENU ==================
-with st.sidebar:
-    selected = option_menu(
-        menu_title="Main Menu",
-        options=["Dataset Overview", "Data Analysis"],
-        icons=["table", "bar-chart"],
-        menu_icon="cast",
-        default_index=0,
-        orientation="vertical"
-    )
-
-# ================== LOAD DATA ==================
-# ⚠️ ملاحظة: هذا الكود يفترض وجود ملف "Dr_Chase_Leads.csv"
-try:
-    df = pd.read_csv("Dr_Chase_Leads.csv", low_memory=False)
-    df.columns = df.columns.str.strip()
-    st.success("✅ File loaded successfully!")
-except FileNotFoundError:
-    st.error("⚠️ خطأ: لم يتم العثور على الملف 'Dr_Chase_Leads.csv'.")
-    st.stop()
-
 
 # ================== HELPER FUNCTIONS ==================
 def norm(s: str) -> str:
@@ -46,8 +25,15 @@ def find_col(df_cols, candidates):
             return c
     return None
 
+def categorize_weeks(days):
+    if pd.isna(days):
+        return None
+    if days >= 0:
+        return f"Week {math.floor(days / 7) + 1}"
+    else:
+        return f"Week {math.ceil(days / 7)}" 
 
-# ================== SYNONYMS ==================
+# ================== SYNONYMS & MAPS ==================
 syn = {
     "created_time": ["created_time", "created time", "creation time", "created", "lead created", "request created"],
     "assign_date": ["assign_date", "assigned date", "assign time", "assigned time", "assigned on"],
@@ -57,87 +43,99 @@ syn = {
     "assigned_to_chase": ["assigned to chase", "assigned_to_chase", "assigned to", "assigned user (chase)", "assigned chaser"],
 }
 
-cols_map = {
-    "created_time": find_col(df.columns, syn["created_time"]),
-    "assign_date": find_col(df.columns, syn["assign_date"]),
-    "approval_date": find_col(df.columns, syn["approval_date"]),
-    "completion_date": find_col(df.columns, syn["completion_date"]),
-    "uploaded_date": find_col(df.columns, syn["uploaded_date"]),
-    "assigned_to_chase": find_col(df.columns, syn["assigned_to_chase"]),
-}
-
-# ================== CLEAN DATA ==================
-columns_to_remove = [
-    "Is Converted From Lead", "Height", "Weight", "Waist Size", "Dr Phone Number", "Dr Fax",
-    "Dr Alternative Phone", "Dr Address", "Dr City", "Dr ZIP Code", "NPI", "Dr Info Extra Comments",
-    "Dr. Name", "Exception", "Initial Agent", "Full Name", "Last Name", "Secondary Phone", "Address",
-    "Gender", "ZIP Code", "City", "Phase","First Name","LOMN?","Source","Brace Size","Extra Comments" ,"CBA","Primary Phone"
-]
-df_cleaned = df.drop(columns=[c for c in columns_to_remove if c in df.columns], errors="ignore")
-
-date_columns = [
-    "Created Time", "Assigned date", "Completion Date", "Approval date",
-    "Denial Date", "Modified Time", "Date of Sale", "Upload Date", 
-]
-
-for col in date_columns:
-    if col in df_cleaned.columns:
-        # Convert to datetime (day first format)
-        df_cleaned[col] = pd.to_datetime(df_cleaned[col], errors="coerce", dayfirst=True)
-
-        # Create additional split columns for better readability
-        df_cleaned[col + " (Date)"] = df_cleaned[col].dt.date
-        if df_cleaned[col].dt.time.notna().any(): # only if time part exists
-            df_cleaned[col + " (Time)"] = df_cleaned[col].dt.time
-
-# ================== NAME MAP ==================
 name_map = {
-    "a.williams": "Alfred Williams",
-    "david.smith": "David Smith",
-    "jimmy.daves": "Grayson Saint",
-    "e.moore": "Eddie Moore",
-    "aurora.stevens": "Aurora Stevens",
-    "grayson.saint": "Grayson Saint",
-    "emma.wilson": "Emma Wilson",
-    "scarlett.mitchell": "Scarlett Mitchell",
-    "lucas.diago": "Lucas Diago",
-    "mia.alaxendar": "Mia Alaxendar",
-    "ivy.brooks": "Ivy Brooks",
-    "timothy.williams": "Timothy Williams",
-    "sarah.adams": "Sarah Adams",
-    "sara.adams": "Sarah Adams",
-    "samy.youssef": "Samy Youssef",
-    "candy.johns": "Candy Johns",
-    "heather.robertson": "Heather Robertson",
-    "a.cabello": "Andrew Cabello",
-    "alia.scott": "Alia Scott",
-    "sandra.sebastian": "Sandra Sebastian",
-    "kayla.miller": "Kayla Miller"
+    "a.williams": "Alfred Williams", "david.smith": "David Smith", "jimmy.daves": "Grayson Saint",
+    "e.moore": "Eddie Moore", "aurora.stevens": "Aurora Stevens", "grayson.saint": "Grayson Saint",
+    "emma.wilson": "Emma Wilson", "scarlett.mitchell": "Scarlett Mitchell", "lucas.diago": "Lucas Diago",
+    "mia.alaxendar": "Mia Alaxendar", "ivy.brooks": "Ivy Brooks", "timothy.williams": "Timothy Williams",
+    "sarah.adams": "Sarah Adams", "sara.adams": "Sarah Adams", "samy.youssef": "Samy Youssef",
+    "candy.johns": "Candy Johns", "heather.robertson": "Heather Robertson", "a.cabello": "Andrew Cabello",
+    "alia.scott": "Alia Scott", "sandra.sebastian": "Sandra Sebastian", "kayla.miller": "Kayla Miller"
 }
 
-assigned_col = cols_map["assigned_to_chase"]
-if assigned_col and assigned_col in df_cleaned.columns:
-    df_cleaned["Chaser Name"] = (
-        df_cleaned[assigned_col]
-        .astype(str).str.strip().str.lower()
-        .map(name_map)
-        .fillna(df_cleaned[assigned_col])
-    )
+samy_chasers = {
+    "Emma Wilson", "Scarlett Mitchell", "Lucas Diago", "Mia Alaxendar",
+    "Candy Johns", "Sandra Sebastian", "Alia Scott",
+    "Ivy Brooks", "Heather Robertson", "Samy Youssef",
+    "Sarah Adams", "Timothy Williams"
+}
 
-    samy_chasers = {
-        "Emma Wilson", "Scarlett Mitchell", "Lucas Diago", "Mia Alaxendar",
-        "Candy Johns", "Sandra Sebastian", "Alia Scott",
-        "Ivy Brooks", "Heather Robertson", "Samy Youssef",
-        "Sarah Adams", "Timothy Williams"
-    }
-    df_cleaned["Chaser Group"] = df_cleaned["Chaser Name"].apply(
-        lambda n: "Samy Chasers" if n in samy_chasers else "Andrew Chasers"
-    )
+# ⚠️ Load Raw Data (Initial Check)
+try:
+    df_raw = pd.read_csv("Dr_Chase_Leads.csv", low_memory=False)
+except FileNotFoundError:
+    st.error("⚠️ خطأ: لم يتم العثور على الملف 'Dr_Chase_Leads.csv'. يرجى التأكد من وجود الملف في نفس المجلد.")
+    st.stop()
+df_raw.columns = df_raw.columns.str.strip()
 
-# Convert dates
-date_actual_cols = [cols_map[k] for k in ["created_time","assign_date","approval_date","completion_date","uploaded_date"] if cols_map[k]]
-for c in date_actual_cols:
-    df_cleaned[c] = pd.to_datetime(df_cleaned[c], errors="coerce")
+cols_map = {
+    "created_time": find_col(df_raw.columns, syn["created_time"]),
+    "assign_date": find_col(df_raw.columns, syn["assign_date"]),
+    "approval_date": find_col(df_raw.columns, syn["approval_date"]),
+    "completion_date": find_col(df_raw.columns, syn["completion_date"]),
+    "uploaded_date": find_col(df_raw.columns, syn["uploaded_date"]),
+    "assigned_to_chase": find_col(df_raw.columns, syn["assigned_to_chase"]),
+}
+
+# ================== DATA CLEANING & CACHING FUNCTION ==================
+@st.cache_data
+def load_and_clean_data(df, name_map, cols_map, samy_chasers):
+    df_cleaned = df.copy()
+    
+    # 1. Remove columns
+    columns_to_remove = [
+        "Is Converted From Lead", "Height", "Weight", "Waist Size", "Dr Phone Number", "Dr Fax",
+        "Dr Alternative Phone", "Dr Address", "Dr City", "Dr ZIP Code", "NPI", "Dr Info Extra Comments",
+        "Dr. Name", "Exception", "Initial Agent", "Full Name", "Last Name", "Secondary Phone", "Address",
+        "Gender", "ZIP Code", "City", "Phase","First Name","LOMN?","Source","Brace Size","Extra Comments" ,"CBA","Primary Phone"
+    ]
+    df_cleaned = df_cleaned.drop(columns=[c for c in columns_to_remove if c in df_cleaned.columns], errors="ignore")
+
+    # 2. Date Conversion
+    date_columns_original = [
+        "Created Time", "Assigned date", "Completion Date", "Approval date",
+        "Denial Date", "Modified Time", "Date of Sale", "Upload Date", 
+    ]
+
+    for col in date_columns_original:
+        if col in df_cleaned.columns:
+            # Convert to datetime (day first format is assumed: DD/MM/YYYY)
+            df_cleaned[col] = pd.to_datetime(
+                df_cleaned[col], 
+                errors="coerce", 
+                dayfirst=True, 
+                infer_datetime_format=True
+            )
+
+            # Create additional split columns for date/time (used for st.dataframe)
+            df_cleaned[col + " (Date)"] = df_cleaned[col].dt.date
+            if df_cleaned[col].dt.time.notna().any():
+                 df_cleaned[col + " (Time)"] = df_cleaned[col].dt.time
+
+    # 3. Chaser Name Mapping and Grouping
+    assigned_col = cols_map["assigned_to_chase"]
+    if assigned_col and assigned_col in df_cleaned.columns:
+        df_cleaned["Chaser Name"] = (
+            df_cleaned[assigned_col]
+            .astype(str).str.strip().str.lower()
+            .map(name_map)
+            .fillna(df_cleaned[assigned_col])
+        )
+        df_cleaned["Chaser Group"] = df_cleaned["Chaser Name"].apply(
+            lambda n: "Samy Chasers" if n in samy_chasers else "Andrew Chasers"
+        )
+    
+    # 4. Ensure core columns used for calculation are datetime
+    date_actual_cols = [cols_map[k] for k in ["created_time","assign_date","approval_date","completion_date","uploaded_date"] if cols_map[k]]
+    for c in date_actual_cols:
+         if c in df_cleaned.columns:
+            df_cleaned[c] = pd.to_datetime(df_cleaned[c], errors="coerce")
+
+    return df_cleaned
+
+# ================== EXECUTE DATA LOAD ==================
+df_cleaned = load_and_clean_data(df_raw, name_map, cols_map, samy_chasers)
+st.success("✅ File loaded and cleaned successfully! (Cached for speed)")
 
 # ================== COLUMN DESCRIPTIONS ==================
 column_descriptions = {
@@ -194,12 +192,40 @@ column_descriptions = {
     "Chaser Group": "Group classification (e.g., Samy Chasers, Andrew Chasers)."
 }
 
-df_filtered = df_cleaned.copy()
-#switcher
 
-# ================== SIDEBAR FILTERS ==================
+# ================== SIDEBAR MENU ==================
+with st.sidebar:
+    selected = option_menu(
+        menu_title="Main Menu",
+        options=["Dataset Overview", "Data Analysis"],
+        icons=["table", "bar-chart"],
+        menu_icon="cast",
+        default_index=0,
+        orientation="vertical"
+    )
+
+# --- Function for tabular view (USED IN BOTH TABS) ---
+def table(df_filtered):
+    with st.expander("📊 Tabular Data View"):
+        default_cols = [
+            "MCN","Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)","Assigned date (Date)",
+            "Approval date (Date)","Denial Date (Date)","Completion Date (Date)",
+            "Upload Date (Date)","Client","Chasing Disposition","Insurance","Type Of Sale","Products"
+        ]
+        shwdata_defaults = [c for c in default_cols if c in df_filtered.columns]
+
+        shwdata = st.multiselect(
+            "Filter Columns:",
+            df_filtered.columns.tolist(),
+            default=shwdata_defaults
+        )
+        st.dataframe(df_filtered[shwdata], use_container_width=True)
+
+
+# ================== SIDEBAR FILTERS (FIXED: Date Range Robustness) ==================
 st.sidebar.header("🎛 Basic Filters")
 
+# ... (Client, Chaser Name, Chaser Group, Chasing Disposition filters - UNCHANGED) ...
 with st.sidebar.expander("👥 Client", expanded=False):
     all_clients = df_cleaned["Client"].unique().tolist()
     select_all_clients = st.checkbox("Select All Clients", value=True, key="all_clients")
@@ -213,16 +239,16 @@ with st.sidebar.expander("🧑‍💼 Chaser Name", expanded=False):
     all_Chaser_Name=df_cleaned["Chaser Name"].unique().tolist()
     select_all_Chaser_Name = st.checkbox("Select All Chaser Name ", value=True, key="all_Chaser_Name")
     if select_all_Chaser_Name:
-        Chaser_Name = st.multiselect("Select Chaser Name", options=all_Chaser_Name, default=all_Chaser_Name)      
+        Chaser_Name = st.multiselect("Select Chaser Name", options=all_Chaser_Name, default=all_Chaser_Name)   
     else:
         Chaser_Name  = st.multiselect("Select  Chaser Name ", options=all_Chaser_Name)
-              
+            
 
 with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=False):
     all_Chaser_Group=df_cleaned["Chaser Group"].unique().tolist()
     select_all_Chaser_Group = st.checkbox("Select All Chaser Group ", value=True, key="all_Chaser_Group")
     if select_all_Chaser_Group:
-        Chaser_Group = st.multiselect("Select Chaser Group", options=all_Chaser_Group, default=all_Chaser_Group)      
+        Chaser_Group = st.multiselect("Select Chaser Group", options=all_Chaser_Group, default=all_Chaser_Group)   
     else:
         Chaser_Group  = st.multiselect("Select  Chaser Group ", options=all_Chaser_Group)
 
@@ -231,74 +257,73 @@ with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
     all_Chasing_Disposition=df_cleaned["Chasing Disposition"].unique().tolist()
     select_all_Chasing_Disposition = st.checkbox("Select All Chaser Disposition ", value=True, key="all_Chasing_Disposition")
     if select_all_Chasing_Disposition:
-        Chasing_Disposition = st.multiselect("Select Chaser Disposition", options=all_Chasing_Disposition, default=all_Chasing_Disposition)      
+        Chasing_Disposition = st.multiselect("Select Chaser Disposition", options=all_Chasing_Disposition, default=all_Chasing_Disposition)   
     else:
         Chasing_Disposition  = st.multiselect("Select  Chaser Disposition ", options=all_Chasing_Disposition)
 
 
-    
 with st.sidebar.expander("📅 Date Range", expanded=False):
-    date_columns_for_range = [c for c in date_columns if c in df_cleaned.columns]
+    date_cols_for_range = [
+        "Created Time", "Assigned date", "Completion Date", "Approval date",
+        "Denial Date", "Modified Time", "Date of Sale", "Upload Date"
+    ]
     
-    # يجب التأكد من أن الأعمدة الأصلية هي datetime64 قبل أخذ min/max
-    df_temp_dates = df_cleaned[date_columns_for_range].apply(lambda x: pd.to_datetime(x, errors='coerce', dayfirst=True))
+    valid_date_cols = [c for c in date_cols_for_range if c in df_cleaned.columns]
+    
+    if valid_date_cols:
+        # **FIX**: Get min/max from datetime64[ns] columns to avoid TypeError
+        all_dates = pd.concat([df_cleaned[c].dropna() for c in valid_date_cols])
+        
+        if not all_dates.empty:
+            min_ts = all_dates.min()
+            max_ts = all_dates.max()
+            
+            # Convert Timestamp to datetime.date for st.date_input
+            min_date = min_ts.date()
+            max_date = max_ts.date()
+            
+            date_range = st.date_input(
+                "Select date range (based on Available Dates)",
+                value=(min_date, max_date),
+                min_value=min_date,
+                max_value=max_date
+            )
+        else:
+            st.warning("No valid dates found in the dataset.")
+            default_date = pd.Timestamp.now().date()
+            date_range = (default_date, default_date)
+            st.date_input("Select date range (No Data Available)", value=date_range, disabled=True)
+    else:
+        st.warning("No date columns found for filtering.")
+        default_date = pd.Timestamp.now().date()
+        date_range = (default_date, default_date)
 
-    min_date_raw = df_temp_dates.min().min()
-    max_date_raw = df_temp_dates.max().max()
 
-    # تحويل Timestamp إلى date
-    min_date = min_date_raw.date() if pd.notna(min_date_raw) else pd.Timestamp.now().date()
-    max_date = max_date_raw.date() if pd.notna(max_date_raw) else pd.Timestamp.now().date()
-    
-    date_range = st.date_input(
-        "Select date range",
-        value=(min_date, max_date),
-        min_value=min_date,
-        max_value=max_date
-    )
-    
 # --- Apply filters using .query() ---
 df_filtered = df_cleaned.query(
     "Client in @Client and `Chaser Name` in @Chaser_Name and `Chaser Group` in @Chaser_Group and `Chasing Disposition` in @Chasing_Disposition"
 )
 
-# Apply date filter (on Created Time by default, but you can change to Completion Date, etc.)
+# Apply date filter (on Created Time by default)
 if isinstance(date_range, tuple) and len(date_range) == 2:
     start_date, end_date = date_range
     if "Created Time" in df_filtered.columns:
-        # مقارنة تاريخ العمود مع تاريخ المدخلات (datetime.date)
         df_filtered = df_filtered[
             (df_filtered["Created Time"].dt.date >= start_date)
             & (df_filtered["Created Time"].dt.date <= end_date)
         ]
 
-# ================== MAIN DASHBOARD ==================
+# ================== MAIN DASHBOARD (Dataset Overview) ==================
 if selected == "Dataset Overview":
     st.title("📋 Dataset Overview – General Inspection")
     st.info("This page is for **quick inspection** of the dataset, showing key metrics, summaries, and descriptions of columns.")
 
-    # --- Function for tabular view ---
-    def table(df_filtered):
-        with st.expander("📊 Tabular"):
-            shwdata = st.multiselect(
-                "Filter Columns:",
-                df_filtered.columns,
-                default=["MCN","Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)","Assigned date (Date)",
-                         "Approval date (Date)","Denial Date (Date)","Completion Date (Date)",
-                         "Upload Date (Date)","Client","Chasing Disposition","Insurance","Type Of Sale","Products"]  # show first 6 columns by default
-            )
-            st.dataframe(df_filtered[shwdata], use_container_width=True)
-
-    # --- Inside your DR Chase Leads app ---
-    if selected == "Dataset Overview":
-        st.subheader("🔍 Data Inspection")
-        st.markdown(f""" The dataset contains **{len(df_filtered)} rows**
+    st.subheader("🔍 Data Inspection")
+    st.markdown(f""" The dataset contains **{len(df_filtered)} rows**
                          and **{len(df_filtered.columns)} columns**.
                      """)
-        # Show tabular selector
-        table(df_filtered)
+    table(df_filtered)
 
-                
     total_leads = len(df_filtered)
 
     # --- KPIs Section ---
@@ -336,7 +361,7 @@ if selected == "Dataset Overview":
     with col4:
         st.metric("✔ Approved / ❌ Denied", f"{total_approval:,} ({pct_approval:.1f}%) / {total_denial:,} ({pct_denial:.1f}%)")
     with col5:
-        st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)")  
+        st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)") 
     with col6:
         st.metric("📤 Uploaded", f"{total_uploaded:,} ({pct_uploaded:.1f}%)")
         
@@ -394,25 +419,6 @@ if selected == "Dataset Overview":
         "Select a column to view description",
         valid_desc_cols
     )
-
-    # Provide actual descriptions
-    column_descriptions = {
-        "Chaser Name": " chaser Name assigned to the lead.",
-        "Chaser Group": "Group classification (Samy Chasers or Andrew Chasers).",
-        "Date of Sale (Date)": "The confirmed sale date of the lead.",
-        "Created Time (Date)": "When the lead was created.",
-        "Assigned date (Date)": "When the lead was assigned to a chaser.",
-        "Approval date (Date)": "When the lead was approved.",
-        "Denial Date (Date)": "When the lead was denied.",
-        "Completion Date (Date)": "When the lead was completed.",
-        "Upload Date (Date)": "When documents were uploaded.",
-        "Client": "Client associated with the lead (e.g., PPO-Braces chasing).",
-        "Chasing Disposition": "Final chasing result (e.g., Dead Lead, Successful Chase).",
-        "Insurance": "Insurance provider associated with the patient.",
-        "Type Of Sale": "Category of the lead (e.g., Normal Chase, Red Flag).",
-        "Products": "Products linked to the lead (e.g., braces, medical items).",
-        "Days Spent As Pending QA": "Number of days lead stayed in Pending QA status."
-    }
 
     desc = column_descriptions.get(selected_col, "No description available for this column.")
     
@@ -480,7 +486,7 @@ if selected == "Dataset Overview":
         st.altair_chart(chart, use_container_width=True)
 
 
-
+# ================== MAIN DASHBOARD (Data Analysis) ==================
 elif selected == "Data Analysis":
     st.title("📊 Data Analysis – Advanced Insights")
     st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
@@ -501,55 +507,37 @@ elif selected == "Data Analysis":
     
     if not available_columns:
         st.warning("⚠️ None of the predefined analysis columns are available in the dataset.")
-    else:
-        time_col = st.selectbox("Select column for analysis", available_columns)
+        st.stop()
+        
+    time_col = st.selectbox("Select column for analysis", available_columns)
+    original_time_col = time_col.replace(" (Date)", "") # e.g., 'Created Time'
     
-        # Convert to datetime if column looks like a date
-        if "date" in time_col.lower():
-            df_filtered[time_col] = pd.to_datetime(df_filtered[time_col], errors="coerce", dayfirst=True)
-    
-            today = pd.Timestamp.now().normalize()
-            future_mask = df_filtered[time_col] > today
-            df_ts = df_filtered.loc[~future_mask].copy()
-        else:
-            df_ts = df_filtered.copy()
+    # Prepare df_ts
+    df_ts = df_filtered.copy()
+    if original_time_col in df_ts.columns:
+        df_ts = df_ts[df_ts[original_time_col].notna()].copy()
 
-    # --- Function for tabular view ---
-    def table(df_filtered):
-        with st.expander("📊 Tabular"):
-            shwdata = st.multiselect(
-                "Filter Columns:",
-                df_filtered.columns,
-                default=["MCN","Chaser Name","Chaser Group","Date of Sale (Date)","Created Time (Date)","Assigned date (Date)",
-                         "Approval date (Date)","Denial Date (Date)","Completion Date (Date)",
-                         "Upload Date (Date)","Client","Chasing Disposition","Insurance","Type Of Sale","Products"]  # show first 6 columns by default
-            )
-            st.dataframe(df_filtered[shwdata], use_container_width=True)
+        today = pd.Timestamp.now().normalize()
+        future_mask = df_ts[original_time_col].dt.normalize() > today
+        df_ts = df_ts.loc[~future_mask].copy()
 
-    # --- Inside your DR Chase Leads app ---
-    if selected == "Data Analysis":
-        st.markdown(f""" The dataset contains **{len(df_filtered)} rows**
+    st.markdown(f""" The dataset contains **{len(df_filtered)} rows**
                          and **{len(df_filtered.columns)} columns**.
                      """)
-        # Show tabular selector
-        table(df_filtered)
+    table(df_filtered)
 
-                
+            
     total_leads = len(df_filtered)
     
     # --- Aggregation frequency ---
     freq = st.radio("Aggregation level:", ["Daily", "Weekly", "Monthly"], horizontal=True)
     period_map = {"Daily": "D", "Weekly": "W", "Monthly": "M"}
     
-    # يجب استخدام العمود الأصلي لـ Time Series
-    original_time_col = time_col.replace(" (Date)", "") 
     if original_time_col in df_ts.columns:
         df_ts["Period"] = df_ts[original_time_col].dt.to_period(period_map[freq]).dt.to_timestamp()
     else:
-        # إذا لم يكن العمود الأصلي موجوداً (على سبيل المثال إذا كان time_col هو "Created Time (Date)")
-        # فسنقوم بمحاولة إنشاء عمود الوقت من العمود المعروض
-        df_ts["Period"] = pd.to_datetime(df_ts[time_col], errors='coerce').dt.to_period(period_map[freq]).dt.to_timestamp()
-
+        # Fallback: cannot proceed with time series
+        df_ts = pd.DataFrame() 
 
     # --- Grouping option ---
     group_by = st.selectbox("Break down by:", ["None", "Client", "Chaser Name", "Chaser Group"])
@@ -592,7 +580,7 @@ elif selected == "Data Analysis":
             st.table(top_table)
         
         
-                        # ================== Chasing Disposition Distribution ==================
+        # ================== Chasing Disposition Distribution (MODIFIED) ==================
         if "Chasing Disposition" in df_ts.columns:
             st.subheader("📊 Chasing Disposition Distribution")
 
@@ -640,19 +628,48 @@ elif selected == "Data Analysis":
             # --- جهز البيانات ---
             chart_data = metrics_by_disp[["Chasing Disposition", selected_col]].rename(columns={selected_col: "Count"})
 
-            # --- Bar chart only ---
+            # ✅ التعديل الجديد: حساب النسبة المئوية وتسمية البيانات
+            total_for_percentage = chart_data["Count"].sum() 
+            
+            if total_for_percentage > 0:
+                chart_data["Percentage"] = (chart_data["Count"] / total_for_percentage * 100).round(1)
+                chart_data["Label"] = chart_data.apply(
+                    lambda row: f'{row["Count"]:,} ({row["Percentage"]}%)', axis=1
+                )
+            else:
+                chart_data["Percentage"] = 0.0
+                chart_data["Label"] = chart_data["Count"].apply(lambda x: f'{x:,} (0.0%)')
+
+
+            # --- Bar chart ---
             chart_disp = (
                 alt.Chart(chart_data)
                 .mark_bar()
                 .encode(
-                    x=alt.X("Chasing Disposition", sort="-y"),
-                    y="Count",
+                    x=alt.X("Chasing Disposition", sort="-y", title="Chasing Disposition"),
+                    y=alt.Y("Count", title=selected_col.replace(" (Date)", "")),
                     color="Chasing Disposition",
-                    tooltip=["Chasing Disposition", "Count"]
+                    # إضافة النسبة المئوية للتول تيب
+                    tooltip=["Chasing Disposition", "Count", alt.Tooltip("Percentage", format=".1f", title="Percentage (%)")]
                 )
                 .properties(height=400)
             )
-            st.altair_chart(chart_disp, use_container_width=True)
+            
+            # --- Text Layer (Data Label) ---
+            text = chart_disp.mark_text(
+                align='left', 
+                baseline='middle', 
+                dx=5,  # إزاحة بسيطة لليمين
+                angle=270, # تدوير النص ليكون أفقياً
+                color='white',
+                fontSize=10
+            ).encode(
+                text=alt.Text("Label") # استخدام حقل Label الذي يحتوي على القيمة والنسبة
+            )
+
+            # --- Final Chart ---
+            final_chart = chart_disp + text
+            st.altair_chart(final_chart, use_container_width=True)
 
 
             # ================== Client Distribution ==================
@@ -671,7 +688,7 @@ elif selected == "Data Analysis":
                     "Total Completed",
                     "Total Uploaded"
                 ],
-                key="client_metric" # Added a key to avoid duplicate widget error
+                key="client_metric"
             )
         
             # --- حساب المتركس حسب كل Client ---
@@ -864,7 +881,7 @@ elif selected == "Data Analysis":
         st.subheader("⏳ Lead Age Analysis")
         st.info("Analysis of how long it takes for leads to get Approved / Denied. Includes weekly distribution, averages/medians, and grouped comparisons.")
         
-        if "Created Time (Date)" in df_ts.columns:
+        if "Created Time" in df_ts.columns:
             df_lead_age = df_ts.copy()
         
             # حساب Lead Age من Approval و Denial
@@ -920,16 +937,6 @@ elif selected == "Data Analysis":
                     ]],
                     use_container_width=True
                 )
-        
-            # --- Function to categorize weeks ---
-            import math
-            def categorize_weeks(days):
-                if pd.isna(days):
-                    return None
-                if days >= 0:
-                    return f"Week {math.floor(days / 7) + 1}"
-                else:
-                    return f"Week {math.ceil(days / 7)}"    # Week -1, Week -2 ...
         
             # 🚨 Check for leads with both Approval & Denial
             both_dates = df_lead_age[df_lead_age["Approval date"].notna() & df_lead_age["Denial Date"].notna()]
