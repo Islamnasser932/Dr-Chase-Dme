@@ -330,7 +330,6 @@ if selected == "Dataset Overview":
     # --- KPIs Section ---
     st.subheader("📌 Key Performance Indicators")
     
-    # --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
     # --- حساب القيم ---
     total_leads = len(df_filtered)
     total_completed = df_filtered["Completion Date"].notna().sum() if "Completion Date" in df_filtered.columns else 0
@@ -397,7 +396,6 @@ if selected == "Dataset Overview":
         box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
     )
         
-    # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
     
     
     # --- Dates summary (table) ---
@@ -794,6 +792,9 @@ elif selected == "Data Analysis":
             final_chart_client = chart_disp_client + text_client
             st.altair_chart(final_chart_client, use_container_width=True)
 
+        
+        # --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
+        
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
         
@@ -810,6 +811,14 @@ elif selected == "Data Analysis":
             total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
             total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
             
+            # 🆕 (جديد) حساب الـ Pending Shipping
+            if "Chasing Disposition" in df_time.columns:
+                total_pending_shipping = df_time[
+                    df_time["Chasing Disposition"].astype(str).str.lower() == "pending shipping"
+                ].shape[0]
+            else:
+                total_pending_shipping = 0
+
             # Show stats
             st.markdown(f"""
                 - ✅ Total Leads (with {time_col}): **{total_time_leads}**
@@ -819,8 +828,11 @@ elif selected == "Data Analysis":
                 - ❌ Denied: **{total_denial}**
                 - 📌 Completed: **{total_completed}**
                 - 📤 Uploaded: **{total_uploaded}**
+                - 🚚 Total Upload to Client (Pending Shipping): **{total_pending_shipping}**
                 """)           
             
+        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
+
             st.subheader("🚨 Data Quality Warnings")
             today = pd.Timestamp.now().normalize()
 
