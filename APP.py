@@ -50,14 +50,14 @@ name_map = {
     "mia.alaxendar": "Mia Alaxendar", "ivy.brooks": "Ivy Brooks", "timothy.williams": "Timothy Williams",
     "sarah.adams": "Sarah Adams", "sara.adams": "Sarah Adams", "samy.youssef": "Samy Youssef",
     "candy.johns": "Candy Johns", "heather.robertson": "Heather Robertson", "a.cabello": "Andrew Cabello",
-    "alia.scott": "Alia Scott", "sandra.sebastian": "Sandra Sebastian", "kayla.miller": "Kayla Miller"
+    "alia.scott": "Alia Scott", "sandra.sebastian": "Sandra Sebastian", "kayla.miller": "Kayla Miller","Katty.Crater":"Katty Crater"
 }
 
 samy_chasers = {
     "Emma Wilson", "Scarlett Mitchell", "Lucas Diago", "Mia Alaxendar",
     "Candy Johns", "Sandra Sebastian", "Alia Scott",
     "Ivy Brooks", "Heather Robertson", "Samy Youssef",
-    "Sarah Adams", "Timothy Williams"
+    "Sarah Adams", "Timothy Williams","Katty Crater"
 }
 
 # ⚠️ Load Raw Data (Initial Check)
@@ -1252,3 +1252,4 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
+
