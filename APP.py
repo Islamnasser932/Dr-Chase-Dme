@@ -57,7 +57,7 @@ samy_chasers = {
     "Emma Wilson", "Scarlett Mitchell", "Lucas Diago", "Mia Alaxendar",
     "Candy Johns", "Sandra Sebastian", "Alia Scott",
     "Ivy Brooks", "Heather Robertson", "Samy Youssef",
-    "Sarah Adams", "Timothy Williams","Katty Crater"
+    "Sarah Adams", "Timothy Williams", "Katty Crater"
 }
 
 # ⚠️ Load Raw Data (Initial Check)
@@ -1252,5 +1252,6 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
+
 
 
