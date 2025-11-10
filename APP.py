@@ -153,19 +153,19 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
         # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
         # 🆕 (جديد) تنظيف أسماء الأعمدة من المسافات
         df.columns = df.columns.str.strip()
-        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
         
-        # Clean Dispo column
-        if "Dispo" in df.columns:
-            df["Dispo_clean"] = df["Dispo"].fillna('').astype(str).str.strip().str.lower()
+        # Clean "Closing Status" column (FIXED)
+        if "Closing Status" in df.columns:
+            df["Closing Status_clean"] = df["Closing Status"].fillna('').astype(str).str.strip().str.lower()
         else:
-            st.warning("Column 'Dispo' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
+            st.warning("Column 'Closing Status' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
             
         # Clean MCN column
         if "MCN" in df.columns:
             df["MCN_clean"] = df["MCN"].astype(str).str.strip()
         else:
             st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
+        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
             
         st.success("✅ O Plan file loaded successfully! (Cached for speed)")
         return df
@@ -988,8 +988,15 @@ elif selected == "Data Analysis":
                         )
             
             
+            # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
+            
             # 🚨 (NEW) Check for conflicting dispositions between Dr. Chase and O Plan
-            if not df_oplan.empty and "MCN_clean" in df_filtered.columns and "MCN_clean" in df_oplan.columns and "Dispo_clean" in df_oplan.columns:
+            # 🆕 Added check for "Closing Status_clean" (FIXED)
+            if (not df_oplan.empty and 
+                "MCN_clean" in df_filtered.columns and 
+                "MCN_clean" in df_oplan.columns and 
+                "Closing Status_clean" in df_oplan.columns and  # 👈 (FIXED)
+                "Chasing Disposition_clean" in df_filtered.columns):
                 
                 # 1. Define the conflicting statuses
                 dr_chase_bad_dispos = ["dr denied", "rejected bu dr chase", "dead leads"]
@@ -997,35 +1004,33 @@ elif selected == "Data Analysis":
 
                 # 2. Find leads in O Plan with the closing status
                 oplan_conflicts = df_oplan[
-                    df_oplan["Dispo_clean"].eq(oplan_closing_dispo) # 👈 Use .eq()
+                    df_oplan["Closing Status_clean"].eq(oplan_closing_dispo) # 👈 (FIXED)
                 ]
                 
                 # 3. Find leads in Dr. Chase (from the filtered list) with the bad status
-                if "Chasing Disposition_clean" in df_filtered.columns:
-                    dr_chase_conflicts = df_filtered[
-                        df_filtered["Chasing Disposition_clean"].isin(dr_chase_bad_dispos)
-                    ]
+                dr_chase_conflicts = df_filtered[
+                    df_filtered["Chasing Disposition_clean"].isin(dr_chase_bad_dispos)
+                ]
 
-                    # 4. Find the intersection (the MCNs present in both lists)
-                    conflicting_leads = pd.merge(
-                        dr_chase_conflicts[["MCN_clean", "Chasing Disposition", "Chaser Name", "Client"]],
-                        oplan_conflicts[["MCN_clean", "Dispo"]],
-                        on="MCN_clean",
-                        how="inner",
-                        suffixes=('_DrChase', '_OPlan')
-                    )
-                    
-                    # 5. Display the warning if any conflicts are found
-                    if not conflicting_leads.empty:
-                        st.warning(f"⚠️ Found {len(conflicting_leads)} leads marked as Denied/Dead in Dr. Chase but '{oplan_closing_dispo}' in O Plan.")
-                        with st.expander("🔍 View Conflicting Leads"):
-                            st.dataframe(conflicting_leads, use_container_width=True)
-                    
-                    # --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
-                    # 🆕 (جديد) إضافة رسالة تأكيد لو مفيش تضارب
-                    else:
-                        st.success("✅ تم فحص التطابق: لا يوجد أي تضارب بين ملف Dr. Chase وملف O Plan بخصوص الحالات المرفوضة.")
-                    # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
+                # 4. Find the intersection (the MCNs present in both lists)
+                conflicting_leads = pd.merge(
+                    dr_chase_conflicts[["MCN_clean", "Chasing Disposition", "Chaser Name", "Client"]],
+                    oplan_conflicts[["MCN_clean", "Closing Status"]], # 👈 (FIXED)
+                    on="MCN_clean",
+                    how="inner",
+                    suffixes=('_DrChase', '_OPlan')
+                )
+                
+                # 5. Display the warning if any conflicts are found
+                if not conflicting_leads.empty:
+                    st.warning(f"⚠️ Found {len(conflicting_leads)} leads marked as Denied/Dead in Dr. Chase but '{oplan_closing_dispo}' in O Plan.")
+                    with st.expander("🔍 View Conflicting Leads"):
+                        st.dataframe(conflicting_leads, use_container_width=True)
+                
+                else:
+                    st.success("✅ تم فحص التطابق: لا يوجد أي تضارب بين ملف Dr. Chase وملف O Plan بخصوص الحالات المرفوضة.")
+
+            # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
 
             
