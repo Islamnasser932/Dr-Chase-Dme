@@ -150,21 +150,17 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
     try:
         df = pd.read_csv(file_path)
-        # --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
         # Clean Dispo column
         if "Dispo" in df.columns:
             df["Dispo_clean"] = df["Dispo"].fillna('').astype(str).str.strip().str.lower()
         else:
-            # 🆕 Add warning if column is missing
             st.warning("Column 'Dispo' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
             
         # Clean MCN column
         if "MCN" in df.columns:
             df["MCN_clean"] = df["MCN"].astype(str).str.strip()
         else:
-            # 🆕 Add warning if column is missing
             st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
-        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
             
         st.success("✅ O Plan file loaded successfully! (Cached for speed)")
         return df
@@ -990,7 +986,6 @@ elif selected == "Data Analysis":
             # --- 🔽🔽🔽 START OF EDITED SECTION (Fix) 🔽🔽🔽 ---
             
             # 🚨 (NEW) Check for conflicting dispositions between Dr. Chase and O Plan
-            # 🆕 Added check for "Dispo_clean"
             if not df_oplan.empty and "MCN_clean" in df_filtered.columns and "MCN_clean" in df_oplan.columns and "Dispo_clean" in df_oplan.columns:
                 
                 # 1. Define the conflicting statuses
@@ -1022,6 +1017,10 @@ elif selected == "Data Analysis":
                         st.warning(f"⚠️ Found {len(conflicting_leads)} leads marked as Denied/Dead in Dr. Chase but '{oplan_closing_dispo}' in O Plan.")
                         with st.expander("🔍 View Conflicting Leads"):
                             st.dataframe(conflicting_leads, use_container_width=True)
+                    
+                    # 🆕 (جديد) إضافة رسالة تأكيد لو مفيش تضارب
+                    else:
+                        st.success("✅ تم فحص التطابق: لا يوجد أي تضارب بين ملف Dr. Chase وملف O Plan بخصوص الحالات المرفوضة.")
 
             # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
