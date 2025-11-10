@@ -135,18 +135,17 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
         if c in df_cleaned.columns:
             df_cleaned[c] = pd.to_datetime(df_cleaned[c], errors="coerce")
             
-    # --- 🔽🔽🔽 START OF EDITED SECTION (Clean MCN & Dispo) 🔽🔽🔽 ---
     # 5. Clean MCN and Chasing Disposition for merging
     if "MCN" in df_cleaned.columns:
         df_cleaned["MCN_clean"] = df_cleaned["MCN"].astype(str).str.strip()
         
     if "Chasing Disposition" in df_cleaned.columns:
-        df_cleaned["Chasing Disposition_clean"] = df_cleaned["Chasing Disposition"].astype(str).str.strip().str.lower()
-    # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
-
+        # 🔽🔽🔽 (تم التعديل هنا) تحويل القيم الفاضية إلى نص فارغ قبل التحويل
+        df_cleaned["Chasing Disposition_clean"] = df_cleaned["Chasing Disposition"].fillna('').astype(str).str.strip().str.lower()
+    
     return df_cleaned
 
-# --- 🔽🔽🔽 START OF NEW SECTION (Load O Plan Data) 🔽🔽🔽 ---
+
 @st.cache_data
 def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
@@ -154,7 +153,8 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
         df = pd.read_csv(file_path)
         # Clean Dispo column
         if "Dispo" in df.columns:
-            df["Dispo_clean"] = df["Dispo"].astype(str).str.strip().str.lower()
+             # 🔽🔽🔽 (تم التعديل هنا) تحويل القيم الفاضية إلى نص فارغ قبل التحويل
+            df["Dispo_clean"] = df["Dispo"].fillna('').astype(str).str.strip().str.lower()
         # Clean MCN column
         if "MCN" in df.columns:
             df["MCN_clean"] = df["MCN"].astype(str).str.strip()
@@ -166,7 +166,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     except Exception as e:
         st.error(f"An error occurred while loading O_Plan_Leads.csv: {e}")
         return pd.DataFrame()
-# --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
 
 
 # ================== EXECUTE DATA LOAD ==================
@@ -265,7 +264,6 @@ st.sidebar.header("🎛 Basic Filters")
 
 # --- Client Filter ---
 with st.sidebar.expander("👥 Client", expanded=False):
-    # 🆕 Check if "Client" column exists
     if "Client" in df_cleaned.columns:
         all_clients = df_cleaned["Client"].unique().tolist()
         select_all_clients = st.checkbox("Select All Clients", value=True, key="all_clients")
@@ -275,12 +273,11 @@ with st.sidebar.expander("👥 Client", expanded=False):
             Client = st.multiselect("Select Client", options=all_clients)
     else:
         st.warning("Column 'Client' not found.")
-        Client = [] # Set empty list if column not found
+        Client = [] 
 
 
 # --- Chaser Name Filter ---
 with st.sidebar.expander("🧑‍💼 Chaser Name", expanded=False):
-    # 🆕 Check if "Chaser Name" column exists
     if "Chaser Name" in df_cleaned.columns:
         all_Chaser_Name=df_cleaned["Chaser Name"].unique().tolist()
         select_all_Chaser_Name = st.checkbox("Select All Chaser Name ", value=True, key="all_Chaser_Name")
@@ -295,7 +292,6 @@ with st.sidebar.expander("🧑‍💼 Chaser Name", expanded=False):
 
 # --- Chaser Group Filter ---
 with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=False):
-    # 🆕 Check if "Chaser Group" column exists
     if "Chaser Group" in df_cleaned.columns:
         all_Chaser_Group=df_cleaned["Chaser Group"].unique().tolist()
         select_all_Chaser_Group = st.checkbox("Select All Chaser Group ", value=True, key="all_Chaser_Group")
@@ -310,7 +306,6 @@ with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=Fals
 
 # --- Chasing Disposition Filter ---
 with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
-    # 🆕 Check if "Chasing Disposition" column exists
     if "Chasing Disposition" in df_cleaned.columns:
         all_Chasing_Disposition=df_cleaned["Chasing Disposition"].unique().tolist()
         select_all_Chasing_Disposition = st.checkbox("Select All Chaser Disposition ", value=True, key="all_Chasing_Disposition")
@@ -361,15 +356,14 @@ with st.sidebar.expander("📅 Date Range", expanded=False):
 
 
 # --- Apply filters using .query() ---
-# 🆕 Build the query string dynamically to avoid errors if columns are missing
 query_parts = []
-if Client:
+if Client and "Client" in df_cleaned.columns:
     query_parts.append("Client in @Client")
-if Chaser_Name:
+if Chaser_Name and "Chaser Name" in df_cleaned.columns:
     query_parts.append("`Chaser Name` in @Chaser_Name")
-if Chaser_Group:
+if Chaser_Group and "Chaser Group" in df_cleaned.columns:
     query_parts.append("`Chaser Group` in @Chaser_Group")
-if Chasing_Disposition:
+if Chasing_Disposition and "Chasing Disposition" in df_cleaned.columns:
     query_parts.append("`Chasing Disposition` in @Chasing_Disposition")
 
 if query_parts:
@@ -410,13 +404,13 @@ if selected == "Dataset Overview":
     total_approval = df_filtered["Approval date"].notna().sum() if "Approval date" in df_filtered.columns else 0
     total_denial = df_filtered["Denial Date"].notna().sum() if "Denial Date" in df_filtered.columns else 0
     
-    # 🆕 (جديد) حساب الـ Pending Shipping
-    if "Chasing Disposition_clean" in df_filtered.columns: # 🆕 Use clean column
+    total_pending_shipping = 0
+    if "Chasing Disposition_clean" in df_filtered.columns: 
+        # --- 🔽🔽🔽 START OF EDITED SECTION (Fix 1) 🔽🔽🔽 ---
         total_pending_shipping = df_filtered[
-            df_filtered["Chasing Disposition_clean"] == "pending shipping"
+            df_filtered["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
         ].shape[0]
-    else:
-        total_pending_shipping = 0
+        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
     # Derived metrics
     total_not_assigned = total_leads - total_assigned
@@ -425,45 +419,39 @@ if selected == "Dataset Overview":
     pct_completed = (total_completed / total_leads * 100) if total_leads > 0 else 0
     pct_assigned = (total_assigned / total_leads * 100) if total_leads > 0 else 0
     pct_not_assigned = (total_not_assigned / total_leads * 100) if total_leads > 0 else 0
-    # ⚠️ الحفاظ على نفس المنطق: Uploaded كنسبة من Completed
     pct_uploaded = (total_uploaded / total_completed * 100) if total_completed > 0 else 0
     pct_approval = (total_approval / total_leads * 100) if total_leads > 0 else 0
     pct_denial = (total_denial / total_leads * 100) if total_leads > 0 else 0
-    # 🆕 (جديد) نسبة الـ Pending Shipping من الإجمالي
     pct_pending_shipping = (total_pending_shipping / total_leads * 100) if total_leads > 0 else 0
     
-    # --- 🆕 (تعديل) KPIs Layout (8 بطاقات) ---
+    # --- KPIs Layout (8 بطاقات) ---
     col1, col2, col3 = st.columns(3)
     col4, col5, col6 = st.columns(3)
-    col7, col8 = st.columns(2) # 🆕 صف جديد
+    col7, col8 = st.columns(2) 
     
     with col1:
         st.metric("📊 Total Leads", f"{total_leads:,}")
     with col2:
         st.metric("🧑‍💼 Assigned", f"{total_assigned:,} ({pct_assigned:.1f}%)")
     with col3:
-        st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)") # نقلناها هنا
+        st.metric("🚫 Not Assigned", f"{total_not_assigned:,} ({pct_not_assigned:.1f}%)")
     with col4:
         st.metric("✅ Completed", f"{total_completed:,} ({pct_completed:.1f}%)")
     with col5:
-        # 🆕 (تعديل) Approved في بطاقة منفصلة
         st.metric("✔ Approved", f"{total_approval:,} ({pct_approval:.1f}%)")
     with col6:
-        # 🆕 (تعديل) Denied في بطاقة منفصلة
         st.metric("❌ Denied", f"{total_denial:,} ({pct_denial:.1f}%)")
     with col7:
-        # 💡 ملحوظة: النسبة هنا من الـ Completed كما في الكود الأصلي
         st.metric("📤 Uploaded", f"{total_uploaded:,} ({pct_uploaded:.1f}%)")
     with col8:
-        # 🆕 (جديد) بطاقة الـ Pending Shipping
         st.metric("🚚 Total Upload to Client (Pending Shipping)", 
                  f"{total_pending_shipping:,} ({pct_pending_shipping:.1f}%)")
         
     
         # ✅ Apply custom style
     style_metric_cards(
-        background_color="#0E1117",  # خلفية dashboard غامقة
-        border_left_color="#00BFFF",  # أزرق للـ Total
+        background_color="#0E1117",
+        border_left_color="#00BFFF",
         border_color="#444",
         box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
     )
@@ -498,7 +486,6 @@ if selected == "Dataset Overview":
     st.subheader("📖 Column Descriptions")
     st.info("Choose a column to see what it represents and explore its distribution.")
 
-        # ✅ Restrict to specific columns
     description_columns = [
         "Chaser Name", "Chaser Group", "Date of Sale (Date)", "Created Time (Date)",
         "Assigned date (Date)", "Approval date (Date)", "Denial Date (Date)",
@@ -506,7 +493,6 @@ if selected == "Dataset Overview":
         "Chasing Disposition", "Insurance", "Type Of Sale", "Products","Days Spent As Pending QA"
     ]
 
-    # Keep only the ones that exist in df_cleaned
     valid_desc_cols = [c for c in description_columns if c in df_cleaned.columns]
 
     selected_col = st.selectbox(
@@ -552,7 +538,7 @@ if selected == "Dataset Overview":
             alt.Chart(df_filtered)
             .mark_bar(color="#0eff87")
             .encode(
-                x=alt.X(selected_col, bin=alt.Bin(maxbins=30)),  # bins for histogram
+                x=alt.X(selected_col, bin=alt.Bin(maxbins=30)),
                 y='count()',
                 tooltip=[selected_col, "count()"]
             )
@@ -596,7 +582,6 @@ elif selected == "Data Analysis":
         "Date of Sale (Date)",
     ]
     
-    # Keep only available ones from dataset
     available_columns = [c for c in allowed_columns if c in df_filtered.columns]
     
     if not available_columns:
@@ -604,7 +589,7 @@ elif selected == "Data Analysis":
         st.stop()
         
     time_col = st.selectbox("Select column for analysis", available_columns)
-    original_time_col = time_col.replace(" (Date)", "") # e.g., 'Created Time'
+    original_time_col = time_col.replace(" (Date)", "") 
     
     # Prepare df_ts
     df_ts = df_filtered.copy()
@@ -618,8 +603,7 @@ elif selected == "Data Analysis":
     st.markdown(f""" The working dataset for analysis contains **{len(df_ts)} rows**
                       and **{len(df_ts.columns)} columns**.
                     """)
-    table(df_filtered) # Use df_filtered for the general table view
-
+    table(df_filtered) 
             
     total_leads = len(df_filtered)
     
@@ -630,7 +614,6 @@ elif selected == "Data Analysis":
     if original_time_col in df_ts.columns:
         df_ts["Period"] = df_ts[original_time_col].dt.to_period(period_map[freq]).dt.to_timestamp()
     else:
-        # Fallback: cannot proceed with time series
         df_ts = pd.DataFrame() 
 
     # --- Grouping option ---
@@ -678,7 +661,6 @@ elif selected == "Data Analysis":
         if "Chasing Disposition" in df_ts.columns:
             st.subheader("📊 Chasing Disposition Distribution")
 
-            # --- اختيارات المتركس اللي نعرضها ---
             metric_options_disp = [
                 "Total Leads (with Created Time (Date))",
                 "Total Assigned",
@@ -693,7 +675,6 @@ elif selected == "Data Analysis":
                 metric_options_disp
             )
 
-            # --- حساب المتركس حسب كل Chasing Disposition ---
             metrics_by_disp = df_ts.groupby("Chasing Disposition").agg({
                 "Created Time (Date)": "count",
                 "Assigned date": lambda x: x.notna().sum(),
@@ -707,7 +688,6 @@ elif selected == "Data Analysis":
                 metrics_by_disp["Created Time (Date)"] - metrics_by_disp["Assigned date"]
             )
 
-            # --- ربط الاختيارات بالاعمدة ---
             metric_map = {
                 "Total Leads (with Created Time (Date))": "Created Time (Date)",
                 "Total Assigned": "Assigned date",
@@ -720,18 +700,14 @@ elif selected == "Data Analysis":
 
             selected_col = metric_map[metric_option]
             
-            # --- جهز البيانات ---
             chart_data = metrics_by_disp[["Chasing Disposition", selected_col]].rename(columns={selected_col: "Count"})
 
-            # ✅ إضافة مؤشر إجمالي العدد الكلي في عمود ضيق
             total_selected_metric = chart_data["Count"].sum()
             
-            # 📌 التعديل لتصغير حجم المؤشر باستخدام الأعمدة
-            col_metric, col_spacer = st.columns([1, 4]) # 1:4 ratio for small metric and large spacer
+            col_metric, col_spacer = st.columns([1, 4])
             with col_metric:
                 st.metric(label=f"Total Count for: {metric_option}", value=f"{total_selected_metric:,}")
             
-            # ✅ حساب النسبة المئوية وتسمية البيانات (Data Label)
             total_for_percentage = total_selected_metric
             
             if total_for_percentage > 0:
@@ -742,7 +718,6 @@ elif selected == "Data Analysis":
                 chart_data["Label"] = chart_data["Count"].apply(lambda x: f'{x:,}')
 
 
-            # --- Bar chart ---
             chart_disp = (
                 alt.Chart(chart_data)
                 .mark_bar()
@@ -755,7 +730,6 @@ elif selected == "Data Analysis":
                 .properties(height=400)
             )
             
-            # --- Text Layer (Data Label) ---
             text = chart_disp.mark_text(
                 align='center',    
                 baseline='bottom', 
@@ -766,7 +740,6 @@ elif selected == "Data Analysis":
                 text=alt.Text("Label") 
             )
 
-            # --- Final Chart ---
             final_chart = chart_disp + text
             st.altair_chart(final_chart, use_container_width=True)
 
@@ -775,7 +748,6 @@ elif selected == "Data Analysis":
         if "Client" in df_ts.columns:
             st.subheader("👥 Client Distribution")
         
-            # --- اختيارات المتركس اللي نعرضها ---
             metric_options_client = [
                 "Total Leads (with Created Time (Date))",
                 "Total Assigned",
@@ -791,7 +763,6 @@ elif selected == "Data Analysis":
                 key="client_metric"
             )
         
-            # --- حساب المتركس حسب كل Client ---
             metrics_by_client = df_ts.groupby("Client").agg({
                 "Created Time (Date)": "count",
                 "Assigned date": lambda x: x.notna().sum(),
@@ -803,7 +774,6 @@ elif selected == "Data Analysis":
         
             metrics_by_client["Not Assigned"] = metrics_by_client["Created Time (Date)"] - metrics_by_client["Assigned date"]
         
-            # --- ربط الاختيارات بالاعمدة ---
             metric_map = {
                 "Total Leads (with Created Time (Date))": "Created Time (Date)",
                 "Total Assigned": "Assigned date",
@@ -816,18 +786,14 @@ elif selected == "Data Analysis":
             
             selected_col_client = metric_map[metric_option_client]
         
-            # --- جهز البيانات ---
             chart_data_client = metrics_by_client[["Client", selected_col_client]].rename(columns={selected_col_client: "Count"})
 
-            # ✅ إضافة مؤشر إجمالي العدد الكلي في عمود ضيق
             total_selected_metric_client = chart_data_client["Count"].sum()
             
-            # 📌 التعديل لتصغير حجم المؤشر باستخدام الأعمدة
             col_metric_client, col_spacer_client = st.columns([1, 4]) 
             with col_metric_client:
                 st.metric(label=f"Total Count for: {metric_option_client}", value=f"{total_selected_metric_client:,}")
             
-            # ✅ حساب النسبة المئوية وتسمية البيانات (Data Label)
             total_for_percentage_client = total_selected_metric_client
             
             if total_for_percentage_client > 0:
@@ -837,7 +803,6 @@ elif selected == "Data Analysis":
                 chart_data_client["Percentage"] = 0.0
                 chart_data_client["Label"] = chart_data_client["Count"].apply(lambda x: f'{x:,}')
         
-            # --- Bar chart ---
             chart_disp_client = (
                 alt.Chart(chart_data_client)
                 .mark_bar()
@@ -850,7 +815,6 @@ elif selected == "Data Analysis":
                 .properties(height=400)
             )
 
-            # --- Text Layer (Data Label) ---
             text_client = chart_disp_client.mark_text(
                 align='center',    
                 baseline='bottom', 
@@ -882,13 +846,13 @@ elif selected == "Data Analysis":
             total_uploaded = df_time["Upload Date"].notna().sum() if "Upload Date" in df_time.columns else 0
             total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
             
-            # 🆕 (جديد) حساب الـ Pending Shipping
-            if "Chasing Disposition_clean" in df_time.columns: # 🆕 Use clean column
+            total_pending_shipping = 0
+            if "Chasing Disposition_clean" in df_time.columns:
+                # --- 🔽🔽🔽 START OF EDITED SECTION (Fix 2) 🔽🔽🔽 ---
                 total_pending_shipping = df_time[
-                    df_time["Chasing Disposition_clean"] == "pending shipping"
+                    df_time["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
                 ].shape[0]
-            else:
-                total_pending_shipping = 0
+                # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
             # Show stats
             st.markdown(f"""
@@ -908,10 +872,13 @@ elif selected == "Data Analysis":
 
             # 🚨 Leads with Pending Shipping but no Upload Date
             if "Chasing Disposition_clean" in df_filtered.columns and "Upload Date" in df_filtered.columns:
+                # --- 🔽🔽🔽 START OF EDITED SECTION (Fix 3) 🔽🔽🔽 ---
                 mask_shipping = (
-                    df_filtered["Chasing Disposition_clean"] == "pending shipping"
+                    df_filtered["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
                     & df_filtered["Upload Date"].isna()
                 )
+                # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
+                
                 pending_shipping = df_filtered[mask_shipping]
                 
                 if not pending_shipping.empty:
@@ -935,13 +902,14 @@ elif selected == "Data Analysis":
             if "Created Time (Date)" in df_filtered.columns and "Chasing Disposition_clean" in df_filtered.columns:
                 today = pd.Timestamp.now().normalize()
                 
-                df_filtered["Days Since Created"] = (
-                    today - pd.to_datetime(df_filtered["Created Time (Date)"], errors="coerce")
-                ).dt.days
+                if "Days Since Created" not in df_filtered.columns: # Avoid re-creating column
+                    df_filtered["Days Since Created"] = (
+                        today - pd.to_datetime(df_filtered["Created Time (Date)"], errors="coerce")
+                    ).dt.days
                 
                 pending_mask = (
                     (df_filtered["Days Since Created"] > 7) &
-                    (df_filtered["Chasing Disposition_clean"].isin(["pending fax", "pending dr call"])) # 🆕 Use clean column
+                    (df_filtered["Chasing Disposition_clean"].isin(["pending fax", "pending dr call"])) 
                 )
                 pending_leads = df_filtered[pending_mask]
                 
@@ -1016,41 +984,40 @@ elif selected == "Data Analysis":
                             use_container_width=True
                         )
             
-            # --- 🔽🔽🔽 START OF NEW WARNING SECTION 🔽🔽🔽 ---
             
             # 🚨 (NEW) Check for conflicting dispositions between Dr. Chase and O Plan
             if not df_oplan.empty and "MCN_clean" in df_filtered.columns and "MCN_clean" in df_oplan.columns:
                 
                 # 1. Define the conflicting statuses
                 dr_chase_bad_dispos = ["dr denied", "rejected bu dr chase", "dead leads"]
-                oplan_closing_dispo = "doctor chase" # 🆕 (ملحوظة: اسمها "doctor chase" مش "dr chase")
+                oplan_closing_dispo = "doctor chase" 
 
                 # 2. Find leads in O Plan with the closing status
                 oplan_conflicts = df_oplan[
-                    df_oplan["Dispo_clean"] == oplan_closing_dispo
+                    df_oplan["Dispo_clean"].eq(oplan_closing_dispo) # 👈 Use .eq()
                 ]
                 
                 # 3. Find leads in Dr. Chase (from the filtered list) with the bad status
-                dr_chase_conflicts = df_filtered[
-                    df_filtered["Chasing Disposition_clean"].isin(dr_chase_bad_dispos)
-                ]
+                # 🔽🔽🔽 (تم التعديل هنا) التأكد من وجود العمود قبل استخدامه
+                if "Chasing Disposition_clean" in df_filtered.columns:
+                    dr_chase_conflicts = df_filtered[
+                        df_filtered["Chasing Disposition_clean"].isin(dr_chase_bad_dispos)
+                    ]
 
-                # 4. Find the intersection (the MCNs present in both lists)
-                conflicting_leads = pd.merge(
-                    dr_chase_conflicts[["MCN_clean", "Chasing Disposition", "Chaser Name", "Client"]],
-                    oplan_conflicts[["MCN_clean", "Dispo"]],
-                    on="MCN_clean",
-                    how="inner",
-                    suffixes=('_DrChase', '_OPlan')
-                )
-                
-                # 5. Display the warning if any conflicts are found
-                if not conflicting_leads.empty:
-                    st.warning(f"⚠️ Found {len(conflicting_leads)} leads marked as Denied/Dead in Dr. Chase but '{oplan_closing_dispo}' in O Plan.")
-                    with st.expander("🔍 View Conflicting Leads"):
-                        st.dataframe(conflicting_leads, use_container_width=True)
-
-            # --- 🔼🔼🔼 END OF NEW WARNING SECTION 🔼🔼🔼 ---
+                    # 4. Find the intersection (the MCNs present in both lists)
+                    conflicting_leads = pd.merge(
+                        dr_chase_conflicts[["MCN_clean", "Chasing Disposition", "Chaser Name", "Client"]],
+                        oplan_conflicts[["MCN_clean", "Dispo"]],
+                        on="MCN_clean",
+                        how="inner",
+                        suffixes=('_DrChase', '_OPlan')
+                    )
+                    
+                    # 5. Display the warning if any conflicts are found
+                    if not conflicting_leads.empty:
+                        st.warning(f"⚠️ Found {len(conflicting_leads)} leads marked as Denied/Dead in Dr. Chase but '{oplan_closing_dispo}' in O Plan.")
+                        with st.expander("🔍 View Conflicting Leads"):
+                            st.dataframe(conflicting_leads, use_container_width=True)
 
 
             
@@ -1301,7 +1268,6 @@ elif selected == "Data Analysis":
                 st.warning(f"⚠️ Found {dup_same_product['MCN'].nunique()} unique MCNs duplicated with SAME Product "
                            f"(total {len(dup_same_product)} rows).")
                 
-                # ✅ الأعمدة المطلوبة في الجدول الجديد
                 required_cols = [
                     "MCN", 
                     "Products", 
@@ -1313,25 +1279,20 @@ elif selected == "Data Analysis":
                     "Chasing Disposition"
                 ]
                 
-                # تصفية الأعمدة المتوفرة فقط
                 available_dup_cols = [c for c in required_cols if c in dup_same_product.columns]
                 
-                # **الجدول المطلوب: Duplicate Leads (MCN & Product) Details**
                 st.markdown("### 📋 Duplicate Leads (MCN & Product) Details")
                 st.dataframe(
                     dup_same_product.sort_values(["MCN", "Products", "Created Time"])[available_dup_cols],
                     use_container_width=True
                 )
                 
-                # 📌 تم حذف الجدول: "📊 Duplicate MCN (Same Product) Grouped by Key Dates" 
-        
             else:
                 st.success("✅ No duplicate MCNs found with SAME product.")
         
             # --- Duplicates with different Product ---
             dup_diff_product_check = df_filtered[df_filtered.duplicated(subset=["MCN"], keep=False)].copy()
             
-            # Filter to only MCNs that truly have different products
             dup_diff_product_grouped = dup_diff_product_check.groupby("MCN")["Products"].nunique().reset_index()
             mcn_with_diff_products = dup_diff_product_grouped[dup_diff_product_grouped["Products"] > 1]["MCN"]
 
