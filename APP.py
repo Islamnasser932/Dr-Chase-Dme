@@ -43,6 +43,7 @@ syn = {
     "assigned_to_chase": ["assigned to chase", "assigned_to_chase", "assigned to", "assigned user (chase)", "assigned chaser"],
 }
 
+# (تم تعديل المفاتيح لتكون كلها lowercase لتتوافق مع دالة التنظيف)
 name_map = {
     "a.williams": "Alfred Williams", "david.smith": "David Smith", "jimmy.daves": "Grayson Saint",
     "e.moore": "Eddie Moore", "aurora.stevens": "Aurora Stevens", "grayson.saint": "Grayson Saint",
@@ -51,9 +52,10 @@ name_map = {
     "sarah.adams": "Sarah Adams", "sara.adams": "Sarah Adams", "samy.youssef": "Samy Youssef",
     "candy.johns": "Candy Johns", "heather.robertson": "Heather Robertson", "a.cabello": "Andrew Cabello",
     "alia.scott": "Alia Scott", "sandra.sebastian": "Sandra Sebastian", 
-    "katty.crater": "Katty Crater", 
+    "katty.crater": "Katty Crater", # 👈 تم التعديل هنا
     "kayla.miller": "Kayla Miller"
 }
+
 
 samy_chasers = {
     "Emma Wilson", "Scarlett Mitchell", "Lucas Diago", "Mia Alaxendar",
@@ -119,9 +121,9 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     if assigned_col and assigned_col in df_cleaned.columns:
         df_cleaned["Chaser Name"] = (
             df_cleaned[assigned_col]
-            .astype(str).str.strip().str.lower()
-            .map(name_map)
-            .fillna(df_cleaned[assigned_col])
+            .astype(str).str.strip().str.lower() # <-- This lowercases the key
+            .map(name_map)                       # <-- This maps using the (now) lowercase key
+            .fillna(df_cleaned[assigned_col])    # <-- This fills if map fails
         )
         df_cleaned["Chaser Group"] = df_cleaned["Chaser Name"].apply(
             lambda n: "Samy Chasers" if n in samy_chasers else "Andrew Chasers"
@@ -132,15 +134,49 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     for c in date_actual_cols:
         if c in df_cleaned.columns:
             df_cleaned[c] = pd.to_datetime(df_cleaned[c], errors="coerce")
+            
+    # --- 🔽🔽🔽 START OF EDITED SECTION (Clean MCN & Dispo) 🔽🔽🔽 ---
+    # 5. Clean MCN and Chasing Disposition for merging
+    if "MCN" in df_cleaned.columns:
+        df_cleaned["MCN_clean"] = df_cleaned["MCN"].astype(str).str.strip()
+        
+    if "Chasing Disposition" in df_cleaned.columns:
+        df_cleaned["Chasing Disposition_clean"] = df_cleaned["Chasing Disposition"].astype(str).str.strip().str.lower()
+    # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
     return df_cleaned
 
+# --- 🔽🔽🔽 START OF NEW SECTION (Load O Plan Data) 🔽🔽🔽 ---
+@st.cache_data
+def load_oplan_data(file_path="O_Plan_Leads.csv"):
+    """Loads and cleans the O Plan leads file."""
+    try:
+        df = pd.read_csv(file_path)
+        # Clean Dispo column
+        if "Dispo" in df.columns:
+            df["Dispo_clean"] = df["Dispo"].astype(str).str.strip().str.lower()
+        # Clean MCN column
+        if "MCN" in df.columns:
+            df["MCN_clean"] = df["MCN"].astype(str).str.strip()
+        st.success("✅ O Plan file loaded successfully! (Cached for speed)")
+        return df
+    except FileNotFoundError:
+        st.error(f"⚠️ خطأ: لم يتم العثور على الملف '{file_path}'. يرجى التأكد من وجود الملف في نفس المجلد.")
+        return pd.DataFrame() # Return empty dataframe on error
+    except Exception as e:
+        st.error(f"An error occurred while loading O_Plan_Leads.csv: {e}")
+        return pd.DataFrame()
+# --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
+
 # ================== EXECUTE DATA LOAD ==================
 df_cleaned = load_and_clean_data(df_raw, name_map, cols_map, samy_chasers)
-st.success("✅ File loaded and cleaned successfully! (Cached for speed)")
+df_oplan = load_oplan_data("O_Plan_Leads.csv") # 🆕 Load O Plan data
+
 
 # ================== COLUMN DESCRIPTIONS ==================
 column_descriptions = {
+    # ... (all your column descriptions are here, no changes) ...
     "Assigned To Chase": "Username of the chaser assigned to the lead (mapped later to full names).",
     "Dr Chase Lead Number": "Unique ID assigned to each lead in the DR Chase system.",
     "Created Time": "Timestamp when the lead was first created.",
@@ -229,42 +265,62 @@ st.sidebar.header("🎛 Basic Filters")
 
 # --- Client Filter ---
 with st.sidebar.expander("👥 Client", expanded=False):
-    all_clients = df_cleaned["Client"].unique().tolist()
-    select_all_clients = st.checkbox("Select All Clients", value=True, key="all_clients")
-    if select_all_clients:
-        Client = st.multiselect("Select Client", options=all_clients, default=all_clients)
+    # 🆕 Check if "Client" column exists
+    if "Client" in df_cleaned.columns:
+        all_clients = df_cleaned["Client"].unique().tolist()
+        select_all_clients = st.checkbox("Select All Clients", value=True, key="all_clients")
+        if select_all_clients:
+            Client = st.multiselect("Select Client", options=all_clients, default=all_clients)
+        else:
+            Client = st.multiselect("Select Client", options=all_clients)
     else:
-        Client = st.multiselect("Select Client", options=all_clients)
+        st.warning("Column 'Client' not found.")
+        Client = [] # Set empty list if column not found
 
 
 # --- Chaser Name Filter ---
 with st.sidebar.expander("🧑‍💼 Chaser Name", expanded=False):
-    all_Chaser_Name=df_cleaned["Chaser Name"].unique().tolist()
-    select_all_Chaser_Name = st.checkbox("Select All Chaser Name ", value=True, key="all_Chaser_Name")
-    if select_all_Chaser_Name:
-        Chaser_Name = st.multiselect("Select Chaser Name", options=all_Chaser_Name, default=all_Chaser_Name)   
+    # 🆕 Check if "Chaser Name" column exists
+    if "Chaser Name" in df_cleaned.columns:
+        all_Chaser_Name=df_cleaned["Chaser Name"].unique().tolist()
+        select_all_Chaser_Name = st.checkbox("Select All Chaser Name ", value=True, key="all_Chaser_Name")
+        if select_all_Chaser_Name:
+            Chaser_Name = st.multiselect("Select Chaser Name", options=all_Chaser_Name, default=all_Chaser_Name)   
+        else:
+            Chaser_Name  = st.multiselect("Select  Chaser Name ", options=all_Chaser_Name)
     else:
-        Chaser_Name  = st.multiselect("Select  Chaser Name ", options=all_Chaser_Name)
-            
+        st.warning("Column 'Chaser Name' not found.")
+        Chaser_Name = []
+
 
 # --- Chaser Group Filter ---
 with st.sidebar.expander("👨‍👩‍👧‍👦 Chaser Group", expanded=False):
-    all_Chaser_Group=df_cleaned["Chaser Group"].unique().tolist()
-    select_all_Chaser_Group = st.checkbox("Select All Chaser Group ", value=True, key="all_Chaser_Group")
-    if select_all_Chaser_Group:
-        Chaser_Group = st.multiselect("Select Chaser Group", options=all_Chaser_Group, default=all_Chaser_Group)   
+    # 🆕 Check if "Chaser Group" column exists
+    if "Chaser Group" in df_cleaned.columns:
+        all_Chaser_Group=df_cleaned["Chaser Group"].unique().tolist()
+        select_all_Chaser_Group = st.checkbox("Select All Chaser Group ", value=True, key="all_Chaser_Group")
+        if select_all_Chaser_Group:
+            Chaser_Group = st.multiselect("Select Chaser Group", options=all_Chaser_Group, default=all_Chaser_Group)   
+        else:
+            Chaser_Group  = st.multiselect("Select  Chaser Group ", options=all_Chaser_Group)
     else:
-        Chaser_Group  = st.multiselect("Select  Chaser Group ", options=all_Chaser_Group)
+        st.warning("Column 'Chaser Group' not found.")
+        Chaser_Group = []
 
 
 # --- Chasing Disposition Filter ---
 with st.sidebar.expander("👥 Chasing Disposition", expanded=False):
-    all_Chasing_Disposition=df_cleaned["Chasing Disposition"].unique().tolist()
-    select_all_Chasing_Disposition = st.checkbox("Select All Chaser Disposition ", value=True, key="all_Chasing_Disposition")
-    if select_all_Chasing_Disposition:
-        Chasing_Disposition = st.multiselect("Select Chaser Disposition", options=all_Chasing_Disposition, default=all_Chasing_Disposition)   
+    # 🆕 Check if "Chasing Disposition" column exists
+    if "Chasing Disposition" in df_cleaned.columns:
+        all_Chasing_Disposition=df_cleaned["Chasing Disposition"].unique().tolist()
+        select_all_Chasing_Disposition = st.checkbox("Select All Chaser Disposition ", value=True, key="all_Chasing_Disposition")
+        if select_all_Chasing_Disposition:
+            Chasing_Disposition = st.multiselect("Select Chaser Disposition", options=all_Chasing_Disposition, default=all_Chasing_Disposition)   
+        else:
+            Chasing_Disposition  = st.multiselect("Select  Chaser Disposition ", options=all_Chasing_Disposition)
     else:
-        Chasing_Disposition  = st.multiselect("Select  Chaser Disposition ", options=all_Chasing_Disposition)
+        st.warning("Column 'Chasing Disposition' not found.")
+        Chasing_Disposition = []
 
 
 # --- Date Range Filter ---
@@ -305,9 +361,23 @@ with st.sidebar.expander("📅 Date Range", expanded=False):
 
 
 # --- Apply filters using .query() ---
-df_filtered = df_cleaned.query(
-    "Client in @Client and `Chaser Name` in @Chaser_Name and `Chaser Group` in @Chaser_Group and `Chasing Disposition` in @Chasing_Disposition"
-)
+# 🆕 Build the query string dynamically to avoid errors if columns are missing
+query_parts = []
+if Client:
+    query_parts.append("Client in @Client")
+if Chaser_Name:
+    query_parts.append("`Chaser Name` in @Chaser_Name")
+if Chaser_Group:
+    query_parts.append("`Chaser Group` in @Chaser_Group")
+if Chasing_Disposition:
+    query_parts.append("`Chasing Disposition` in @Chasing_Disposition")
+
+if query_parts:
+    final_query = " and ".join(query_parts)
+    df_filtered = df_cleaned.query(final_query)
+else:
+    df_filtered = df_cleaned.copy() # No filters applied
+
 
 # Apply date filter (on Created Time by default)
 if isinstance(date_range, tuple) and len(date_range) == 2:
@@ -341,9 +411,9 @@ if selected == "Dataset Overview":
     total_denial = df_filtered["Denial Date"].notna().sum() if "Denial Date" in df_filtered.columns else 0
     
     # 🆕 (جديد) حساب الـ Pending Shipping
-    if "Chasing Disposition" in df_filtered.columns:
+    if "Chasing Disposition_clean" in df_filtered.columns: # 🆕 Use clean column
         total_pending_shipping = df_filtered[
-            df_filtered["Chasing Disposition"].astype(str).str.lower() == "pending shipping"
+            df_filtered["Chasing Disposition_clean"] == "pending shipping"
         ].shape[0]
     else:
         total_pending_shipping = 0
@@ -795,7 +865,6 @@ elif selected == "Data Analysis":
             st.altair_chart(final_chart_client, use_container_width=True)
 
         
-        # --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
         
         # 📝 Insights Summary
         st.subheader("📝 Insights Summary")
@@ -814,9 +883,9 @@ elif selected == "Data Analysis":
             total_completed = df_time["Completion Date"].notna().sum() if "Completion Date" in df_time.columns else 0
             
             # 🆕 (جديد) حساب الـ Pending Shipping
-            if "Chasing Disposition" in df_time.columns:
+            if "Chasing Disposition_clean" in df_time.columns: # 🆕 Use clean column
                 total_pending_shipping = df_time[
-                    df_time["Chasing Disposition"].astype(str).str.lower() == "pending shipping"
+                    df_time["Chasing Disposition_clean"] == "pending shipping"
                 ].shape[0]
             else:
                 total_pending_shipping = 0
@@ -833,16 +902,14 @@ elif selected == "Data Analysis":
                 - 🚚 Total Upload to Client (Pending Shipping): **{total_pending_shipping}**
                 """)           
             
-        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
-
             st.subheader("🚨 Data Quality Warnings")
             today = pd.Timestamp.now().normalize()
 
 
             # 🚨 Leads with Pending Shipping but no Upload Date
-            if "Chasing Disposition" in df_filtered.columns and "Upload Date" in df_filtered.columns:
+            if "Chasing Disposition_clean" in df_filtered.columns and "Upload Date" in df_filtered.columns:
                 mask_shipping = (
-                    df_filtered["Chasing Disposition"].astype(str).str.lower().eq("pending shipping")
+                    df_filtered["Chasing Disposition_clean"] == "pending shipping"
                     & df_filtered["Upload Date"].isna()
                 )
                 pending_shipping = df_filtered[mask_shipping]
@@ -865,7 +932,7 @@ elif selected == "Data Analysis":
                         )
                 
             # 🚨 Leads pending too long (Fax / Dr Call)
-            if "Created Time (Date)" in df_filtered.columns and "Chasing Disposition" in df_filtered.columns:
+            if "Created Time (Date)" in df_filtered.columns and "Chasing Disposition_clean" in df_filtered.columns:
                 today = pd.Timestamp.now().normalize()
                 
                 df_filtered["Days Since Created"] = (
@@ -874,7 +941,7 @@ elif selected == "Data Analysis":
                 
                 pending_mask = (
                     (df_filtered["Days Since Created"] > 7) &
-                    (df_filtered["Chasing Disposition"].isin(["Pending Fax", "Pending Dr Call"]))
+                    (df_filtered["Chasing Disposition_clean"].isin(["pending fax", "pending dr call"])) # 🆕 Use clean column
                 )
                 pending_leads = df_filtered[pending_mask]
                 
@@ -948,6 +1015,42 @@ elif selected == "Data Analysis":
                             bad_uploaded_approval[["MCN", "Client", "Chaser Name", "Upload Date", "Approval date"]],
                             use_container_width=True
                         )
+            
+            # --- 🔽🔽🔽 START OF NEW WARNING SECTION 🔽🔽🔽 ---
+            
+            # 🚨 (NEW) Check for conflicting dispositions between Dr. Chase and O Plan
+            if not df_oplan.empty and "MCN_clean" in df_filtered.columns and "MCN_clean" in df_oplan.columns:
+                
+                # 1. Define the conflicting statuses
+                dr_chase_bad_dispos = ["dr denied", "rejected bu dr chase", "dead leads"]
+                oplan_closing_dispo = "doctor chase" # 🆕 (ملحوظة: اسمها "doctor chase" مش "dr chase")
+
+                # 2. Find leads in O Plan with the closing status
+                oplan_conflicts = df_oplan[
+                    df_oplan["Dispo_clean"] == oplan_closing_dispo
+                ]
+                
+                # 3. Find leads in Dr. Chase (from the filtered list) with the bad status
+                dr_chase_conflicts = df_filtered[
+                    df_filtered["Chasing Disposition_clean"].isin(dr_chase_bad_dispos)
+                ]
+
+                # 4. Find the intersection (the MCNs present in both lists)
+                conflicting_leads = pd.merge(
+                    dr_chase_conflicts[["MCN_clean", "Chasing Disposition", "Chaser Name", "Client"]],
+                    oplan_conflicts[["MCN_clean", "Dispo"]],
+                    on="MCN_clean",
+                    how="inner",
+                    suffixes=('_DrChase', '_OPlan')
+                )
+                
+                # 5. Display the warning if any conflicts are found
+                if not conflicting_leads.empty:
+                    st.warning(f"⚠️ Found {len(conflicting_leads)} leads marked as Denied/Dead in Dr. Chase but '{oplan_closing_dispo}' in O Plan.")
+                    with st.expander("🔍 View Conflicting Leads"):
+                        st.dataframe(conflicting_leads, use_container_width=True)
+
+            # --- 🔼🔼🔼 END OF NEW WARNING SECTION 🔼🔼🔼 ---
 
 
             
@@ -1254,9 +1357,3 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
-
-
-
-
-
-
