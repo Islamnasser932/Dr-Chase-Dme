@@ -150,7 +150,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
     try:
         df = pd.read_csv(file_path)
-        # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
         # 🆕 (جديد) تنظيف أسماء الأعمدة من المسافات
         df.columns = df.columns.str.strip()
         
@@ -165,7 +164,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
             df["MCN_clean"] = df["MCN"].astype(str).str.strip()
         else:
             st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
-        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
             
         st.success("✅ O Plan file loaded successfully! (Cached for speed)")
         return df
@@ -988,19 +986,18 @@ elif selected == "Data Analysis":
                         )
             
             
-            # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
-            
             # 🚨 (NEW) Check for conflicting dispositions between Dr. Chase and O Plan
-            # 🆕 Added check for "Closing Status_clean" (FIXED)
             if (not df_oplan.empty and 
                 "MCN_clean" in df_filtered.columns and 
                 "MCN_clean" in df_oplan.columns and 
                 "Closing Status_clean" in df_oplan.columns and  # 👈 (FIXED)
                 "Chasing Disposition_clean" in df_filtered.columns):
                 
-                # 1. Define the conflicting statuses
-                dr_chase_bad_dispos = ["dr denied", "rejected bu dr chase", "dead leads"]
+                # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
+                # 1. Define the conflicting statuses (CORRECTED)
+                dr_chase_bad_dispos = ["dr denied", "rejected by dr chase", "dead lead"] # 👈 (FIXED)
                 oplan_closing_dispo = "doctor chase" 
+                # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
                 # 2. Find leads in O Plan with the closing status
                 oplan_conflicts = df_oplan[
@@ -1029,8 +1026,6 @@ elif selected == "Data Analysis":
                 
                 else:
                     st.success("✅ تم فحص التطابق: لا يوجد أي تضارب بين ملف Dr. Chase وملف O Plan بخصوص الحالات المرفوضة.")
-
-            # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
 
             
