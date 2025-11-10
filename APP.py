@@ -140,7 +140,6 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
         df_cleaned["MCN_clean"] = df_cleaned["MCN"].astype(str).str.strip()
         
     if "Chasing Disposition" in df_cleaned.columns:
-        # 🔽🔽🔽 (تم التعديل هنا) تحويل القيم الفاضية إلى نص فارغ قبل التحويل
         df_cleaned["Chasing Disposition_clean"] = df_cleaned["Chasing Disposition"].fillna('').astype(str).str.strip().str.lower()
     
     return df_cleaned
@@ -151,13 +150,22 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
     try:
         df = pd.read_csv(file_path)
+        # --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
         # Clean Dispo column
         if "Dispo" in df.columns:
-             # 🔽🔽🔽 (تم التعديل هنا) تحويل القيم الفاضية إلى نص فارغ قبل التحويل
             df["Dispo_clean"] = df["Dispo"].fillna('').astype(str).str.strip().str.lower()
+        else:
+            # 🆕 Add warning if column is missing
+            st.warning("Column 'Dispo' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
+            
         # Clean MCN column
         if "MCN" in df.columns:
             df["MCN_clean"] = df["MCN"].astype(str).str.strip()
+        else:
+            # 🆕 Add warning if column is missing
+            st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
+        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
+            
         st.success("✅ O Plan file loaded successfully! (Cached for speed)")
         return df
     except FileNotFoundError:
@@ -406,11 +414,9 @@ if selected == "Dataset Overview":
     
     total_pending_shipping = 0
     if "Chasing Disposition_clean" in df_filtered.columns: 
-        # --- 🔽🔽🔽 START OF EDITED SECTION (Fix 1) 🔽🔽🔽 ---
         total_pending_shipping = df_filtered[
             df_filtered["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
         ].shape[0]
-        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
     # Derived metrics
     total_not_assigned = total_leads - total_assigned
@@ -848,11 +854,9 @@ elif selected == "Data Analysis":
             
             total_pending_shipping = 0
             if "Chasing Disposition_clean" in df_time.columns:
-                # --- 🔽🔽🔽 START OF EDITED SECTION (Fix 2) 🔽🔽🔽 ---
                 total_pending_shipping = df_time[
                     df_time["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
                 ].shape[0]
-                # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
             # Show stats
             st.markdown(f"""
@@ -872,12 +876,10 @@ elif selected == "Data Analysis":
 
             # 🚨 Leads with Pending Shipping but no Upload Date
             if "Chasing Disposition_clean" in df_filtered.columns and "Upload Date" in df_filtered.columns:
-                # --- 🔽🔽🔽 START OF EDITED SECTION (Fix 3) 🔽🔽🔽 ---
                 mask_shipping = (
                     df_filtered["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
                     & df_filtered["Upload Date"].isna()
                 )
-                # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
                 
                 pending_shipping = df_filtered[mask_shipping]
                 
@@ -985,8 +987,11 @@ elif selected == "Data Analysis":
                         )
             
             
+            # --- 🔽🔽🔽 START OF EDITED SECTION (Fix) 🔽🔽🔽 ---
+            
             # 🚨 (NEW) Check for conflicting dispositions between Dr. Chase and O Plan
-            if not df_oplan.empty and "MCN_clean" in df_filtered.columns and "MCN_clean" in df_oplan.columns:
+            # 🆕 Added check for "Dispo_clean"
+            if not df_oplan.empty and "MCN_clean" in df_filtered.columns and "MCN_clean" in df_oplan.columns and "Dispo_clean" in df_oplan.columns:
                 
                 # 1. Define the conflicting statuses
                 dr_chase_bad_dispos = ["dr denied", "rejected bu dr chase", "dead leads"]
@@ -998,7 +1003,6 @@ elif selected == "Data Analysis":
                 ]
                 
                 # 3. Find leads in Dr. Chase (from the filtered list) with the bad status
-                # 🔽🔽🔽 (تم التعديل هنا) التأكد من وجود العمود قبل استخدامه
                 if "Chasing Disposition_clean" in df_filtered.columns:
                     dr_chase_conflicts = df_filtered[
                         df_filtered["Chasing Disposition_clean"].isin(dr_chase_bad_dispos)
@@ -1018,6 +1022,8 @@ elif selected == "Data Analysis":
                         st.warning(f"⚠️ Found {len(conflicting_leads)} leads marked as Denied/Dead in Dr. Chase but '{oplan_closing_dispo}' in O Plan.")
                         with st.expander("🔍 View Conflicting Leads"):
                             st.dataframe(conflicting_leads, use_container_width=True)
+
+            # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
 
             
