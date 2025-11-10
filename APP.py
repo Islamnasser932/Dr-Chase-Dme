@@ -150,6 +150,11 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
     try:
         df = pd.read_csv(file_path)
+        # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
+        # 🆕 (جديد) تنظيف أسماء الأعمدة من المسافات
+        df.columns = df.columns.str.strip()
+        # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
+        
         # Clean Dispo column
         if "Dispo" in df.columns:
             df["Dispo_clean"] = df["Dispo"].fillna('').astype(str).str.strip().str.lower()
@@ -983,8 +988,6 @@ elif selected == "Data Analysis":
                         )
             
             
-            # --- 🔽🔽🔽 START OF EDITED SECTION (Fix) 🔽🔽🔽 ---
-            
             # 🚨 (NEW) Check for conflicting dispositions between Dr. Chase and O Plan
             if not df_oplan.empty and "MCN_clean" in df_filtered.columns and "MCN_clean" in df_oplan.columns and "Dispo_clean" in df_oplan.columns:
                 
@@ -1018,11 +1021,11 @@ elif selected == "Data Analysis":
                         with st.expander("🔍 View Conflicting Leads"):
                             st.dataframe(conflicting_leads, use_container_width=True)
                     
+                    # --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
                     # 🆕 (جديد) إضافة رسالة تأكيد لو مفيش تضارب
                     else:
                         st.success("✅ تم فحص التطابق: لا يوجد أي تضارب بين ملف Dr. Chase وملف O Plan بخصوص الحالات المرفوضة.")
-
-            # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
+                    # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
 
             
