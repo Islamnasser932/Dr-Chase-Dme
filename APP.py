@@ -81,7 +81,7 @@ cols_map = {
 }
 
 # ================== DATA CLEANING & CACHING FUNCTION ==================
-#@st.cache_data
+@st.cache_data
 def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     df_cleaned = df.copy()
     
@@ -144,7 +144,7 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     return df_cleaned
 
 
-#@st.cache_data
+@st.cache_data
 def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
     try:
@@ -1324,4 +1324,5 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
+
 
