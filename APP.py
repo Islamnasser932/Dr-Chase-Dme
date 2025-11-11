@@ -25,14 +25,12 @@ def find_col(df_cols, candidates):
             return c
     return None
 
-# --- 🔽🔽🔽 START OF EDITED SECTION (categorize_weeks) 🔽🔽🔽 ---
 def categorize_weeks(days):
     if pd.isna(days):
         return None
     # 🆕 (FIXED) "Week 0" (0-6 days), "Week 1" (7-13 days), "Week -1" (-1 to -7 days)
     # math.floor() بتظبط الحالتين
     return f"Week {math.floor(days / 7)}"
-# --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
 # ================== SYNONYMS & MAPS ==================
 syn = {
@@ -994,11 +992,9 @@ elif selected == "Data Analysis":
                 "Closing Status_clean" in df_oplan.columns and  # 👈 (FIXED)
                 "Chasing Disposition_clean" in df_filtered.columns):
                 
-                # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
                 # 1. Define the conflicting statuses (CORRECTED)
                 dr_chase_bad_dispos = ["dr denied", "rejected by dr chase", "dead lead"] # 👈 (FIXED)
                 oplan_closing_dispo = "doctor chase" 
-                # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
                 # 2. Find leads in O Plan with the closing status
                 oplan_conflicts = df_oplan[
@@ -1047,7 +1043,6 @@ elif selected == "Data Analysis":
                     (df_lead_age["Denial Date"] - df_lead_age["Created Time"]).dt.days
                 )
             
-            # --- 🔽🔽🔽 START OF EDITED SECTION (KPIs) 🔽🔽🔽 ---
             # --- KPIs Section ---
             # 🆕 (FIXED) Filter for positive ages before calculating mean/median
             positive_approval_ages = df_lead_age[df_lead_age["Lead Age (Approval)"] >= 0]["Lead Age (Approval)"]
@@ -1057,7 +1052,6 @@ elif selected == "Data Analysis":
             total_denied = positive_denial_ages.notna().sum() # Count only positive denials
             avg_approval_age = positive_approval_ages.mean(skipna=True)
             avg_denial_age = positive_denial_ages.mean(skipna=True)
-            # --- 🔼🔼🔼 END OF EDITED SECTION (KPIs) 🔼🔼🔼 ---
 
             col1, col2, col3, col4 = st.columns(4)
             with col1:
@@ -1116,132 +1110,109 @@ elif selected == "Data Analysis":
                     st.dataframe(both_dates[available_cols], use_container_width=True)
             
             
-            # --- 🔽🔽🔽 START OF EDITED SECTION (Approval Chart) 🔽🔽🔽 ---
+            # --- 🔽🔽🔽 START OF EDITED SECTION (Approval Chart FIX) 🔽🔽🔽 ---
             # 📊 Lead Age Distribution – Approval
             if "Lead Age (Approval)" in df_lead_age.columns:
-                with st.expander("📊 Lead Age Distribution – Approval (Week 0+)"): # 🆕 Title changed
-                    df_lead_age["Approval Category"] = df_lead_age["Lead Age (Approval)"].dropna().apply(categorize_weeks)
-        
-                    # Get all categories
-                    approval_summary_all = df_lead_age["Approval Category"].value_counts().reset_index()
-                    approval_summary_all.columns = ["Category", "Count"]
+                df_lead_age["Approval Category"] = df_lead_age["Lead Age (Approval)"].dropna().apply(categorize_weeks)
+                approval_summary_all = df_lead_age["Approval Category"].value_counts().reset_index()
+                approval_summary_all.columns = ["Category", "Count"]
 
-                    # 🆕 (FIXED) Filter for positive chart (Week 0 and up)
+                # 1. (Chart) Show positive-only chart
+                with st.expander("📊 Lead Age Distribution – Approval (Week 0+)"):
                     approval_summary_positive = approval_summary_all[
                         ~approval_summary_all["Category"].astype(str).str.contains("Week -")
                     ].copy()
                     
-                    # 🆕 (FIXED) Get the sort order for *only* positive weeks
                     category_order_positive = sorted(
                         approval_summary_positive["Category"].dropna().unique(),
-                        key=lambda x: int(x.split()[1]) # "Week 0" -> 0, "Week 1" -> 1
+                        key=lambda x: int(x.split()[1])
                     )
         
                     chart_approval = (
                         alt.Chart(approval_summary_positive)
-                        .mark_bar(color="#28a745") # 🆕 Set color directly
+                        .mark_bar(color="#28a745") 
                         .encode(
-                            x=alt.X("Category", sort=category_order_positive), # 🆕 Use positive order
+                            x=alt.X("Category", sort=category_order_positive), 
                             y="Count",
                             tooltip=["Category", "Count"]
                         )
                     )
                     st.altair_chart(chart_approval, use_container_width=True)
                     
-                    # (This part for negative leads is still correct and separate)
-                    # جدول leads في الأسابيع السالبة - Approval
-                    if "Approval Category" in df_lead_age.columns:
-                        negative_approval = df_lead_age[
-                            df_lead_age["Approval Category"].astype(str).str.contains("Week -", na=False)
-                        ]
-                        if not negative_approval.empty:
-                            st.warning(f"⚠️ Found {len(negative_approval)} approvals with negative week categories (before Week 0).")
-                            with st.expander("🔍 View Negative Week Approvals"): # 🆕 Changed title
-                                st.dataframe(
-                                    negative_approval[[
-                                        "Created Time",
-                                        "Approval date",
-                                        "Lead Age (Approval)",
-                                        "Approval Category",
-                                        "Chaser Name",
-                                        "Client",
-                                        "MCN"
-                                    ]],
-                                    use_container_width=True
-                                )
-            # --- 🔼🔼🔼 END OF EDITED SECTION (Approval Chart) 🔼🔼🔼 ---
+                # 2. (Warning Table) Show negative-only data
+                negative_approval = df_lead_age[
+                    df_lead_age["Approval Category"].astype(str).str.contains("Week -", na=False)
+                ]
+                if not negative_approval.empty:
+                    st.warning(f"⚠️ Found {len(negative_approval)} approvals with negative week categories (before Week 0).")
+                    with st.expander("🔍 View Negative Week Approvals"): # 👈 This is no longer nested
+                        st.dataframe(
+                            negative_approval[[
+                                "Created Time", "Approval date", "Lead Age (Approval)",
+                                "Approval Category", "Chaser Name", "Client", "MCN"
+                            ]],
+                            use_container_width=True
+                        )
+            # --- 🔼🔼🔼 END OF EDITED SECTION (Approval Chart FIX) 🔼🔼🔼 ---
 
         
-            # --- 🔽🔽🔽 START OF EDITED SECTION (Denial Chart) 🔽🔽🔽 ---
+            # --- 🔽🔽🔽 START OF EDITED SECTION (Denial Chart FIX) 🔽🔽🔽 ---
             # 📊 Lead Age Distribution – Denial
             if "Lead Age (Denial)" in df_lead_age.columns:
-                with st.expander("📊 Lead Age Distribution – Denial (Week 0+)"): # 🆕 Title changed
-                    df_lead_age["Denial Category"] = df_lead_age["Lead Age (Denial)"].dropna().apply(categorize_weeks)
-        
-                    # Get all categories
-                    denial_summary_all = df_lead_age["Denial Category"].value_counts().reset_index()
-                    denial_summary_all.columns = ["Category", "Count"]
+                df_lead_age["Denial Category"] = df_lead_age["Lead Age (Denial)"].dropna().apply(categorize_weeks)
+                denial_summary_all = df_lead_age["Denial Category"].value_counts().reset_index()
+                denial_summary_all.columns = ["Category", "Count"]
 
-                    # 🆕 (FIXED) Filter for positive chart (Week 0 and up)
+                # 1. (Chart) Show positive-only chart
+                with st.expander("📊 Lead Age Distribution – Denial (Week 0+)"):
                     denial_summary_positive = denial_summary_all[
                         ~denial_summary_all["Category"].astype(str).str.contains("Week -")
                     ].copy()
                     
-                    # 🆕 (FIXED) Get the sort order for *only* positive weeks
                     category_order_positive = sorted(
                         denial_summary_positive["Category"].dropna().unique(),
-                        key=lambda x: int(x.split()[1]) # "Week 0" -> 0, "Week 1" -> 1
+                        key=lambda x: int(x.split()[1])
                     )
         
                     chart_denial = (
                         alt.Chart(denial_summary_positive)
-                        .mark_bar(color="#dc3545") # 🆕 Set color directly
+                        .mark_bar(color="#dc3545") 
                         .encode(
-                            x=alt.X("Category", sort=category_order_positive), # 🆕 Use positive order
+                            x=alt.X("Category", sort=category_order_positive),
                             y="Count",
                             tooltip=["Category", "Count"]
                         )
                     )
                     st.altair_chart(chart_denial, use_container_width=True)
-                    
-                    # (This part for negative leads is still correct and separate)
-                    # جدول leads في الأسابيع السالبة - Denial
-                    if "Denial Category" in df_lead_age.columns:
-                        negative_denial = df_lead_age[
-                            df_lead_age["Denial Category"].astype(str).str.contains("Week -", na=False)
-                        ]
-                        if not negative_denial.empty:
-                            st.warning(f"⚠️ Found {len(negative_denial)} denials with negative week categories (before Week 0).")
-                            with st.expander("🔍 View Negative Week Denials"): # 🆕 Changed title
-                                st.dataframe(
-                                    negative_denial[[
-                                        "Created Time",
-                                        "Denial Date",
-                                        "Lead Age (Denial)",
-                                        "Denial Category",
-                                        "Chaser Name",
-                                        "Client",
-                                        "MCN"
-                                    ]],
-                                    use_container_width=True
-                                )
-            # --- 🔼🔼🔼 END OF EDITED SECTION (Denial Chart) 🔼🔼🔼 ---
+                
+                # 2. (Warning Table) Show negative-only data
+                negative_denial = df_lead_age[
+                    df_lead_age["Denial Category"].astype(str).str.contains("Week -", na=False)
+                ]
+                if not negative_denial.empty:
+                    st.warning(f"⚠️ Found {len(negative_denial)} denials with negative week categories (before Week 0).")
+                    with st.expander("🔍 View Negative Week Denials"): # 👈 This is no longer nested
+                        st.dataframe(
+                            negative_denial[[
+                                "Created Time", "Denial Date", "Lead Age (Denial)",
+                                "Denial Category", "Chaser Name", "Client", "MCN"
+                            ]],
+                            use_container_width=True
+                        )
+            # --- 🔼🔼🔼 END OF EDITED SECTION (Denial Chart FIX) 🔼🔼🔼 ---
 
         
-            # --- 🔽🔽🔽 START OF EDITED SECTION (Grouped Charts) 🔽🔽🔽 ---
-            # 🆕 (FIXED) Create a filtered DF for positive-only stats to be used in grouped charts
-            df_lead_age_positive = df_lead_age.copy()
-            
-            # Filter out negative ages from the columns before melting
-            if "Lead Age (Approval)" in df_lead_age_positive.columns:
-                df_lead_age_positive["Lead Age (Approval)"] = df_lead_age_positive["Lead Age (Approval)"].apply(lambda x: x if x >= 0 else pd.NA)
-            if "Lead Age (Denial)" in df_lead_age_positive.columns:
-                df_lead_age_positive["Lead Age (Denial)"] = df_lead_age_positive["Lead Age (Denial)"].apply(lambda x: x if x >= 0 else pd.NA)
-
-
             # 📊 Grouped Bar Chart – Approval vs Denial per Chaser
-            if "Chaser Name" in df_lead_age_positive.columns:
-                st.markdown("### 📊 Approval vs Denial Lead Age by Chaser (Week 0+)") # 🆕 Title changed
+            if "Chaser Name" in df_lead_age.columns:
+                st.markdown("### 📊 Approval vs Denial Lead Age by Chaser (Week 0+)")
+                
+                # 🆕 Filter for positive-only data *before* melting
+                df_lead_age_positive = df_lead_age.copy()
+                if "Lead Age (Approval)" in df_lead_age_positive.columns:
+                    df_lead_age_positive["Lead Age (Approval)"] = df_lead_age_positive["Lead Age (Approval)"].apply(lambda x: x if x >= 0 else pd.NA)
+                if "Lead Age (Denial)" in df_lead_age_positive.columns:
+                    df_lead_age_positive["Lead Age (Denial)"] = df_lead_age_positive["Lead Age (Denial)"].apply(lambda x: x if x >= 0 else pd.NA)
+
                 grouped_chaser = pd.melt(
                     df_lead_age_positive, # 👈 Use the positive-only DF
                     id_vars=["Chaser Name"],
@@ -1263,8 +1234,10 @@ elif selected == "Data Analysis":
                 st.altair_chart(chart_grouped_chaser, use_container_width=True)
         
             # 📊 Grouped Bar Chart – Approval vs Denial per Client
-            if "Client" in df_lead_age_positive.columns:
-                st.markdown("### 📊 Approval vs Denial Lead Age by Client (Week 0+)") # 🆕 Title changed
+            if "Client" in df_lead_age.columns:
+                st.markdown("### 📊 Approval vs Denial Lead Age by Client (Week 0+)")
+                
+                # 🆕 We can reuse df_lead_age_positive from above
                 grouped_client = pd.melt(
                     df_lead_age_positive, # 👈 Use the positive-only DF
                     id_vars=["Client"],
@@ -1284,7 +1257,6 @@ elif selected == "Data Analysis":
                     )
                 )
                 st.altair_chart(chart_grouped_client, use_container_width=True)
-            # --- 🔼🔼🔼 END OF EDITED SECTION (Grouped Charts) 🔼🔼🔼 ---
 
 
         
@@ -1328,7 +1300,7 @@ elif selected == "Data Analysis":
             dup_diff_product_grouped = dup_diff_product_check.groupby("MCN")["Products"].nunique().reset_index()
             mcn_with_diff_products = dup_diff_product_grouped[dup_diff_product_grouped["Products"] > 1]["MCN"]
 
-            dup_diff_product = dup_diff_product_check[dup_diff_product_check["MCN"].isin(mcn_with_diff_products)].copy()
+            dup_diff_product = df_diff_product_check[df_diff_product_check["MCN"].isin(mcn_with_diff_products)].copy()
             
             if not dup_diff_product.empty:
                 st.info(f"ℹ️ Found {len(mcn_with_diff_products)} MCNs with DIFFERENT Products (not real dups).")
