@@ -1300,7 +1300,9 @@ elif selected == "Data Analysis":
             dup_diff_product_grouped = dup_diff_product_check.groupby("MCN")["Products"].nunique().reset_index()
             mcn_with_diff_products = dup_diff_product_grouped[dup_diff_product_grouped["Products"] > 1]["MCN"]
 
-            dup_diff_product = df_diff_product_check[df_diff_product_check["MCN"].isin(mcn_with_diff_products)].copy()
+            # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
+            dup_diff_product = dup_diff_product_check[dup_diff_product_check["MCN"].isin(mcn_with_diff_products)].copy() # 👈 (FIXED)
+            # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
             
             if not dup_diff_product.empty:
                 st.info(f"ℹ️ Found {len(mcn_with_diff_products)} MCNs with DIFFERENT Products (not real dups).")
