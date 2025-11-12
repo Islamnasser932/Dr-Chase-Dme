@@ -1366,7 +1366,7 @@ elif selected == "Data Analysis":
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
 
     # --- 🔽🔽🔽 START OF NEW SECTION 🔽🔽🔽 ---
-    st.markdown("---") # 🆕 Add separator
+   st.markdown("---") # 🆕 Add separator
     st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
     st.info("This section analyzes leads present in *both* the filtered Dr. Chase data and the O Plan file.")
 
@@ -1391,7 +1391,7 @@ elif selected == "Data Analysis":
         )
         
         # 🆕 Define "Done" statuses (lowercase) and create 'is_done' column
-        done_statuses = ["Hot Lead", "Pending Shipping", "Passed Review"]
+        done_statuses = ["hot lead", "pending shipping", "passed review"]
         df_merged_analysis['is_done'] = df_merged_analysis['Chasing Disposition_clean'].isin(done_statuses)
 
     if not df_merged_analysis.empty:
@@ -1459,4 +1459,3 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
-
