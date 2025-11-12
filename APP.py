@@ -1367,7 +1367,6 @@ elif selected == "Data Analysis":
 
     # --- 🔽🔽🔽 START OF NEW SECTION 🔽🔽🔽 ---
     st.markdown("---") # 🆕 Add separator
-    st.markdown("---") # 🆕 Add separator
     st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
     st.info("This section analyzes leads present in *both* the filtered Dr. Chase data and the O Plan file.")
 
@@ -1436,14 +1435,47 @@ elif selected == "Data Analysis":
             kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
             kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
             kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
-
-            style_metric_cards(
-                background_color="#0E1117",
-                border_left_color="#FF4B4B", 
-                border_color="#444",
-                box_shadow="2px 2px 10px rgba(0,0,0,0.5)" )
-
             
+            # (FIXED) 
+            style_metric_cards(
+                background_color="#0E1117",
+                border_left_color="#FF4B4B", 
+                border_color="#444",
+                box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
+            )
+
+            # --- 5. Chart Section ---
+            
+            # Agent Done Rate Chart
+            st.markdown(f"### 📊 'Done Rate' by O Plan Agent (for selected clients)")
+            agent_done_rate = df_agent_analysis.groupby('Assign To_clean').agg(
+                Total_Leads=('MCN_clean', 'count'),
+                Done_Leads=('is_done', 'sum')
+            ).reset_index()
+            agent_done_rate['Done Rate'] = (agent_done_rate['Done_Leads'] / agent_done_rate['Total_Leads']) * 100
+            
+            chart_agent_rate = alt.Chart(agent_done_rate).mark_bar().encode(
+                x=alt.X('Assign To_clean', title='O Plan Agent', sort='-y'),
+                y=alt.Y('Done Rate', title='Done Rate (%)'),
+                tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
+            ).interactive()
+            st.altair_chart(chart_agent_rate, use_container_width=True, theme="streamlit")
+
+            # Client Done Rate Chart
+            st.markdown(f"### 📊 'Done Rate' by Client (for selected clients)")
+            client_done_rate = df_agent_analysis.groupby('Client').agg(
+                Total_Leads=('MCN_clean', 'count'),
+                Done_Leads=('is_done', 'sum')
+            ).reset_index()
+            client_done_rate['Done Rate'] = (client_done_rate['Done_Leads'] / client_done_rate['Total_Leads']) * 100
+            
+            chart_client_rate = alt.Chart(client_done_rate).mark_bar().encode(
+                x=alt.X('Client', title='Client', sort='-y'),
+                y=alt.Y('Done Rate', title='Done Rate (%)'),
+                tooltip=['Client', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
+            ).interactive()
+            st.altair_chart(chart_client_rate, use_container_width=True, theme="streamlit")
+
             # Original Relationship Chart
             st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
             dispo_list = sorted(df_agent_analysis["Chasing Disposition"].dropna().unique())
@@ -1471,8 +1503,3 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
-
-
-
-
-
