@@ -1391,7 +1391,7 @@ elif selected == "Data Analysis":
         )
         
         # 🆕 Define "Done" statuses (lowercase) and create 'is_done' column
-        done_statuses = ["hot lead", "pending shipping", "passed review"]
+        done_statuses = ["Hot Lead", "Pending Shipping", "Passed Review"]
         df_merged_analysis['is_done'] = df_merged_analysis['Chasing Disposition_clean'].isin(done_statuses)
 
     if not df_merged_analysis.empty:
@@ -1459,3 +1459,4 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
