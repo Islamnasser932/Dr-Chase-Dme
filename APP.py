@@ -426,23 +426,23 @@ if selected == "Dataset Overview":
                     """)
     table(df_filtered)
 
-    # --- KPIs Section ---
+   # --- KPIs Section ---
     st.subheader("📌 Key Performance Indicators")
     
-# --- حساب القيم ---
+    # --- حساب القيم ---
     # 🆕 (FIXED) 
-    total_leads = len(df_kpi)
-    total_completed = df_kpi["Completion Date"].notna().sum() if "Completion Date" in df_kpi.columns else 0
-    total_assigned = df_kpi["Assigned date"].notna().sum() if "Assigned date" in df_kpi.columns else 0
-    total_uploaded = df_kpi["Upload Date"].notna().sum() if "Upload Date" in df_kpi.columns else 0
-    total_approval = df_kpi["Approval date"].notna().sum() if "Approval date" in df_kpi.columns else 0
-    total_denial = df_kpi["Denial Date"].notna().sum() if "Denial Date" in df_kpi.columns else 0
-    
-    total_pending_shipping = 0
-    if "Chasing Disposition_clean" in df_kpi.columns: # 👈 (FIXED)
-        total_pending_shipping = df_kpi[ # 👈 (FIXED)
-            df_kpi["Chasing Disposition_clean"].eq("pending shipping") # 👈 (FIXED)
-        ].shape[0]
+    total_leads = len(df_kpi)
+    total_completed = df_kpi["Completion Date"].notna().sum() if "Completion Date" in df_kpi.columns else 0
+    total_assigned = df_kpi["Assigned date"].notna().sum() if "Assigned date" in df_kpi.columns else 0
+    total_uploaded = df_kpi["Upload Date"].notna().sum() if "Upload Date" in df_kpi.columns else 0
+    total_approval = df_kpi["Approval date"].notna().sum() if "Approval date" in df_kpi.columns else 0
+    total_denial = df_kpi["Denial Date"].notna().sum() if "Denial Date" in df_kpi.columns else 0
+    
+    total_pending_shipping = 0
+    if "Chasing Disposition_clean" in df_kpi.columns: # 👈 (FIXED)
+        total_pending_shipping = df_kpi[ # 👈 (FIXED)
+            df_kpi["Chasing Disposition_clean"].eq("pending shipping") # 👈 (FIXED)
+        ].shape[0]
 
     # Derived metrics
     total_not_assigned = total_leads - total_assigned
@@ -1473,4 +1473,5 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
