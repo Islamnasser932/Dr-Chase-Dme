@@ -1439,10 +1439,9 @@ elif selected == "Data Analysis":
 
             style_metric_cards(
                 background_color="#0E1117",
-                border_left_color="#FF4B4B", # ده اللون الأحمر اللي اخترناه
+                border_left_color="#FF4B4B", 
                 border_color="#444",
-                box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
- )
+                box_shadow="2px 2px 10px rgba(0,0,0,0.5)" )
 
             
             # Original Relationship Chart
@@ -1472,6 +1471,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
