@@ -1513,46 +1513,4 @@ elif selected == "Data Analysis":
             
             # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
-            # Client Done Rate Chart
-            st.markdown(f"### 📊 'Done Rate' by Client (for selected clients)")
-            client_done_rate = df_agent_analysis.groupby('Client').agg(
-                Total_Leads=('MCN_clean', 'count'),
-                Done_Leads=('is_done', 'sum')
-            ).reset_index()
-            client_done_rate['Done Rate'] = (client_done_rate['Done_Leads'] / client_done_rate['Total_Leads']) * 100
             
-            chart_client_rate = alt.Chart(client_done_rate).mark_bar().encode(
-                x=alt.X('Client', title='Client', sort='-y'),
-                y=alt.Y('Done Rate', title='Done Rate (%)'),
-                tooltip=['Client', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
-            ).interactive()
-            st.altair_chart(chart_client_rate, use_container_width=True, theme="streamlit")
-
-            # Original Relationship Chart
-            st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
-            dispo_list = sorted(df_agent_analysis["Chasing Disposition"].dropna().unique())
-            dispo_options = ["All Dispositions"] + dispo_list
-            chart_dispo_filter = st.selectbox("Filter Chart by Chasing Disposition:", dispo_options, key="chart_dispo_filter")
-
-            # Filter data for this specific chart
-            df_chart_data = df_agent_analysis.copy()
-            if chart_dispo_filter != "All Dispositions":
-                df_chart_data = df_chart_data[df_chart_data["Chasing Disposition"] == chart_dispo_filter]
-            
-            chart_data = df_chart_data.groupby(["Assign To_clean", "Chasing Disposition"]).size().reset_index(name="Count")
-
-            if not chart_data.empty:
-                chart_relation = alt.Chart(chart_data).mark_bar().encode(
-                    x=alt.X("Assign To_clean", title="O Plan Agent"),
-                    y=alt.Y("Count", title="Number of Leads"),
-                    color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
-                    tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
-                ).interactive()
-                st.altair_chart(chart_relation, use_container_width=True, theme="streamlit")
-            else:
-                st.info("No data to display for the selected relationship chart filters.")
-            
-    else:
-        st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
-    # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
-
