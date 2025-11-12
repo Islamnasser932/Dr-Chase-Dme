@@ -1377,7 +1377,7 @@ elif selected == "Data Analysis":
         "MCN_clean" in df_oplan.columns and
         "Assign To_clean" in df_oplan.columns and
         "Chasing Disposition_clean" in df_ts.columns and
-        "Client" in df_ts.columns): # 🆕 Make sure Client column exists
+        "Client" in df_ts.columns): # 
         
         # 🆕 Select only necessary columns before merge
         df_ts_subset = df_ts[["MCN_clean", "Chasing Disposition_clean", "Chasing Disposition", "Client"]]
@@ -1396,109 +1396,65 @@ elif selected == "Data Analysis":
 
     if not df_merged_analysis.empty:
         
-        # --- 2. NEW Client Filter for this section ---
-        st.markdown("### 🎯 Filters for Agent/Client Analysis")
-        all_analysis_clients = sorted(df_merged_analysis['Client'].dropna().unique())
-        selected_analysis_clients = st.multiselect(
-            "Filter Clients for this analysis:",
-            options=all_analysis_clients,
-            default=all_analysis_clients, # Select all by default
-            key="agent_analysis_client_filter"
-        )
+        # --- 2. KPI Section (Modified: No Client filter) ---
+        st.markdown("### 📈 Agent Performance KPIs")
         
-        # 3. Apply this client filter
-        df_agent_analysis = df_merged_analysis[df_merged_analysis['Client'].isin(selected_analysis_clients)]
-
-        if df_agent_analysis.empty:
-            st.info("No data found for the selected Client(s) in this section.")
+        # 🆕 (FIXED) Use df_merged_analysis directly
+        agent_list = sorted(df_merged_analysis["Assign To_clean"].unique()) 
+        kpi_agent = st.selectbox("Select O Plan Agent for KPIs:", ["All Agents"] + agent_list, key="kpi_agent_select")
+        
+        # Filter for the selected agent
+        if kpi_agent == "All Agents":
+            df_kpi_data = df_merged_analysis # 👈 (FIXED)
+            kpi_title = "All Agents"
         else:
-            # --- 4. KPI Section ---
-            st.markdown("### 📈 Agent Performance KPIs")
-            agent_list = sorted(df_agent_analysis["Assign To_clean"].unique())
-            kpi_agent = st.selectbox("Select O Plan Agent for KPIs:", ["All Agents"] + agent_list, key="kpi_agent_select")
-            
-            # Filter for the selected agent
-            if kpi_agent == "All Agents":
-                df_kpi_data = df_agent_analysis
-                kpi_title = "All Agents"
-            else:
-                df_kpi_data = df_agent_analysis[df_agent_analysis["Assign To_clean"] == kpi_agent]
-                kpi_title = kpi_agent
-            
-            # Calculate KPIs
-            total_leads_for_agent = len(df_kpi_data)
-            total_done = df_kpi_data['is_done'].sum()
-            pct_done = (total_done / total_leads_for_agent * 100) if total_leads_for_agent > 0 else 0
-            
-            # Show KPIs
-            kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-            kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
-            kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
-            kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
-            
-            # (FIXED) 
-            style_metric_cards(
-                background_color="#0E1117",
-                border_left_color="#FF4B4B", 
-                border_color="#444",
-                box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
-            )
+            df_kpi_data = df_merged_analysis[df_merged_analysis["Assign To_clean"] == kpi_agent] # 👈 (FIXED)
+            kpi_title = kpi_agent
+        
+        # Calculate KPIs
+        total_leads_for_agent = len(df_kpi_data)
+        total_done = df_kpi_data['is_done'].sum()
+        pct_done = (total_done / total_leads_for_agent * 100) if total_leads_for_agent > 0 else 0
+        
+        # Show KPIs
+        kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+        kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
+        kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
+        kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
+        
+        # (FIXED) 
+        style_metric_cards(
+            background_color="#0E1117",
+            border_left_color="#FF4B4B", 
+            border_color="#444",
+            box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
+        )
 
-            # --- 5. Chart Section ---
-            
-            # Agent Done Rate Chart
-            st.markdown(f"### 📊 'Done Rate' by O Plan Agent (for selected clients)")
-            agent_done_rate = df_agent_analysis.groupby('Assign To_clean').agg(
-                Total_Leads=('MCN_clean', 'count'),
-                Done_Leads=('is_done', 'sum')
-            ).reset_index()
-            agent_done_rate['Done Rate'] = (agent_done_rate['Done_Leads'] / agent_done_rate['Total_Leads']) * 100
-            
-            chart_agent_rate = alt.Chart(agent_done_rate).mark_bar().encode(
-                x=alt.X('Assign To_clean', title='O Plan Agent', sort='-y'),
-                y=alt.Y('Done Rate', title='Done Rate (%)'),
-                tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
+        # --- 3. Chart Section (Modified: Only Relationship Chart) ---
+        st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
+        
+        # 🆕 (FIXED) Use df_merged_analysis directly
+        dispo_list = sorted(df_merged_analysis["Chasing Disposition"].dropna().unique())
+        dispo_options = ["All Dispositions"] + dispo_list
+        chart_dispo_filter = st.selectbox("Filter Chart by Chasing Disposition:", dispo_options, key="chart_dispo_filter")
+
+        # Filter data for this specific chart
+        df_chart_data = df_merged_analysis.copy() # 👈 (FIXED)
+        if chart_dispo_filter != "All Dispositions":
+            df_chart_data = df_chart_data[df_chart_data["Chasing Disposition"] == chart_dispo_filter]
+        
+        chart_data = df_chart_data.groupby(["Assign To_clean", "Chasing Disposition"]).size().reset_index(name="Count")
+
+        if not chart_data.empty:
+            chart_relation = alt.Chart(chart_data).mark_bar().encode(
+                x=alt.X("Assign To_clean", title="O Plan Agent"),
+                y=alt.Y("Count", title="Number of Leads"),
+                color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
+                tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
             ).interactive()
-            st.altair_chart(chart_agent_rate, use_container_width=True, theme="streamlit")
-
-            # Client Done Rate Chart
-            st.markdown(f"### 📊 'Done Rate' by Client (for selected clients)")
-            client_done_rate = df_agent_analysis.groupby('Client').agg(
-                Total_Leads=('MCN_clean', 'count'),
-                Done_Leads=('is_done', 'sum')
-            ).reset_index()
-            client_done_rate['Done Rate'] = (client_done_rate['Done_Leads'] / client_done_rate['Total_Leads']) * 100
-            
-            chart_client_rate = alt.Chart(client_done_rate).mark_bar().encode(
-                x=alt.X('Client', title='Client', sort='-y'),
-                y=alt.Y('Done Rate', title='Done Rate (%)'),
-                tooltip=['Client', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
-            ).interactive()
-            st.altair_chart(chart_client_rate, use_container_width=True, theme="streamlit")
-
-            # Original Relationship Chart
-            st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
-            dispo_list = sorted(df_agent_analysis["Chasing Disposition"].dropna().unique())
-            dispo_options = ["All Dispositions"] + dispo_list
-            chart_dispo_filter = st.selectbox("Filter Chart by Chasing Disposition:", dispo_options, key="chart_dispo_filter")
-
-            # Filter data for this specific chart
-            df_chart_data = df_agent_analysis.copy()
-            if chart_dispo_filter != "All Dispositions":
-                df_chart_data = df_chart_data[df_chart_data["Chasing Disposition"] == chart_dispo_filter]
-            
-            chart_data = df_chart_data.groupby(["Assign To_clean", "Chasing Disposition"]).size().reset_index(name="Count")
-
-            if not chart_data.empty:
-                chart_relation = alt.Chart(chart_data).mark_bar().encode(
-                    x=alt.X("Assign To_clean", title="O Plan Agent"),
-                    y=alt.Y("Count", title="Number of Leads"),
-                    color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
-                    tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
-                ).interactive()
-                st.altair_chart(chart_relation, use_container_width=True, theme="streamlit")
-            else:
-                st.info("No data to display for the selected relationship chart filters.")
+            st.altair_chart(chart_relation, use_container_width=True, theme="streamlit")
+        else:
+            st.info("No data to display for the selected relationship chart filters.")
             
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
