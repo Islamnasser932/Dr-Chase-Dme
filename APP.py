@@ -1506,7 +1506,7 @@ elif selected == "Data Analysis":
                 st.markdown("#### 🥉 Bottom Agents")
                 chart_bottom_agents = alt.Chart(bottom_agents).mark_bar(color="#dc3545").encode(
                     x=alt.X('Done_Leads', title='Number of "Done" Leads'),
-                    y=alt.Y('Assign To_clean', title='O Plan Agent', sort='+x'),
+                    y=alt.Y('Assign To_clean', title='O Plan Agent', sort='x'), # 👈 (FIXED) 
                     tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
                 ).interactive()
                 st.altair_chart(chart_bottom_agents, use_container_width=True, theme="streamlit")
@@ -1555,3 +1555,4 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
