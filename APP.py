@@ -1438,49 +1438,7 @@ elif selected == "Data Analysis":
             kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
             style_metric_cards(border_left_color="#FF4B4B") # Apply style with an argument
 
-            # --- 5. Chart Section ---
             
-            # Agent Done Rate Pie Chart
-            st.markdown(f"### 📊 'Done Leads' vs 'Other Leads' by O Plan Agent (for selected clients)")
-            
-            # 1. تجميع البيانات (Done vs Other)
-            agent_agg = df_agent_analysis.groupby('Assign To_clean')['is_done'].value_counts().unstack(fill_value=0)
-            if True not in agent_agg.columns:
-                agent_agg[True] = 0
-            if False not in agent_agg.columns:
-                agent_agg[False] = 0
-                
-            agent_agg = agent_agg.rename(columns={True: 'Done Leads', False: 'Other Leads'})
-            agent_agg = agent_agg.stack().reset_index(name='Count')
-            agent_agg = agent_agg.rename(columns={'is_done': 'Status'})
-
-            # 2. رسم الـ Pie Charts (لكل ايجنت)
-            base = alt.Chart(agent_agg).encode(
-                theta=alt.Theta("Count", stack=True)
-            )
-            
-            pie = base.mark_arc(outerRadius=120, innerRadius=0).encode(
-                color=alt.Color("Status"),
-                order=alt.Order("Status"),
-                tooltip=["Assign To_clean", "Status", "Count"]
-            ).properties(
-                title=alt.TitleParams(text='Agent', align='center', anchor='middle', fontSize=16, dy=-130) # 
-            )
-
-            text = base.mark_text(radius=140).encode(
-                text=alt.Text("Count", format=",.0f"),
-                order=alt.Order("Status"),
-                color=alt.value("white")  # لون الخط
-            )
-
-            chart_agent_pie = (pie + text).facet(
-                column=alt.Column("Assign To_clean", header=alt.Header(titleOrient="bottom", labelOrient="bottom"))
-            ).properties(
-                title="Done vs. Other Leads by Agent"
-            )
-            
-            st.altair_chart(chart_agent_pie, use_container_width=True, theme="streamlit")
-
             # Original Relationship Chart
             st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
             dispo_list = sorted(df_agent_analysis["Chasing Disposition"].dropna().unique())
@@ -1508,4 +1466,5 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
