@@ -942,15 +942,15 @@ elif selected == "Data Analysis":
                 
                 pending_mask = (
                     (df_filtered["Days Since Created"] > 7) &
-                    (df_filtered["Chasing Disposition_clean"].isin(["Faxed"])) 
+                    (df_filtered["Chasing Disposition_clean"].isin(["faxed"])) # 👈 (FIXED) 
                 )
-                pending_leads = df_filtered[pending_mask]
+                pending_leads_faxed = df_filtered[pending_mask] # 👈 (FIXED) 
                 
-                if not pending_leads.empty:
-                    st.warning(f"⚠️ Found {len(pending_leads)} leads pending for more than 7 days (Faxed).")
-                    with st.expander("🔍 View Pending Leads > 7 Days"):
+                if not pending_leads_faxed.empty: # 👈 (FIXED) 
+                    st.warning(f"⚠️ Found {len(pending_leads_faxed)} leads pending for more than 7 days (Faxed).") # 👈 (FIXED) 
+                    with st.expander("🔍 View Pending Leads > 7 Days (Faxed)"): # 👈 (FIXED) 
                         st.dataframe(
-                            pending_leads[[
+                            pending_leads_faxed[[ # 👈 (FIXED) 
                                 "MCN",
                                 "Created Time (Date)",
                                 "Days Since Created",
@@ -1355,6 +1355,7 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
+
 
 
 
