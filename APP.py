@@ -1463,38 +1463,55 @@ elif selected == "Data Analysis":
 
             # --- 5. Chart Section ---
             
-            # --- 🔽🔽🔽 START OF EDITED SECTION (Charts Removed) 🔽🔽🔽 ---
+            # --- 🔽🔽🔽 START OF EDITED SECTION (Top/Bottom Agents) 🔽🔽🔽 ---
             
-            # (Chart for Agent Done Rate - REMOVED)
-            # (Chart for Client Done Rate - REMOVED)
+            st.markdown(f"### 🏆 Top & Bottom Agents by 'Done' Leads (for selected clients)")
 
-            # Original Relationship Chart
-            st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
-            dispo_list = sorted(df_agent_analysis["Chasing Disposition"].dropna().unique())
-            dispo_options = ["All Dispositions"] + dispo_list
-            chart_dispo_filter = st.selectbox("Filter Chart by Chasing Disposition:", dispo_options, key="chart_dispo_filter")
+            # 1. 
+            agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
+                Total_Leads=('MCN_clean', 'count'),
+                Done_Leads=('is_done', 'sum')
+            ).reset_index()
+            agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
 
-            # Filter data for this specific chart
-            df_chart_data = df_agent_analysis.copy()
-            if chart_dispo_filter != "All Dispositions":
-                df_chart_data = df_chart_data[df_chart_data["Chasing Disposition"] == chart_dispo_filter]
+            # 2. 
+            max_agents = len(agent_performance)
+            if max_agents > 20:
+                max_agents = 20 # 
             
-            chart_data = df_chart_data.groupby(["Assign To_clean", "Chasing Disposition"]).size().reset_index(name="Count")
+            top_n = st.slider(
+                "Select number of agents to show:",
+                min_value=3,
+                max_value=max_agents,
+                value=5, # 
+                key="top_n_slider"
+            )
 
-            if not chart_data.empty:
-                chart_relation = alt.Chart(chart_data).mark_bar().encode(
-                    x=alt.X("Assign To_clean", title="O Plan Agent"),
-                    y=alt.Y("Count", title="Number of Leads"),
-                    color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
-                    tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
+            # 3. 
+            top_agents = agent_performance.sort_values(by="Done_Leads", ascending=False).head(top_n)
+            bottom_agents = agent_performance.sort_values(by="Done_Leads", ascending=True).head(top_n)
+
+            # 4. 
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown("#### 🥇 Top Agents")
+                chart_top_agents = alt.Chart(top_agents).mark_bar(color="#28a745").encode(
+                    x=alt.X('Done_Leads', title='Number of "Done" Leads'),
+                    y=alt.Y('Assign To_clean', title='O Plan Agent', sort='-x'),
+                    tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
                 ).interactive()
-                st.altair_chart(chart_relation, use_container_width=True, theme="streamlit")
-            else:
-                st.info("No data to display for the selected relationship chart filters.")
+                st.altair_chart(chart_top_agents, use_container_width=True, theme="streamlit")
+
+            with col2:
+                st.markdown("#### 🥉 Bottom Agents")
+                chart_bottom_agents = alt.Chart(bottom_agents).mark_bar(color="#dc3545").encode(
+                    x=alt.X('Done_Leads', title='Number of "Done" Leads'),
+                    y=alt.Y('Assign To_clean', title='O Plan Agent', sort='x'), # 👈 (FIXED) 
+                    tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
+                ).interactive()
+                st.altair_chart(chart_bottom_agents, use_container_width=True, theme="streamlit")
             
             # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
-            
-    else:
-        st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
-    # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
 
+       
