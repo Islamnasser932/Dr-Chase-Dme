@@ -1431,12 +1431,21 @@ elif selected == "Data Analysis":
             pct_done = (total_done / total_leads_for_agent * 100) if total_leads_for_agent > 0 else 0
             
             # Show KPIs
-            kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-            kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
-            kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
-            kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
-            style_metric_cards(border_left_color="#FF4B4B") # Apply style with an argument
-
+            kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+            kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
+            kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
+            kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
+            
+            # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
+            # (FIXED) 
+            # 
+            # 
+            # 
+            style_metric_cards(
+                background_color="#0E1117",
+                border_left_color="#FF4B4B", # 
+                border_color="#444",
+                box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
             # --- 5. Chart Section ---
             
             # Agent Done Rate Chart
@@ -1499,4 +1508,5 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
