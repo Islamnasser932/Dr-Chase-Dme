@@ -144,30 +144,38 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     return df_cleaned
 
 
-# --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
+# --- 🔽🔽🔽 START OF EDITED SECTION (load_oplan_data) 🔽🔽🔽 ---
 @st.cache_data
 def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
     try:
         df = pd.read_csv(file_path)
-        # 🆕 (جديد) تنظيف أسماء الأعمدة من المسافات
         df.columns = df.columns.str.strip()
         
-        # Clean "Closing Status" column (FIXED)
-        if "Closing Status" in df.columns:
-            df["Closing Status_clean"] = df["Closing Status"].fillna('').astype(str).str.strip().str.lower()
+        # 1. Find "Closing Status" column (case-insensitive)
+        closing_status_syns = ["Closing Status", "closing status", "status"]
+        actual_closing_col = find_col(df.columns, closing_status_syns) # 👈 Use find_col
+        
+        if actual_closing_col:
+            df["Closing Status_clean"] = df[actual_closing_col].fillna('').astype(str).str.strip().str.lower()
         else:
             st.warning("Column 'Closing Status' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
             
-        # 🆕 (جديد) Clean "Assign To" column
-        if "Assign To" in df.columns:
-            df["Assign To_clean"] = df["Assign To"].fillna("Unassigned").astype(str).str.strip()
+        # 2. Find "Assign To" column (case-insensitive)
+        assign_to_syns = ["Assign To", "Assign to", "assigned to", "agent", "Assigned To"]
+        actual_assign_col = find_col(df.columns, assign_to_syns) # 👈 Use find_col
+        
+        if actual_assign_col:
+            df["Assign To_clean"] = df[actual_assign_col].fillna("Unassigned").astype(str).str.strip()
         else:
             st.warning("Column 'Assign To' not found in O_Plan_Leads.csv. Cannot perform agent analysis.")
+        
+        # 3. Find "MCN" column (case-insensitive)
+        mcn_syns = ["MCN", "mcn"]
+        actual_mcn_col = find_col(df.columns, mcn_syns) # 👈 Use find_col
 
-        # Clean MCN column
-        if "MCN" in df.columns:
-            df["MCN_clean"] = df["MCN"].astype(str).str.strip()
+        if actual_mcn_col:
+            df["MCN_clean"] = df[actual_mcn_col].astype(str).str.strip()
         else:
             st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
             
