@@ -144,7 +144,6 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     return df_cleaned
 
 
-# --- 🔽🔽🔽 START OF EDITED SECTION (load_oplan_data) 🔽🔽🔽 ---
 @st.cache_data
 def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
@@ -187,7 +186,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     except Exception as e:
         st.error(f"An error occurred while loading O_Plan_Leads.csv: {e}")
         return pd.DataFrame()
-# --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
 
 # ================== EXECUTE DATA LOAD ==================
@@ -931,7 +929,7 @@ elif selected == "Data Analysis":
                 
                 if not pending_leads.empty:
                     st.warning(f"⚠️ Found {len(pending_leads)} leads pending for more than 5 days (Fax/Dr Call).")
-                    with st.expander("🔍 View Pending Leads > 5 Days"):
+                    with st.expander("🔍 View Pending Leads > 5 Days (Fax/Dr Call)"): 
                         st.dataframe(
                             pending_leads[[
                                 "MCN",
@@ -1415,7 +1413,11 @@ elif selected == "Data Analysis":
             kpi_col1.metric(f"Total Leads for {kpi_agent}", total_leads_for_agent)
             kpi_col2.metric(f"'Done' Leads", total_done)
             kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
-            style_metric_cards() 
+            
+            # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
+            style_metric_cards(border_left_color="#FF4B4B") # Apply style (removed key, added arg)
+            # --- 🔼🔼🔼 END OF EDITED SECTION (FIX) 🔼🔼🔼 ---
+
         # --- 3. Chart Section ---
         st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
         
