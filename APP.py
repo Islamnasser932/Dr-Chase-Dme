@@ -1415,8 +1415,7 @@ elif selected == "Data Analysis":
             kpi_col1.metric(f"Total Leads for {kpi_agent}", total_leads_for_agent)
             kpi_col2.metric(f"'Done' Leads", total_done)
             kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
-            style_metric_cards(key="kpi_card_style_agent") # Apply style
-
+            style_metric_cards() 
         # --- 3. Chart Section ---
         st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
         
@@ -1448,3 +1447,4 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
