@@ -1365,7 +1365,7 @@ elif selected == "Data Analysis":
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
 
-    # --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
+    # --- 🔽🔽🔽 START OF NEW SECTION 🔽🔽🔽 ---
     st.markdown("---") # 🆕 Add separator
     st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
     st.info("This section analyzes leads present in *both* the filtered Dr. Chase data and the O Plan file.")
@@ -1452,6 +1452,7 @@ elif selected == "Data Analysis":
                 y=alt.Y('Done Rate', title='Done Rate (%)'),
                 tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
             ).interactive()
+            # 🆕 Use theme="streamlit" to match dark mode
             st.altair_chart(chart_agent_rate, use_container_width=True, theme="streamlit")
 
             # Client Done Rate Chart
@@ -1467,6 +1468,7 @@ elif selected == "Data Analysis":
                 y=alt.Y('Done Rate', title='Done Rate (%)'),
                 tooltip=['Client', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
             ).interactive()
+            # 🆕 Use theme="streamlit" to match dark mode
             st.altair_chart(chart_client_rate, use_container_width=True, theme="streamlit")
 
             # Original Relationship Chart
@@ -1489,6 +1491,7 @@ elif selected == "Data Analysis":
                     color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
                     tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
                 ).interactive()
+                # 🆕 Use theme="streamlit" to match dark mode
                 st.altair_chart(chart_relation, use_container_width=True, theme="streamlit")
             else:
                 st.info("No data to display for the selected relationship chart filters.")
