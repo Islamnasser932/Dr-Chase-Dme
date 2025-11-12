@@ -1367,6 +1367,7 @@ elif selected == "Data Analysis":
 
     # --- 🔽🔽🔽 START OF NEW SECTION 🔽🔽🔽 ---
     st.markdown("---") # 🆕 Add separator
+    st.markdown("---") # 🆕 Add separator
     st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
     st.info("This section analyzes leads present in *both* the filtered Dr. Chase data and the O Plan file.")
 
@@ -1431,17 +1432,12 @@ elif selected == "Data Analysis":
             pct_done = (total_done / total_leads_for_agent * 100) if total_leads_for_agent > 0 else 0
             
             # Show KPIs
-            kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-            kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
-            kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
-            kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
-            # 
-            style_metric_cards(
-                background_color="#0E1117",
-                border_left_color="#FF4B4B", # 
-                border_color="#444",
-                box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
-            )
+            kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+            kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
+            kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
+            kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
+            style_metric_cards(border_left_color="#FF4B4B") # Apply style with an argument
+
             # --- 5. Chart Section ---
             
             # Agent Done Rate Chart
@@ -1457,7 +1453,6 @@ elif selected == "Data Analysis":
                 y=alt.Y('Done Rate', title='Done Rate (%)'),
                 tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
             ).interactive()
-            # 🆕 Use theme="streamlit" to match dark mode
             st.altair_chart(chart_agent_rate, use_container_width=True, theme="streamlit")
 
             # Client Done Rate Chart
@@ -1473,7 +1468,6 @@ elif selected == "Data Analysis":
                 y=alt.Y('Done Rate', title='Done Rate (%)'),
                 tooltip=['Client', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
             ).interactive()
-            # 🆕 Use theme="streamlit" to match dark mode
             st.altair_chart(chart_client_rate, use_container_width=True, theme="streamlit")
 
             # Original Relationship Chart
@@ -1496,7 +1490,6 @@ elif selected == "Data Analysis":
                     color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
                     tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
                 ).interactive()
-                # 🆕 Use theme="streamlit" to match dark mode
                 st.altair_chart(chart_relation, use_container_width=True, theme="streamlit")
             else:
                 st.info("No data to display for the selected relationship chart filters.")
@@ -1504,6 +1497,3 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
-
-
-
