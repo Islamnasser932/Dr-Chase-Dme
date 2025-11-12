@@ -1396,16 +1396,6 @@ elif selected == "Data Analysis":
 
     if not df_merged_analysis.empty:
         
-        # --- 2. NEW Client Filter for this section ---
-        st.markdown("### 🎯 Filters for Agent/Client Analysis")
-        all_analysis_clients = sorted(df_merged_analysis['Client'].dropna().unique())
-        selected_analysis_clients = st.multiselect(
-            "Filter Clients for this analysis:",
-            options=all_analysis_clients,
-            default=all_analysis_clients, # Select all by default
-            key="agent_analysis_client_filter"
-        )
-        
         # 3. Apply this client filter
         df_agent_analysis = df_merged_analysis[df_merged_analysis['Client'].isin(selected_analysis_clients)]
 
@@ -1474,4 +1464,5 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
