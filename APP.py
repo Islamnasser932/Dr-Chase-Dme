@@ -144,30 +144,37 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     return df_cleaned
 
 
-# --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
 @st.cache_data
 def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
     try:
         df = pd.read_csv(file_path)
-        # 🆕 (جديد) تنظيف أسماء الأعمدة من المسافات
         df.columns = df.columns.str.strip()
         
-        # Clean "Closing Status" column (FIXED)
-        if "Closing Status" in df.columns:
-            df["Closing Status_clean"] = df["Closing Status"].fillna('').astype(str).str.strip().str.lower()
+        # 1. Find "Closing Status" column (case-insensitive)
+        closing_status_syns = ["Closing Status", "closing status", "status"]
+        actual_closing_col = find_col(df.columns, closing_status_syns) # 👈 Use find_col
+        
+        if actual_closing_col:
+            df["Closing Status_clean"] = df[actual_closing_col].fillna('').astype(str).str.strip().str.lower()
         else:
             st.warning("Column 'Closing Status' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
             
-        # 🆕 (جديد) Clean "Assign To" column
-        if "Assign To" in df.columns:
-            df["Assign To_clean"] = df["Assign To"].fillna("Unassigned").astype(str).str.strip()
+        # 2. Find "Assign To" column (case-insensitive)
+        assign_to_syns = ["Assign To", "Assign to", "assigned to", "agent", "Assigned To"]
+        actual_assign_col = find_col(df.columns, assign_to_syns) # 👈 Use find_col
+        
+        if actual_assign_col:
+            df["Assign To_clean"] = df[actual_assign_col].fillna("Unassigned").astype(str).str.strip()
         else:
             st.warning("Column 'Assign To' not found in O_Plan_Leads.csv. Cannot perform agent analysis.")
+        
+        # 3. Find "MCN" column (case-insensitive)
+        mcn_syns = ["MCN", "mcn"]
+        actual_mcn_col = find_col(df.columns, mcn_syns) # 👈 Use find_col
 
-        # Clean MCN column
-        if "MCN" in df.columns:
-            df["MCN_clean"] = df["MCN"].astype(str).str.strip()
+        if actual_mcn_col:
+            df["MCN_clean"] = df[actual_mcn_col].astype(str).str.strip()
         else:
             st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
             
@@ -179,7 +186,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     except Exception as e:
         st.error(f"An error occurred while loading O_Plan_Leads.csv: {e}")
         return pd.DataFrame()
-# --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
 
 # ================== EXECUTE DATA LOAD ==================
@@ -923,7 +929,7 @@ elif selected == "Data Analysis":
                 
                 if not pending_leads.empty:
                     st.warning(f"⚠️ Found {len(pending_leads)} leads pending for more than 5 days (Fax/Dr Call).")
-                    with st.expander("🔍 View Pending Leads > 5 Days"):
+                    with st.expander("🔍 View Pending Leads > 5 Days (Fax/Dr Call)"): 
                         st.dataframe(
                             pending_leads[[
                                 "MCN",
@@ -1360,6 +1366,7 @@ elif selected == "Data Analysis":
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
 
     # --- 🔽🔽🔽 START OF NEW SECTION 🔽🔽🔽 ---
+    st.markdown("---") # 🆕 Add separator
     st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
     st.info("This section analyzes leads present in *both* the filtered Dr. Chase data and the O Plan file.")
 
@@ -1369,75 +1376,126 @@ elif selected == "Data Analysis":
         "MCN_clean" in df_ts.columns and 
         "MCN_clean" in df_oplan.columns and
         "Assign To_clean" in df_oplan.columns and
-        "Chasing Disposition_clean" in df_ts.columns):
+        "Chasing Disposition_clean" in df_ts.columns and
+        "Client" in df_ts.columns): # 🆕 Make sure Client column exists
+        
+        # 🆕 Select only necessary columns before merge
+        df_ts_subset = df_ts[["MCN_clean", "Chasing Disposition_clean", "Chasing Disposition", "Client"]]
+        df_oplan_subset = df_oplan[["MCN_clean", "Assign To_clean"]]
         
         df_merged_analysis = pd.merge(
-            df_ts, 
-            df_oplan[["MCN_clean", "Assign To_clean"]], 
+            df_ts_subset, 
+            df_oplan_subset, 
             on="MCN_clean", 
             how="inner"
         )
+        
+        # 🆕 Define "Done" statuses (lowercase) and create 'is_done' column
+        done_statuses = ["hot lead", "pending shipping", "passed review"]
+        df_merged_analysis['is_done'] = df_merged_analysis['Chasing Disposition_clean'].isin(done_statuses)
 
     if not df_merged_analysis.empty:
         
-        # --- 2. KPI Section ---
-        st.markdown("### 📈 Agent Performance KPIs")
+        # --- 2. NEW Client Filter for this section ---
+        st.markdown("### 🎯 Filters for Agent/Client Analysis")
+        all_analysis_clients = sorted(df_merged_analysis['Client'].dropna().unique())
+        selected_analysis_clients = st.multiselect(
+            "Filter Clients for this analysis:",
+            options=all_analysis_clients,
+            default=all_analysis_clients, # Select all by default
+            key="agent_analysis_client_filter"
+        )
         
-        agent_list = sorted(df_merged_analysis["Assign To_clean"].unique())
-        # Note: No "All Agents" for this KPI, as it's agent-specific
-        kpi_agent = st.selectbox("Select O Plan Agent for KPIs:", agent_list, key="kpi_agent_select")
-        
-        if kpi_agent:
-            df_kpi_agent = df_merged_analysis[df_merged_analysis["Assign To_clean"] == kpi_agent]
+        # 3. Apply this client filter
+        df_agent_analysis = df_merged_analysis[df_merged_analysis['Client'].isin(selected_analysis_clients)]
+
+        if df_agent_analysis.empty:
+            st.info("No data found for the selected Client(s) in this section.")
+        else:
+            # --- 4. KPI Section ---
+            st.markdown("### 📈 Agent Performance KPIs")
+            agent_list = sorted(df_agent_analysis["Assign To_clean"].unique())
+            kpi_agent = st.selectbox("Select O Plan Agent for KPIs:", ["All Agents"] + agent_list, key="kpi_agent_select")
             
-            # Define "Done" statuses (lowercase)
-            done_statuses = ["hot lead", "pending shipping", "passed review"]
+            # Filter for the selected agent
+            if kpi_agent == "All Agents":
+                df_kpi_data = df_agent_analysis
+                kpi_title = "All Agents"
+            else:
+                df_kpi_data = df_agent_analysis[df_agent_analysis["Assign To_clean"] == kpi_agent]
+                kpi_title = kpi_agent
             
-            # Calculate "Done"
-            total_done = df_kpi_agent[df_kpi_agent["Chasing Disposition_clean"].isin(done_statuses)].shape[0]
-            
-            # Calculate "Total"
-            total_leads_for_agent = len(df_kpi_agent)
-            
-            # Calculate Percentage
+            # Calculate KPIs
+            total_leads_for_agent = len(df_kpi_data)
+            total_done = df_kpi_data['is_done'].sum()
             pct_done = (total_done / total_leads_for_agent * 100) if total_leads_for_agent > 0 else 0
             
             # Show KPIs
             kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-            kpi_col1.metric(f"Total Leads for {kpi_agent}", total_leads_for_agent)
-            kpi_col2.metric(f"'Done' Leads", total_done)
+            kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
+            kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
             kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
-            style_metric_cards(border_left_color="#FF4B4B")
+            style_metric_cards(border_left_color="#FF4B4B") # Apply style with an argument
 
-        # --- 3. Chart Section ---
-        st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
-        
-        dispo_list = sorted(df_merged_analysis["Chasing Disposition"].dropna().unique())
-        dispo_options = ["All Dispositions"] + dispo_list
-        chart_dispo_filter = st.selectbox("Filter Chart by Chasing Disposition:", dispo_options, key="chart_dispo_filter")
-
-        # Filter data for the chart
-        df_chart_data = df_merged_analysis.copy()
-        if chart_dispo_filter != "All Dispositions":
-            df_chart_data = df_chart_data[df_chart_data["Chasing Disposition"] == chart_dispo_filter]
-        
-        # Group data for chart
-        chart_data = df_chart_data.groupby(["Assign To_clean", "Chasing Disposition"]).size().reset_index(name="Count")
-
-        if not chart_data.empty:
-            # Create the chart
-            chart = alt.Chart(chart_data).mark_bar().encode(
-                x=alt.X("Assign To_clean", title="O Plan Agent"),
-                y=alt.Y("Count", title="Number of Leads"),
-                color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
-                tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
-            ).interactive()
+            # --- 5. Chart Section ---
             
-            st.altair_chart(chart, use_container_width=True)
-        else:
-            st.info("No data to display for the selected chart filters.")
+            # Agent Done Rate Chart
+            st.markdown(f"### 📊 'Done Rate' by O Plan Agent (for selected clients)")
+            agent_done_rate = df_agent_analysis.groupby('Assign To_clean').agg(
+                Total_Leads=('MCN_clean', 'count'),
+                Done_Leads=('is_done', 'sum')
+            ).reset_index()
+            agent_done_rate['Done Rate'] = (agent_done_rate['Done_Leads'] / agent_done_rate['Total_Leads']) * 100
+            
+            chart_agent_rate = alt.Chart(agent_done_rate).mark_bar().encode(
+                x=alt.X('Assign To_clean', title='O Plan Agent', sort='-y'),
+                y=alt.Y('Done Rate', title='Done Rate (%)'),
+                tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
+            ).interactive()
+            # 🆕 Use theme="streamlit" to match dark mode
+            st.altair_chart(chart_agent_rate, use_container_width=True, theme="streamlit")
+
+            # Client Done Rate Chart
+            st.markdown(f"### 📊 'Done Rate' by Client (for selected clients)")
+            client_done_rate = df_agent_analysis.groupby('Client').agg(
+                Total_Leads=('MCN_clean', 'count'),
+                Done_Leads=('is_done', 'sum')
+            ).reset_index()
+            client_done_rate['Done Rate'] = (client_done_rate['Done_Leads'] / client_done_rate['Total_Leads']) * 100
+            
+            chart_client_rate = alt.Chart(client_done_rate).mark_bar().encode(
+                x=alt.X('Client', title='Client', sort='-y'),
+                y=alt.Y('Done Rate', title='Done Rate (%)'),
+                tooltip=['Client', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
+            ).interactive()
+            # 🆕 Use theme="streamlit" to match dark mode
+            st.altair_chart(chart_client_rate, use_container_width=True, theme="streamlit")
+
+            # Original Relationship Chart
+            st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
+            dispo_list = sorted(df_agent_analysis["Chasing Disposition"].dropna().unique())
+            dispo_options = ["All Dispositions"] + dispo_list
+            chart_dispo_filter = st.selectbox("Filter Chart by Chasing Disposition:", dispo_options, key="chart_dispo_filter")
+
+            # Filter data for this specific chart
+            df_chart_data = df_agent_analysis.copy()
+            if chart_dispo_filter != "All Dispositions":
+                df_chart_data = df_chart_data[df_chart_data["Chasing Disposition"] == chart_dispo_filter]
+            
+            chart_data = df_chart_data.groupby(["Assign To_clean", "Chasing Disposition"]).size().reset_index(name="Count")
+
+            if not chart_data.empty:
+                chart_relation = alt.Chart(chart_data).mark_bar().encode(
+                    x=alt.X("Assign To_clean", title="O Plan Agent"),
+                    y=alt.Y("Count", title="Number of Leads"),
+                    color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
+                    tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
+                ).interactive()
+                # 🆕 Use theme="streamlit" to match dark mode
+                st.altair_chart(chart_relation, use_container_width=True, theme="streamlit")
+            else:
+                st.info("No data to display for the selected relationship chart filters.")
             
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
-
