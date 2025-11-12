@@ -1383,7 +1383,8 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
-st.markdown("---") # 
+    
+    st.markdown("---") # 
     st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
     st.info("This section analyzes leads present in *both* the filtered Dr. Chase data and the O Plan file.")
 
@@ -1496,3 +1497,4 @@ st.markdown("---") #
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
