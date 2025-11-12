@@ -376,21 +376,34 @@ with st.sidebar.expander("📅 Date Range", expanded=False):
 
 
 # --- Apply filters using .query() ---
-query_parts = []
+# 🆕 (FIXED) 1. 
+query_parts_kpi = []
 if Client and "Client" in df_cleaned.columns:
-    query_parts.append("Client in @Client")
+    query_parts_kpi.append("Client in @Client")
 if Chaser_Name and "Chaser Name" in df_cleaned.columns:
-    query_parts.append("`Chaser Name` in @Chaser_Name")
+    query_parts_kpi.append("`Chaser Name` in @Chaser_Name")
 if Chaser_Group and "Chaser Group" in df_cleaned.columns:
-    query_parts.append("`Chaser Group` in @Chaser_Group")
-if Chasing_Disposition and "Chasing Disposition" in df_cleaned.columns:
-    query_parts.append("`Chasing Disposition` in @Chasing_Disposition")
+    query_parts_kpi.append("`Chaser Group` in @Chaser_Group")
 
-if query_parts:
-    final_query = " and ".join(query_parts)
-    df_filtered = df_cleaned.query(final_query)
+# 🆕 (FIXED) 2. 
+if query_parts_kpi:
+    final_query_kpi = " and ".join(query_parts_kpi)
+    df_kpi = df_cleaned.query(final_query_kpi)
 else:
-    df_filtered = df_cleaned.copy() # No filters applied
+    df_kpi = df_cleaned.copy()
+
+# 🆕 (FIXED) 3. 
+query_parts_main = query_parts_kpi.copy() # 
+if Chasing_Disposition and "Chasing Disposition" in df_cleaned.columns:
+    query_parts_main.append("`Chasing Disposition` in @Chasing_Disposition") # 
+
+# 🆕 (FIXED) 4. 
+if query_parts_main:
+    final_query_main = " and ".join(query_parts_main)
+    df_filtered = df_cleaned.query(final_query_main)
+else:
+    df_filtered = df_kpi.copy() #
+    
 
 
 # Apply date filter (on Created Time by default)
@@ -416,19 +429,20 @@ if selected == "Dataset Overview":
     # --- KPIs Section ---
     st.subheader("📌 Key Performance Indicators")
     
-    # --- حساب القيم ---
-    total_leads = len(df_filtered)
-    total_completed = df_filtered["Completion Date"].notna().sum() if "Completion Date" in df_filtered.columns else 0
-    total_assigned = df_filtered["Assigned date"].notna().sum() if "Assigned date" in df_filtered.columns else 0
-    total_uploaded = df_filtered["Upload Date"].notna().sum() if "Upload Date" in df_filtered.columns else 0
-    total_approval = df_filtered["Approval date"].notna().sum() if "Approval date" in df_filtered.columns else 0
-    total_denial = df_filtered["Denial Date"].notna().sum() if "Denial Date" in df_filtered.columns else 0
-    
-    total_pending_shipping = 0
-    if "Chasing Disposition_clean" in df_filtered.columns: 
-        total_pending_shipping = df_filtered[
-            df_filtered["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
-        ].shape[0]
+# --- حساب القيم ---
+    # 🆕 (FIXED) 
+    total_leads = len(df_kpi)
+    total_completed = df_kpi["Completion Date"].notna().sum() if "Completion Date" in df_kpi.columns else 0
+    total_assigned = df_kpi["Assigned date"].notna().sum() if "Assigned date" in df_kpi.columns else 0
+    total_uploaded = df_kpi["Upload Date"].notna().sum() if "Upload Date" in df_kpi.columns else 0
+    total_approval = df_kpi["Approval date"].notna().sum() if "Approval date" in df_kpi.columns else 0
+    total_denial = df_kpi["Denial Date"].notna().sum() if "Denial Date" in df_kpi.columns else 0
+    
+    total_pending_shipping = 0
+    if "Chasing Disposition_clean" in df_kpi.columns: # 👈 (FIXED)
+        total_pending_shipping = df_kpi[ # 👈 (FIXED)
+            df_kpi["Chasing Disposition_clean"].eq("pending shipping") # 👈 (FIXED)
+        ].shape[0]
 
     # Derived metrics
     total_not_assigned = total_leads - total_assigned
@@ -1459,3 +1473,4 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
