@@ -144,6 +144,7 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     return df_cleaned
 
 
+# --- 🔽🔽🔽 START OF EDITED SECTION 🔽🔽🔽 ---
 @st.cache_data
 def load_oplan_data(file_path="O_Plan_Leads.csv"):
     """Loads and cleans the O Plan leads file."""
@@ -158,6 +159,12 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
         else:
             st.warning("Column 'Closing Status' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
             
+        # 🆕 (جديد) Clean "Assign To" column
+        if "Assign To" in df.columns:
+            df["Assign To_clean"] = df["Assign To"].fillna("Unassigned").astype(str).str.strip()
+        else:
+            st.warning("Column 'Assign To' not found in O_Plan_Leads.csv. Cannot perform agent analysis.")
+
         # Clean MCN column
         if "MCN" in df.columns:
             df["MCN_clean"] = df["MCN"].astype(str).str.strip()
@@ -172,6 +179,7 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     except Exception as e:
         st.error(f"An error occurred while loading O_Plan_Leads.csv: {e}")
         return pd.DataFrame()
+# --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
 
 
 # ================== EXECUTE DATA LOAD ==================
@@ -963,6 +971,7 @@ elif selected == "Data Analysis":
                             ]],
                             use_container_width=True
                         )
+            
             # --- Row-level logic checks with expanders ---
             if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
                 bad_rows = df_time[df_time["Completion Date"].notna() & df_time["Assigned date"].isna()]
@@ -1141,7 +1150,6 @@ elif selected == "Data Analysis":
                     st.dataframe(both_dates[available_cols], use_container_width=True)
             
             
-            # --- 🔽🔽🔽 START OF EDITED SECTION (Approval Chart FIX) 🔽🔽🔽 ---
             # 📊 Lead Age Distribution – Approval
             if "Lead Age (Approval)" in df_lead_age.columns:
                 df_lead_age["Approval Category"] = df_lead_age["Lead Age (Approval)"].dropna().apply(categorize_weeks)
@@ -1184,10 +1192,8 @@ elif selected == "Data Analysis":
                             ]],
                             use_container_width=True
                         )
-            # --- 🔼🔼🔼 END OF EDITED SECTION (Approval Chart FIX) 🔼🔼🔼 ---
 
         
-            # --- 🔽🔽🔽 START OF EDITED SECTION (Denial Chart FIX) 🔽🔽🔽 ---
             # 📊 Lead Age Distribution – Denial
             if "Lead Age (Denial)" in df_lead_age.columns:
                 df_lead_age["Denial Category"] = df_lead_age["Lead Age (Denial)"].dropna().apply(categorize_weeks)
@@ -1230,7 +1236,6 @@ elif selected == "Data Analysis":
                             ]],
                             use_container_width=True
                         )
-            # --- 🔼🔼🔼 END OF EDITED SECTION (Denial Chart FIX) 🔼🔼🔼 ---
 
         
             # 📊 Grouped Bar Chart – Approval vs Denial per Chaser
@@ -1331,9 +1336,7 @@ elif selected == "Data Analysis":
             dup_diff_product_grouped = dup_diff_product_check.groupby("MCN")["Products"].nunique().reset_index()
             mcn_with_diff_products = dup_diff_product_grouped[dup_diff_product_grouped["Products"] > 1]["MCN"]
 
-            # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
-            dup_diff_product = dup_diff_product_check[dup_diff_product_check["MCN"].isin(mcn_with_diff_products)].copy() # 👈 (FIXED)
-            # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
+            dup_diff_product = dup_diff_product_check[dup_diff_product_check["MCN"].isin(mcn_with_diff_products)].copy() 
             
             if not dup_diff_product.empty:
                 st.info(f"ℹ️ Found {len(mcn_with_diff_products)} MCNs with DIFFERENT Products (not real dups).")
@@ -1356,6 +1359,84 @@ elif selected == "Data Analysis":
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
 
+    # --- 🔽🔽🔽 START OF NEW SECTION 🔽🔽🔽 ---
+    st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
+    st.info("This section analyzes leads present in *both* the filtered Dr. Chase data and the O Plan file.")
 
+    # 1. Merge the filtered data with O Plan data
+    df_merged_analysis = pd.DataFrame()
+    if (not df_oplan.empty and 
+        "MCN_clean" in df_ts.columns and 
+        "MCN_clean" in df_oplan.columns and
+        "Assign To_clean" in df_oplan.columns and
+        "Chasing Disposition_clean" in df_ts.columns):
+        
+        df_merged_analysis = pd.merge(
+            df_ts, 
+            df_oplan[["MCN_clean", "Assign To_clean"]], 
+            on="MCN_clean", 
+            how="inner"
+        )
 
+    if not df_merged_analysis.empty:
+        
+        # --- 2. KPI Section ---
+        st.markdown("### 📈 Agent Performance KPIs")
+        
+        agent_list = sorted(df_merged_analysis["Assign To_clean"].unique())
+        # Note: No "All Agents" for this KPI, as it's agent-specific
+        kpi_agent = st.selectbox("Select O Plan Agent for KPIs:", agent_list, key="kpi_agent_select")
+        
+        if kpi_agent:
+            df_kpi_agent = df_merged_analysis[df_merged_analysis["Assign To_clean"] == kpi_agent]
+            
+            # Define "Done" statuses (lowercase)
+            done_statuses = ["hot lead", "pending shipping", "passed review"]
+            
+            # Calculate "Done"
+            total_done = df_kpi_agent[df_kpi_agent["Chasing Disposition_clean"].isin(done_statuses)].shape[0]
+            
+            # Calculate "Total"
+            total_leads_for_agent = len(df_kpi_agent)
+            
+            # Calculate Percentage
+            pct_done = (total_done / total_leads_for_agent * 100) if total_leads_for_agent > 0 else 0
+            
+            # Show KPIs
+            kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+            kpi_col1.metric(f"Total Leads for {kpi_agent}", total_leads_for_agent)
+            kpi_col2.metric(f"'Done' Leads", total_done)
+            kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
+            style_metric_cards(key="kpi_card_style_agent") # Apply style
 
+        # --- 3. Chart Section ---
+        st.markdown("### 📊 Relationship Chart (Agent vs. Status)")
+        
+        dispo_list = sorted(df_merged_analysis["Chasing Disposition"].dropna().unique())
+        dispo_options = ["All Dispositions"] + dispo_list
+        chart_dispo_filter = st.selectbox("Filter Chart by Chasing Disposition:", dispo_options, key="chart_dispo_filter")
+
+        # Filter data for the chart
+        df_chart_data = df_merged_analysis.copy()
+        if chart_dispo_filter != "All Dispositions":
+            df_chart_data = df_chart_data[df_chart_data["Chasing Disposition"] == chart_dispo_filter]
+        
+        # Group data for chart
+        chart_data = df_chart_data.groupby(["Assign To_clean", "Chasing Disposition"]).size().reset_index(name="Count")
+
+        if not chart_data.empty:
+            # Create the chart
+            chart = alt.Chart(chart_data).mark_bar().encode(
+                x=alt.X("Assign To_clean", title="O Plan Agent"),
+                y=alt.Y("Count", title="Number of Leads"),
+                color=alt.Color("Chasing Disposition", title="Dr. Chase Status"),
+                tooltip=["Assign To_clean", "Chasing Disposition", "Count"]
+            ).interactive()
+            
+            st.altair_chart(chart, use_container_width=True)
+        else:
+            st.info("No data to display for the selected chart filters.")
+            
+    else:
+        st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
+    # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
