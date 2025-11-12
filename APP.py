@@ -410,11 +410,16 @@ else:
 if isinstance(date_range, tuple) and len(date_range) == 2:
     start_date, end_date = date_range
     if "Created Time" in df_filtered.columns:
+        # 
         df_filtered = df_filtered[
             (df_filtered["Created Time"].dt.date >= start_date)
             & (df_filtered["Created Time"].dt.date <= end_date)
         ]
-
+        # 🆕 (FIX) 
+        df_kpi = df_kpi[
+            (df_kpi["Created Time"].dt.date >= start_date)
+            & (df_kpi["Created Time"].dt.date <= end_date)
+        ]
 # ================== MAIN DASHBOARD (Dataset Overview) ==================
 if selected == "Dataset Overview":
     st.title("📋 Dataset Overview – General Inspection")
@@ -624,7 +629,7 @@ elif selected == "Data Analysis":
     original_time_col = time_col.replace(" (Date)", "") 
     
     # Prepare df_ts
-    df_ts = df_filtered.copy()
+    df_ts = df_kpi.copy()
     if original_time_col in df_ts.columns:
         df_ts = df_ts[df_ts[original_time_col].notna()].copy()
 
@@ -1473,5 +1478,6 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
