@@ -908,14 +908,14 @@ elif selected == "Data Analysis":
                     ).dt.days
                 
                 pending_mask = (
-                    (df_filtered["Days Since Created"] > 7) &
+                    (df_filtered["Days Since Created"] > 5) &
                     (df_filtered["Chasing Disposition_clean"].isin(["pending fax", "pending dr call"])) 
                 )
                 pending_leads = df_filtered[pending_mask]
                 
                 if not pending_leads.empty:
-                    st.warning(f"⚠️ Found {len(pending_leads)} leads pending for more than 7 days (Fax/Dr Call).")
-                    with st.expander("🔍 View Pending Leads > 7 Days"):
+                    st.warning(f"⚠️ Found {len(pending_leads)} leads pending for more than 5 days (Fax/Dr Call).")
+                    with st.expander("🔍 View Pending Leads > 5 Days"):
                         st.dataframe(
                             pending_leads[[
                                 "MCN",
@@ -931,7 +931,38 @@ elif selected == "Data Analysis":
                             use_container_width=True
                         )
 
-
+            # 🚨 Leads pending too long (Faxed)
+            if "Created Time (Date)" in df_filtered.columns and "Chasing Disposition_clean" in df_filtered.columns:
+                today = pd.Timestamp.now().normalize()
+                
+                if "Days Since Created" not in df_filtered.columns: # Avoid re-creating column
+                    df_filtered["Days Since Created"] = (
+                        today - pd.to_datetime(df_filtered["Created Time (Date)"], errors="coerce")
+                    ).dt.days
+                
+                pending_mask = (
+                    (df_filtered["Days Since Created"] > 7) &
+                    (df_filtered["Chasing Disposition_clean"].isin(["Faxed"])) 
+                )
+                pending_leads = df_filtered[pending_mask]
+                
+                if not pending_leads.empty:
+                    st.warning(f"⚠️ Found {len(pending_leads)} leads pending for more than 7 days (Faxed).")
+                    with st.expander("🔍 View Pending Leads > 7 Days"):
+                        st.dataframe(
+                            pending_leads[[
+                                "MCN",
+                                "Created Time (Date)",
+                                "Days Since Created",
+                                "Chasing Disposition",
+                                "Assigned date (Date)",
+                                "Upload Date (Date)",
+                                "Completion Date (Date)",
+                                "Chaser Name",
+                                "Client"
+                            ]],
+                            use_container_width=True
+                        )
             # --- Row-level logic checks with expanders ---
             if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
                 bad_rows = df_time[df_time["Completion Date"].notna() & df_time["Assigned date"].isna()]
@@ -1324,5 +1355,6 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
+
 
 
