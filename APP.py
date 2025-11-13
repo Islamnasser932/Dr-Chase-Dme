@@ -1498,7 +1498,7 @@ elif selected == "Data Analysis":
 
 
             
-        st.markdown("### 📈 Agent Done Leads Rankings (for selected clients)")
+        st.markdown("### 📈 Agent Done Leads Rankings")
         
         # 
         agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
@@ -1614,6 +1614,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
