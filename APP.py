@@ -1428,26 +1428,23 @@ elif selected == "Data Analysis":
    # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
     st.markdown("---")
     st.subheader("📊 Data Discrepancy Analysis (Dr. Chase vs. O Plan)")
-    st.info("This section finds leads present in one file but not the other, based on MCN. This respects all sidebar filters *except* 'Chasing Disposition'.")
-
     # 1. 
     df_discrepancy_analysis = pd.DataFrame()
     if (not df_oplan.empty and 
         "MCN_clean" in df_ts.columns and 
         "MCN_clean" in df_oplan.columns and
-        "Client_OPlan" in df_oplan.columns): # 
+        "Client" in df_ts.columns): # 
         
         # 
         # 
-        df_ts_mcn = df_ts[["MCN_clean"]].drop_duplicates()
-        # 
-        df_oplan_subset = df_oplan[["MCN_clean", "Client_OPlan"]].drop_duplicates(subset=["MCN_clean"])
+        df_ts_subset = df_ts[["MCN_clean", "Client"]]
+        df_oplan_mcn = df_oplan[["MCN_clean"]]
 
         # 
         # 
         df_discrepancy_analysis = pd.merge(
-            df_ts_mcn, 
-            df_oplan_subset, # 
+            df_ts_subset, 
+            df_oplan_mcn, 
             on="MCN_clean", 
             how="outer", # 
             indicator=True # 
@@ -1479,13 +1476,13 @@ elif selected == "Data Analysis":
         if not df_chase_only.empty:
             with st.expander(f"🔍 View {len(df_chase_only)} Leads: In Dr. Chase ONLY (Not in O Plan)"):
                 # 
-                st.dataframe(df_chase_only[["MCN_clean"]], use_container_width=True)
+                st.dataframe(df_chase_only[["MCN_clean", "Client"]], use_container_width=True)
 
         if not df_oplan_only.empty:
             with st.expander(f"🔍 View {len(df_oplan_only)} Leads: In O Plan ONLY (Not in Dr. Chase)"):
                 # 
-                st.dataframe(df_oplan_only[["MCN_clean", "Client_OPlan"]], use_container_width=True)
+                st.dataframe(df_oplan_only[["MCN_clean"]], use_container_width=True)
             
     else:
-        st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Client' columns.")
+        st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
