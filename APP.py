@@ -177,6 +177,18 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
             df["MCN_clean"] = df[actual_mcn_col].astype(str).str.strip()
         else:
             st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
+        
+        # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
+        # 4. 
+        client_syns = ["Client", "client"]
+        actual_client_col = find_col(df.columns, client_syns) # 👈 Use find_col
+
+        if actual_client_col:
+            df["Client_OPlan"] = df[actual_client_col].fillna("Unknown Client").astype(str).str.strip() # 
+        else:
+            st.warning("Column 'Client' not found in O_Plan_Leads.csv.")
+            df["Client_OPlan"] = "Unknown Client" # 
+        # --- 🔼🔼🔼 END OF EDITED SECTION (FIX) 🔼🔼🔼 ---
             
         st.success("✅ O Plan file loaded successfully! (Cached for speed)")
         return df
@@ -186,7 +198,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     except Exception as e:
         st.error(f"An error occurred while loading O_Plan_Leads.csv: {e}")
         return pd.DataFrame()
-
 
 # ================== EXECUTE DATA LOAD ==================
 df_cleaned = load_and_clean_data(df_raw, name_map, cols_map, samy_chasers)
@@ -1422,18 +1433,19 @@ elif selected == "Data Analysis":
     if (not df_oplan.empty and 
         "MCN_clean" in df_ts.columns and 
         "MCN_clean" in df_oplan.columns and
-        "Client" in df_ts.columns): # 
+        "Client_OPlan" in df_oplan.columns): # 
         
         # 
         # 
-        df_ts_subset = df_ts[["MCN_clean", "Client"]]
-        df_oplan_mcn = df_oplan[["MCN_clean", "Client"]]
+        df_ts_mcn = df_ts[["MCN_clean"]].drop_duplicates()
+        # 
+        df_oplan_subset = df_oplan[["MCN_clean", "Client_OPlan"]].drop_duplicates(subset=["MCN_clean"])
 
         # 
         # 
         df_discrepancy_analysis = pd.merge(
-            df_ts_subset, 
-            df_oplan_mcn, 
+            df_ts_mcn, 
+            df_oplan_subset, # 
             on="MCN_clean", 
             how="outer", # 
             indicator=True # 
@@ -1465,15 +1477,13 @@ elif selected == "Data Analysis":
         if not df_chase_only.empty:
             with st.expander(f"🔍 View {len(df_chase_only)} Leads: In Dr. Chase ONLY (Not in O Plan)"):
                 # 
-                st.dataframe(df_chase_only[["MCN_clean", "Client"]], use_container_width=True)
+                st.dataframe(df_chase_only[["MCN_clean"]], use_container_width=True)
 
         if not df_oplan_only.empty:
             with st.expander(f"🔍 View {len(df_oplan_only)} Leads: In O Plan ONLY (Not in Dr. Chase)"):
                 # 
-                st.dataframe(df_oplan_only[["MCN_clean", "Client"]], use_container_width=True)
+                st.dataframe(df_oplan_only[["MCN_clean", "Client_OPlan"]], use_container_width=True)
             
     else:
-        st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
+        st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Client' columns.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
-    
-
