@@ -1479,36 +1479,7 @@ elif selected == "Data Analysis":
         agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']).fillna(0) * 100
         agent_performance_chart_data = agent_performance.sort_values(by="Done_Leads", ascending=False)
         
-          
-        fig = px.bar(
-            agent_performance_chart_data[agent_performance_chart_data['Done_Leads'] > 0], # 
-            x="Done_Leads", 
-            y="Assign To_clean", 
-            orientation='h',
-            title="Total 'Done' Leads (Hot, Pending, Passed) by Agent",
-            text='Done_Leads' # 
-        )
         
-        # 
-        fig.update_traces(
-            textposition='outside', 
-            textfont_size=14 # 
-        )
-        fig.update_layout(
-            template="plotly_dark",
-            yaxis_title="O Plan Agent",
-            xaxis_title="Total Done Leads Count",
-            yaxis=dict(
-                autorange="reversed",
-                tickfont_size=12, # 
-                automargin=True # 
-            ),
-            xaxis=dict(
-                tickfont_size=12 # 
-            )
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
 
         # --- 🔽🔽🔽 START OF EDITED SECTION (Display as DataFrames) 🔽🔽🔽 ---
         
@@ -1612,6 +1583,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
