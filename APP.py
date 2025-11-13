@@ -1462,14 +1462,15 @@ elif selected == "Data Analysis":
         if not df_chase_only.empty:
             with st.expander(f"🔍 View {len(df_chase_only)} Leads: In Dr. Chase ONLY (Not in O Plan)"):
                 # 
-                st.dataframe(df_chase_only[["MCN_clean"]], use_container_width=True)
+                st.dataframe(df_chase_only[["MCN_clean","Client"]], use_container_width=True)
 
         if not df_oplan_only.empty:
             with st.expander(f"🔍 View {len(df_oplan_only)} Leads: In O Plan ONLY (Not in Dr. Chase)"):
                 # 
-                st.dataframe(df_oplan_only[["MCN_clean"]], use_container_width=True)
+                st.dataframe(df_oplan_only[["MCN_clean","Client"]], use_container_width=True)
             
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
