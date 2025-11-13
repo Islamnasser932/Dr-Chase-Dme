@@ -1530,12 +1530,12 @@ st.markdown("---")
             for i, row in bottom_20.iterrows():
                 bottom_20_strings.append(f"{i+1}. **{row['Assign To_clean']}**: {row['Done Rate']:.1f}% ({row['Done_Leads']} / {row['Total_Leads']})")
             st.markdown("\n".join(bottom_20_strings))
-
-        # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
             
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
+
    # --- 🔽🔽🔽 START OF Difference leads 🔽🔽🔽 ---
     st.markdown("---")
     df_discrepancy_analysis = pd.DataFrame()
@@ -1595,6 +1595,7 @@ st.markdown("---")
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
