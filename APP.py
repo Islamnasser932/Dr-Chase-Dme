@@ -1425,9 +1425,9 @@ elif selected == "Data Analysis":
 
 # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
 
+    # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
     st.markdown("---")
-    st.subheader("📊 Agent Performance In Dr Chase Leads")
-
+    st.subheader("📊 Data Discrepancy Analysis (Dr. Chase vs. O Plan)")
     # 1. 
     df_discrepancy_analysis = pd.DataFrame()
     if (not df_oplan.empty and 
