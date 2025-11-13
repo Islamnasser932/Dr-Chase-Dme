@@ -1093,7 +1093,7 @@ elif selected == "Data Analysis":
                 # 4. Find the intersection (the MCNs present in both lists)
                 conflicting_leads = pd.merge(
                     dr_chase_conflicts[["MCN_clean", "Chasing Disposition", "Chaser Name", "Client"]],
-                    oplan_conflicts[["MCN_clean", "Closing Status"]], # 
+                    oplan_conflicts[["MCN_clean", "Closing Status_clean"]], # 
                     on="MCN_clean",
                     how="inner",
                     suffixes=('_DrChase', '_OPlan')
@@ -1492,4 +1492,5 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
