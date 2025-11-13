@@ -1472,62 +1472,51 @@ elif selected == "Data Analysis":
 
         # --- 5. Chart Section ---
         
-        # --- 🔽🔽🔽 START OF NEW SECTION (Plotly Chart & Summary) 🔽🔽🔽 ---
-        
-        st.markdown("### 📊 Done Leads Distribution (Agent vs. Status)")
-        
-        # 1. 
-        df_done_leads = df_agent_analysis[df_agent_analysis['is_done'] == True]
-        
-        if not df_done_leads.empty:
-            # 2. 
-            df_heatmap_data = df_done_leads.groupby(["Assign To_clean", "Chasing Disposition_clean"]).size().reset_index(name="Count")
-            
-
-            base = alt.Chart(df_heatmap_data).encode(
-                x=alt.X('Chasing Disposition_clean', title='Dr. Chase "Done" Status'),
-                y=alt.Y('Assign To_clean', title='O Plan Agent'),
-                tooltip=[
-                    'Assign To_clean',
-                    'Chasing Disposition_clean',
-                    'Count'
-                ]
-            )
-            # 
-            heatmap = base.mark_rect().encode(
-                color=alt.Color('Count', 
-                                scale=alt.Scale(range='heatmap'), # 
-                                legend=alt.Legend(title="Lead Count"))
-            )
-
-# 
-            text = base.mark_text().encode(
-                text=alt.Text('Count', format=".0f"),
-                color=alt.value('black') # 
-            )
-
-            chart_heatmap = (heatmap + text).properties(
-                title="Heatmap of 'Done' Leads by Agent and Status"
-            ).interactive() # 
-
-            st.altair_chart(chart_heatmap, use_container_width=True, theme="streamlit")        
-        else:
-            st.info("No 'Done' leads found for the selected agent(s) to display this chart.")
-
 
             
-        st.markdown("### 📈 Agent Done Leads Rankings")
-        
-        # 
+            # 1. 
         agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
             Total_Leads=('MCN_clean', 'count'),
             Done_Leads=('is_done', 'sum')
         ).reset_index()
+        agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']).fillna(0) * 100
         
-        # 
-        agent_performance['Done Rate'] = 0.0
-        agent_performance.loc[agent_performance['Total_Leads'] > 0, 'Done Rate'] = \
-            (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
+        # 2. 
+        agent_performance = agent_performance.sort_values(by="Done_Leads", ascending=False)
+
+        # 3. 
+        st.markdown("### 📊 Total 'Done' Leads by Agent")
+        
+        fig = px.bar(
+            agent_performance[agent_performance['Done_Leads'] > 0], # 
+            x="Done_Leads", 
+            y="Assign To_clean", 
+            orientation='h',
+            title="Total 'Done' Leads (Hot, Pending, Passed) by Agent",
+            text='Done_Leads' # 
+        )
+        fig.update_traces(textposition='outside')
+        fig.update_layout(
+            template="plotly_dark",
+            yaxis_title="O Plan Agent",
+            xaxis_title="Total Done Leads Count",
+            yaxis=dict(autorange="reversed") # 
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        
+    st.markdown("### 📈 Agent Done Leads Rankings")
+    
+    # 
+    agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
+        Total_Leads=('MCN_clean', 'count'),
+        Done_Leads=('is_done', 'sum')
+    ).reset_index()
+    
+    # 
+    agent_performance['Done Rate'] = 0.0
+    agent_performance.loc[agent_performance['Total_Leads'] > 0, 'Done Rate'] = \
+        (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
         
         
         # --- 🔽🔽🔽 START OF EDITED SECTION (Display as DataFrames) 🔽🔽🔽 ---
@@ -1632,6 +1621,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
