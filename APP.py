@@ -647,7 +647,7 @@ elif selected == "Data Analysis":
     original_time_col = time_col.replace(" (Date)", "") 
     
     # Prepare df_ts
-    df_ts = df_kpi.copy()
+    df_ts = df_filtered.copy()
     if original_time_col in df_ts.columns:
         df_ts = df_ts[df_ts[original_time_col].notna()].copy()
 
@@ -1617,6 +1617,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
