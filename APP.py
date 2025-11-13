@@ -1408,33 +1408,77 @@ elif selected == "Data Analysis":
     st.markdown("---")
     st.subheader("📊 Agent Performance on Dr Chase Leads")
 
-    df_merged_final = pd.DataFrame()
+    # 1. Merge the filtered data (df_ts) with O Plan data
+    df_merged_analysis = pd.DataFrame()
     if (not df_oplan.empty and 
         "MCN_clean" in df_ts.columns and 
-        "MCN_clean" in df_oplan.columns):
+        "MCN_clean" in df_oplan.columns and
+        "Assign To_clean" in df_oplan.columns and
+        "Chasing Disposition_clean" in df_ts.columns and
+        "Client" in df_ts.columns): 
         
-        df_merged_final = pd.merge(
-            df_ts, 
-            df_oplan, # 
+        # 
+        df_ts_subset = df_ts[["MCN_clean", "Chasing Disposition_clean", "Chasing Disposition", "Client"]]
+        df_oplan_subset = df_oplan[["MCN_clean", "Assign To_clean"]]
+        
+        df_merged_analysis = pd.merge(
+            df_ts_subset, 
+            df_oplan_subset, 
             on="MCN_clean", 
-            how="inner", # 
-            suffixes=('_DrChase', '_OPlan') # 
+            how="inner" # 
+        )
+        
+        # 
+        done_statuses = ["hot lead", "pending shipping", "passed review"]
+        df_merged_analysis['is_done'] = df_merged_analysis['Chasing Disposition_clean'].isin(done_statuses)
+
+    if not df_merged_analysis.empty:
+        
+        # --- (Client Filter REMOVED as requested) ---
+        
+        # 3. 
+        df_agent_analysis = df_merged_analysis.copy() # 
+
+        # --- 4. KPI Section ---
+        st.markdown("### 📈 Agent Performance KPIs")
+        agent_list = sorted(df_agent_analysis["Assign To_clean"].unique())
+        kpi_agent = st.selectbox("Select O Plan Agent for KPIs:", ["All Agents"] + agent_list, key="kpi_agent_select")
+        
+        # Filter for the selected agent
+        if kpi_agent == "All Agents":
+            df_kpi_data = df_agent_analysis
+            kpi_title = "All Agents"
+        else:
+            df_kpi_data = df_agent_analysis[df_agent_analysis["Assign To_clean"] == kpi_agent]
+            kpi_title = kpi_agent
+        
+        # Calculate KPIs
+        total_leads_for_agent = len(df_kpi_data)
+        total_done = df_kpi_data['is_done'].sum()
+        pct_done = (total_done / total_leads_for_agent * 100) if total_leads_for_agent > 0 else 0
+        
+        # Show KPIs
+        kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+        kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
+        kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
+        kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
+        
+        # (FIXED) 
+        style_metric_cards(
+            background_color="#0E1117",
+            border_left_color="#FF4B4B", 
+            border_color="#444",
+            box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
         )
 
-    if not df_merged_final.empty:
-        st.markdown(f"Found **{len(df_merged_final)}** matching leads between the two files (based on your filters).")
-        with st.expander("🔍 View Merged Data"):
-            st.dataframe(df_merged_final, use_container_width=True)
+        # --- 5. Chart Section (REMOVED as requested) ---
             
     else:
-        st.warning("Could not find any matching leads (MCN) between the filtered Dr. Chase data and the O Plan file.")
-    # --- 🔼🔼🔼 END OF NEW MERGE SECTION 🔼🔼🔼 ---
-
+        st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
+    # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
 
    # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
-    st.markdown("---")
-    st.subheader("📊 Agent Performance in Dr Chase leads")
-    # 1. 
+
     df_discrepancy_analysis = pd.DataFrame()
     if (not df_oplan.empty and 
         "MCN_clean" in df_ts.columns and 
@@ -1492,6 +1536,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
