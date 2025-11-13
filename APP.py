@@ -977,7 +977,8 @@ elif selected == "Data Analysis":
                                 "Upload Date (Date)",
                                 "Completion Date (Date)",
                                 "Chaser Name",
-                                "Client"
+                                "Client",
+                                "Next Follow-up Date"
                             ]],
                             use_container_width=True
                         )
@@ -1015,6 +1016,7 @@ elif selected == "Data Analysis":
                             ]],
                             use_container_width=True
                         )
+
             # 🚨 Leads pending too long (Dr Chase)
             if "Created Time (Date)" in df_filtered.columns and "Chasing Disposition_clean" in df_filtered.columns:
                 today = pd.Timestamp.now().normalize()
@@ -1026,15 +1028,15 @@ elif selected == "Data Analysis":
                 
                 pending_mask = (
                     (df_filtered["Days Since Created"] > 7) &
-                    (df_filtered["Chasing Disposition_clean"].isin(["dr Chase"])) # 
+                    (df_filtered["Chasing Disposition_clean"].isin(["dr chase"])) # 
                 )
-                pending_leads_Dr_Chase= df_filtered[pending_mask] # 
+                pending_leads_dr_chase = df_filtered[pending_mask] # 
                 
-                if not pending_leads_Dr_Chase.empty: # 
-                    st.warning(f"⚠️ Found {len(pending_leads_Dr_Chase)} leads pending for more than 7 days (Dr Chase).") # 
+                if not pending_leads_dr_chase.empty: # 
+                    st.warning(f"⚠️ Found {len(pending_leads_dr_chase)} leads pending for more than 7 days (Dr Chase).") # 
                     with st.expander("🔍 View Pending Leads > 7 Days (Dr Chase)"): # 
                         st.dataframe(
-                            pending_leads_Dr_Chase[[ # 
+                            pending_leads_dr_chase[[ # 
                                 "MCN",
                                 "Created Time (Date)",
                                 "Days Since Created",
@@ -1043,12 +1045,11 @@ elif selected == "Data Analysis":
                                 "Upload Date (Date)",
                                 "Completion Date (Date)",
                                 "Chaser Name",
-                                "Client",
-                                "Next Follow-up Date"
+                                "Client"
+                                # "Next Follow-up Date" 
                             ]],
                             use_container_width=True
                         )
-                        
             # --- Row-level logic checks with expanders ---
             if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
                 bad_rows = df_time[df_time["Completion Date"].notna() & df_time["Assigned date"].isna()]
@@ -1616,6 +1617,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
