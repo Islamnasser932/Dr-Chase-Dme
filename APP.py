@@ -1460,8 +1460,8 @@ elif selected == "Data Analysis":
         # Show KPIs
         kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
         kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
-        kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
-        kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
+        kpi_col2.metric(f" Done Leads (Hot, Pending, Passed)", total_done)
+        kpi_col3.metric(f"Done Rate", f"{pct_done:.1f}%")
         
         # (FIXED) 
         style_metric_cards(
@@ -1478,7 +1478,7 @@ elif selected == "Data Analysis":
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
 
    # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
-
+    st.markdown("---")
     df_discrepancy_analysis = pd.DataFrame()
     if (not df_oplan.empty and 
         "MCN_clean" in df_ts.columns and 
@@ -1510,7 +1510,7 @@ elif selected == "Data Analysis":
         df_matched = df_discrepancy_analysis[df_discrepancy_analysis['_merge'] == 'both']
 
         # 5. 
-        st.markdown("### 📈 Discrepancy KPIs")
+        st.markdown("### 📈 Difference leads")
         kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
         kpi_col1.metric("✅ Leads in Both Files", len(df_matched))
         kpi_col2.metric("⚠️ Leads in Dr. Chase ONLY", len(df_chase_only))
@@ -1536,6 +1536,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
