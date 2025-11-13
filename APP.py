@@ -1433,7 +1433,7 @@ elif selected == "Data Analysis":
 
    # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
     st.markdown("---")
-    st.subheader("📊 Data Discrepancy Analysis (Dr. Chase vs. O Plan)")
+    st.subheader("📊 Agent Performance in Dr Chase leads")
     # 1. 
     df_discrepancy_analysis = pd.DataFrame()
     if (not df_oplan.empty and 
@@ -1492,5 +1492,6 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
