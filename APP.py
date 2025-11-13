@@ -1515,17 +1515,17 @@ elif selected == "Data Analysis":
         # --- 🔽🔽🔽 START OF EDITED SECTION (Display as DataFrames) 🔽🔽🔽 ---
         
         # 
-        top_20 = agent_performance.sort_values(by="Done_Leads", ascending=False).head(20)
-        bottom_20 = agent_performance.sort_values(by="Done_Leads", ascending=True).head(20)
+        top_50 = agent_performance.sort_values(by="Done_Leads", ascending=False).head(50)
+        bottom_50 = agent_performance.sort_values(by="Done_Leads", ascending=True).head(50)
 
         # 
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("#### 🏆 Top 20 Agents (by Done Leads Count)")
+            st.markdown("#### 🏆 Top 50 Agents (by Done Leads Count)")
             # 
             st.dataframe(
-                top_20[['Assign To_clean', 'Total_Leads', 'Done_Leads', 'Done Rate']],
+                top_50[['Assign To_clean', 'Total_Leads', 'Done_Leads', 'Done Rate']],
                 column_config={
                     "Assign To_clean": "Agent",
                     "Total_Leads": "Total",
@@ -1537,10 +1537,10 @@ elif selected == "Data Analysis":
             )
             
         with col2:
-            st.markdown("#### 📉 Bottom 20 Agents (by Done Leads Count)")
+            st.markdown("#### 📉 Bottom 50 Agents (by Done Leads Count)")
             # 
             st.dataframe(
-                bottom_20[['Assign To_clean', 'Total_Leads', 'Done_Leads', 'Done Rate']],
+                bottom_50[['Assign To_clean', 'Total_Leads', 'Done_Leads', 'Done Rate']],
                 column_config={
                     "Assign To_clean": "Agent",
                     "Total_Leads": "Total",
@@ -1614,6 +1614,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
