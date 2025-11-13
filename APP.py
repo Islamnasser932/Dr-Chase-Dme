@@ -1481,18 +1481,36 @@ elif selected == "Data Analysis":
         
         if not df_done_leads.empty:
             # 2. 
-            df_plotly_chart = df_done_leads.groupby(["Assign To_clean", "Chasing Disposition_clean"]).size().reset_index(name="Count")
+            df_heatmap_data = df_done_leads.groupby(["Assign To_clean", "Chasing Disposition_clean"]).size().reset_index(name="Count")
             
-            # 3. 
-            fig = px.bar(
-                df_plotly_chart, 
-                x="Assign To_clean", 
-                y="Count", 
-                color="Chasing Disposition_clean", 
-                title="Done Leads Breakdown by Agent and Status"
+
+            base = alt.Chart(df_heatmap_data).encode(
+                x=alt.X('Chasing Disposition_clean', title='Dr. Chase "Done" Status'),
+                y=alt.Y('Assign To_clean', title='O Plan Agent'),
+                tooltip=[
+                    'Assign To_clean',
+                    'Chasing Disposition_clean',
+                    'Count'
+                ]
             )
-            fig.update_layout(template="plotly_dark") # 
-            st.plotly_chart(fig, use_container_width=True)
+            # 
+            heatmap = base.mark_rect().encode(
+                color=alt.Color('Count', 
+                                scale=alt.Scale(range='heatmap'), # 
+                                legend=alt.Legend(title="Lead Count"))
+            )
+
+# 
+            text = base.mark_text().encode(
+                text=alt.Text('Count', format=".0f"),
+                color=alt.value('black') # 
+            )
+
+            chart_heatmap = (heatmap + text).properties(
+                title="Heatmap of 'Done' Leads by Agent and Status"
+            ).interactive() # 
+
+            st.altair_chart(chart_heatmap, use_container_width=True, theme="streamlit")        
         else:
             st.info("No 'Done' leads found for the selected agent(s) to display this chart.")
 
@@ -1614,6 +1632,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
