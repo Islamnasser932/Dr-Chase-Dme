@@ -1404,11 +1404,12 @@ elif selected == "Data Analysis":
         )
             
     if not df_merged_final.empty:
-        st.markdown(f"Found **{len(df_merged_final)}** matching leads between the two files (based on your filters).")
+        st.markdown(f"Found **{len(df_merged_final)}** matching leads between the two files.")
         with st.expander("🔍 View Merged Data"):
             st.dataframe(df_merged_final, use_container_width=True)
             
     else:
         st.warning("Could not find any matching leads (MCN) between the filtered Dr. Chase data and the O Plan file.")
     # --- 🔼🔼🔼 END OF NEW MERGE SECTION 🔼🔼🔼 ---
+
 
