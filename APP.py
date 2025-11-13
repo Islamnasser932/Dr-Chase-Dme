@@ -136,7 +136,7 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
             
     # 5. Clean MCN and Chasing Disposition for merging
     if "MCN" in df_cleaned.columns:
-        df_cleaned["MCN_clean"] = df_cleaned["MCN"].astype(str).str.strip()
+        df_cleaned["MCN_clean"] = df_cleaned["MCN"].apply(norm)
         
     if "Chasing Disposition" in df_cleaned.columns:
         df_cleaned["Chasing Disposition_clean"] = df_cleaned["Chasing Disposition"].fillna('').astype(str).str.strip().str.lower()
@@ -178,7 +178,7 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
         actual_mcn_col = find_col(df.columns, mcn_syns) 
 
         if actual_mcn_col:
-            df["MCN_clean"] = df[actual_mcn_col].astype(str).str.strip()
+            df["MCN_clean"] = df[actual_mcn_col].apply(norm)
             if actual_mcn_col != "MCN_clean":
                 df = df.drop(columns=[actual_mcn_col])
         else:
@@ -1617,6 +1617,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
