@@ -1385,11 +1385,10 @@ elif selected == "Data Analysis":
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
 
 
-# --- 🔽🔽🔽 START OF NEW MERGE SECTION 🔽🔽🔽 ---
+# --- 🔽🔽🔽Agent Performance on Dr Chase Leads Section🔽🔽🔽 ---
     st.markdown("---")
     st.subheader("📊 Agent Performance on Dr Chase Leads")
     
-    # 1. 
     df_merged_final = pd.DataFrame()
     if (not df_oplan.empty and 
         "MCN_clean" in df_ts.columns and 
@@ -1413,3 +1412,65 @@ elif selected == "Data Analysis":
     # --- 🔼🔼🔼 END OF NEW MERGE SECTION 🔼🔼🔼 ---
 
 
+# --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
+    st.markdown("---")
+    st.subheader("📊 Data Discrepancy Analysis (Dr. Chase vs. O Plan)")
+    st.info("This section finds leads present in one file but not the other, based on MCN. This respects all sidebar filters *except* 'Chasing Disposition'.")
+
+    # 1. 
+    df_discrepancy_analysis = pd.DataFrame()
+    if (not df_oplan.empty and 
+        "MCN_clean" in df_ts.columns and 
+        "MCN_clean" in df_oplan.columns):
+        
+        # 
+        # 
+        df_ts_mcn = df_ts[["MCN_clean"]].drop_duplicates()
+        df_oplan_mcn = df_oplan[["MCN_clean"]].drop_duplicates()
+
+        # 
+        # 
+        df_discrepancy_analysis = pd.merge(
+            df_ts_mcn, 
+            df_oplan_mcn, 
+            on="MCN_clean", 
+            how="outer", # 
+            indicator=True # 
+        )
+
+        # 2. 
+        df_chase_only = df_discrepancy_analysis[df_discrepancy_analysis['_merge'] == 'left_only']
+        
+        # 3. 
+        df_oplan_only = df_discrepancy_analysis[df_discrepancy_analysis['_merge'] == 'right_only']
+
+        # 4. 
+        df_matched = df_discrepancy_analysis[df_discrepancy_analysis['_merge'] == 'both']
+
+        # 5. 
+        st.markdown("### 📈 Discrepancy KPIs")
+        kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+        kpi_col1.metric("✅ Leads in Both Files", len(df_matched))
+        kpi_col2.metric("⚠️ Leads in Dr. Chase ONLY", len(df_chase_only))
+        kpi_col3.metric("⚠️ Leads in O Plan ONLY", len(df_oplan_only))
+        style_metric_cards(
+            background_color="#0E1117",
+            border_left_color="#FF4B4B", 
+            border_color="#444",
+            box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
+        )
+
+        # 6. 
+        if not df_chase_only.empty:
+            with st.expander(f"🔍 View {len(df_chase_only)} Leads: In Dr. Chase ONLY (Not in O Plan)"):
+                # 
+                st.dataframe(df_chase_only[["MCN_clean"]], use_container_width=True)
+
+        if not df_oplan_only.empty:
+            with st.expander(f"🔍 View {len(df_oplan_only)} Leads: In O Plan ONLY (Not in Dr. Chase)"):
+                # 
+                st.dataframe(df_oplan_only[["MCN_clean"]], use_container_width=True)
+            
+    else:
+        st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
+    # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
