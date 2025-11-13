@@ -1496,45 +1496,49 @@ elif selected == "Data Analysis":
         else:
             st.info("No 'Done' leads found for the selected agent(s) to display this chart.")
 
-        st.markdown("### 🏆 Top 20 Agents (by Done Rate %)")
+
             
-        # 
+            # --- 🔽🔽🔽 START OF EDITED SECTION (Top/Bottom Agents as Text) 🔽🔽🔽 ---
+            
+        st.markdown("### 📈 Agent Done Leads Rankings (for selected clients)")
+        
+        # 1. 
         agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
             Total_Leads=('MCN_clean', 'count'),
             Done_Leads=('is_done', 'sum')
         ).reset_index()
         
-        # 
+        # 2. 
         agent_performance['Done Rate'] = 0.0
         agent_performance.loc[agent_performance['Total_Leads'] > 0, 'Done Rate'] = \
             (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
         
-        # 
-        top_20_agents = agent_performance.sort_values(by="Done Rate", ascending=False).head(20)
-    
-        # 5. 
-        fig_top20 = px.bar(
-            top_20_agents,
-            x='Done Rate',
-            y='Assign To_clean',
-            orientation='h', # 
-            color='Done Rate', # 
-            color_continuous_scale='RdYlGn', # 
-            text='Done Rate', # 
-            title="Top 20 Agents by 'Done Rate' %"
-        )
+        # 3. 
+        top_20 = agent_performance.sort_values(by="Done_Leads", ascending=False).head(20)
+        bottom_20 = agent_performance.sort_values(by="Done_Leads", ascending=True).head(20)
+
+        # 4. 
+        col1, col2 = st.columns(2)
         
-        # 
-        fig_top20.update_traces(texttemplate='%{x:.1f}%', textposition='outside')
-        fig_top20.update_layout(
-            template="plotly_dark",
-            yaxis_title="O Plan Agent",
-            xaxis_title="Done Rate (%)",
-            yaxis=dict(autorange="reversed"), # 
-            coloraxis_showscale=False # 
-        )
+        with col1:
+            st.markdown("#### 🏆 Top 20 Agents (by Done Leads Count)")
+            top_20_strings = []
+            # 
+            for i, row in top_20.iterrows():
+                # 
+                top_20_strings.append(f"{i+1}. **{row['Assign To_clean']}**: Total Leads {row['Total_Leads']}, Done {row['Done_Leads']}, Done Rate {row['Done Rate']:.1f}%")
+            st.markdown("\n".join(top_20_strings))
+            
+        with col2:
+            st.markdown("#### 📉 Bottom 20 Agents (by Done Leads Count)")
+            bottom_20_strings = []
+            # 
+            for i, row in bottom_20.iterrows():
+                # 
+                bottom_20_strings.append(f"{i+1}. **{row['Assign To_clean']}**: Total Leads {row['Total_Leads']}, Done {row['Done_Leads']}, Done Rate {row['Done Rate']:.1f}%")
+            st.markdown("\n".join(bottom_20_strings))
         
-        st.plotly_chart(fig_top20, use_container_width=True)
+
 
 
    # --- 🔽🔽🔽 START OF Difference leads 🔽🔽🔽 ---
@@ -1596,6 +1600,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
