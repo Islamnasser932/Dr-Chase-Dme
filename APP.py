@@ -1387,8 +1387,7 @@ elif selected == "Data Analysis":
 
 # --- 🔽🔽🔽 START OF NEW MERGE SECTION 🔽🔽🔽 ---
     st.markdown("---")
-    st.subheader("📊 Merged Data (Dr. Chase + O Plan)")
-    st.info("This section shows all leads that are present in *both* the filtered Dr. Chase data (from above) and the O Plan file, based on MCN.")
+    st.subheader("📊 Agent Performance on Dr Chase Leads")
     
     # 1. 
     df_merged_final = pd.DataFrame()
@@ -1412,3 +1411,4 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not find any matching leads (MCN) between the filtered Dr. Chase data and the O Plan file.")
     # --- 🔼🔼🔼 END OF NEW MERGE SECTION 🔼🔼🔼 ---
+
