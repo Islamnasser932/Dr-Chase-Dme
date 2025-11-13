@@ -402,9 +402,8 @@ if query_parts_main:
     final_query_main = " and ".join(query_parts_main)
     df_filtered = df_cleaned.query(final_query_main)
 else:
-    df_filtered = df_kpi.copy() #
+    df_filtered = df_kpi.copy() # 
     
-
 
 # Apply date filter (on Created Time by default)
 if isinstance(date_range, tuple) and len(date_range) == 2:
@@ -885,8 +884,8 @@ elif selected == "Data Analysis":
             
             total_pending_shipping = 0
             if "Chasing Disposition_clean" in df_time.columns:
-                total_pending_shipping = df_time[
-                    df_time["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
+                total_pending_shipping = df_time[ # 
+                    df_time["Chasing Disposition_clean"].eq("pending shipping") # 
                 ].shape[0]
 
             # Show stats
@@ -908,7 +907,7 @@ elif selected == "Data Analysis":
             # 🚨 Leads with Pending Shipping but no Upload Date
             if "Chasing Disposition_clean" in df_filtered.columns and "Upload Date" in df_filtered.columns:
                 mask_shipping = (
-                    df_filtered["Chasing Disposition_clean"].eq("pending shipping") # 👈 Use .eq()
+                    df_filtered["Chasing Disposition_clean"].eq("pending shipping") # 
                     & df_filtered["Upload Date"].isna()
                 )
                 
@@ -975,15 +974,15 @@ elif selected == "Data Analysis":
                 
                 pending_mask = (
                     (df_filtered["Days Since Created"] > 7) &
-                    (df_filtered["Chasing Disposition_clean"].isin(["faxed"])) # 👈 (FIXED) 
+                    (df_filtered["Chasing Disposition_clean"].isin(["faxed"])) # 
                 )
-                pending_leads_faxed = df_filtered[pending_mask] # 👈 (FIXED) 
+                pending_leads_faxed = df_filtered[pending_mask] # 
                 
-                if not pending_leads_faxed.empty: # 👈 (FIXED) 
-                    st.warning(f"⚠️ Found {len(pending_leads_faxed)} leads pending for more than 7 days (Faxed).") # 👈 (FIXED) 
-                    with st.expander("🔍 View Pending Leads > 7 Days (Faxed)"): # 👈 (FIXED) 
+                if not pending_leads_faxed.empty: # 
+                    st.warning(f"⚠️ Found {len(pending_leads_faxed)} leads pending for more than 7 days (Faxed).") # 
+                    with st.expander("🔍 View Pending Leads > 7 Days (Faxed)"): # 
                         st.dataframe(
-                            pending_leads_faxed[[ # 👈 (FIXED) 
+                            pending_leads_faxed[[ # 
                                 "MCN",
                                 "Created Time (Date)",
                                 "Days Since Created",
@@ -1054,16 +1053,16 @@ elif selected == "Data Analysis":
             if (not df_oplan.empty and 
                 "MCN_clean" in df_filtered.columns and 
                 "MCN_clean" in df_oplan.columns and 
-                "Closing Status_clean" in df_oplan.columns and  # 👈 (FIXED)
+                "Closing Status_clean" in df_oplan.columns and  # 
                 "Chasing Disposition_clean" in df_filtered.columns):
                 
                 # 1. Define the conflicting statuses (CORRECTED)
-                dr_chase_bad_dispos = ["dr denied", "rejected by dr chase", "dead lead"] # 👈 (FIXED)
+                dr_chase_bad_dispos = ["dr denied", "rejected by dr chase", "dead lead"] # 
                 oplan_closing_dispo = "doctor chase" 
 
                 # 2. Find leads in O Plan with the closing status
                 oplan_conflicts = df_oplan[
-                    df_oplan["Closing Status_clean"].eq(oplan_closing_dispo) # 👈 (FIXED)
+                    df_oplan["Closing Status_clean"].eq(oplan_closing_dispo) # 
                 ]
                 
                 # 3. Find leads in Dr. Chase (from the filtered list) with the bad status
@@ -1074,7 +1073,7 @@ elif selected == "Data Analysis":
                 # 4. Find the intersection (the MCNs present in both lists)
                 conflicting_leads = pd.merge(
                     dr_chase_conflicts[["MCN_clean", "Chasing Disposition", "Chaser Name", "Client"]],
-                    oplan_conflicts[["MCN_clean", "Closing Status"]], # 👈 (FIXED)
+                    oplan_conflicts[["MCN_clean", "Closing Status"]], # 
                     on="MCN_clean",
                     how="inner",
                     suffixes=('_DrChase', '_OPlan')
@@ -1383,4 +1382,138 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
-    
+
+    # --- 🔽🔽🔽 START OF NEW SECTION 🔽🔽🔽 ---
+    st.markdown("---") 
+    st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
+    st.info("This section analyzes leads present in *both* the filtered Dr. Chase data and the O Plan file.")
+
+    # 1. Merge the filtered data with O Plan data
+    df_merged_analysis = pd.DataFrame()
+    if (not df_oplan.empty and 
+        "MCN_clean" in df_ts.columns and 
+        "MCN_clean" in df_oplan.columns and
+        "Assign To_clean" in df_oplan.columns and
+        "Chasing Disposition_clean" in df_ts.columns and
+        "Client" in df_ts.columns): 
+        
+        
+        df_ts_subset = df_ts[["MCN_clean", "Chasing Disposition_clean", "Chasing Disposition", "Client"]]
+        df_oplan_subset = df_oplan[["MCN_clean", "Assign To_clean"]]
+        
+        df_merged_analysis = pd.merge(
+            df_ts_subset, 
+            df_oplan_subset, 
+            on="MCN_clean", 
+            how="inner"
+        )
+        
+        
+        done_statuses = ["hot lead", "pending shipping", "passed review"]
+        df_merged_analysis['is_done'] = df_merged_analysis['Chasing Disposition_clean'].isin(done_statuses)
+
+    if not df_merged_analysis.empty:
+        
+        # --- 2. NEW Client Filter for this section ---
+        st.markdown("### 🎯 Filters for Agent/Client Analysis")
+        all_analysis_clients = sorted(df_merged_analysis['Client'].dropna().unique())
+        selected_analysis_clients = st.multiselect(
+            "Filter Clients for this analysis:",
+            options=all_analysis_clients,
+            default=all_analysis_clients, # Select all by default
+            key="agent_analysis_client_filter"
+        )
+        
+        # 3. Apply this client filter
+        df_agent_analysis = df_merged_analysis[df_merged_analysis['Client'].isin(selected_analysis_clients)]
+
+        if df_agent_analysis.empty:
+            st.info("No data found for the selected Client(s) in this section.")
+        else:
+            # --- 4. KPI Section ---
+            st.markdown("### 📈 Agent Performance KPIs")
+            agent_list = sorted(df_agent_analysis["Assign To_clean"].unique())
+            kpi_agent = st.selectbox("Select O Plan Agent for KPIs:", ["All Agents"] + agent_list, key="kpi_agent_select")
+            
+            # Filter for the selected agent
+            if kpi_agent == "All Agents":
+                df_kpi_data = df_agent_analysis
+                kpi_title = "All Agents"
+            else:
+                df_kpi_data = df_agent_analysis[df_agent_analysis["Assign To_clean"] == kpi_agent]
+                kpi_title = kpi_agent
+            
+            # Calculate KPIs
+            total_leads_for_agent = len(df_kpi_data)
+            total_done = df_kpi_data['is_done'].sum()
+            pct_done = (total_done / total_leads_for_agent * 100) if total_leads_for_agent > 0 else 0
+            
+            # Show KPIs
+            kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+            kpi_col1.metric(f"Total Leads for {kpi_title}", total_leads_for_agent)
+            kpi_col2.metric(f"'Done' Leads (Hot, Pending, Passed)", total_done)
+            kpi_col3.metric(f"'Done' Rate", f"{pct_done:.1f}%")
+            
+            style_metric_cards(
+                background_color="#0E1117",
+                border_left_color="#FF4B4B", 
+                border_color="#444",
+                box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
+            )
+
+            # --- 5. Chart Section ---
+            
+            # --- 🔽🔽🔽 START OF EDITED SECTION (Top/Bottom Agents) 🔽🔽🔽 ---
+            
+            st.markdown(f"### 🏆 Top & Bottom Agents by 'Done' Leads (for selected clients)")
+
+            # 1. 
+            agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
+                Total_Leads=('MCN_clean', 'count'),
+                Done_Leads=('is_done', 'sum')
+            ).reset_index()
+            agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
+
+            # 2. 
+            max_agents = len(agent_performance)
+            if max_agents > 20:
+                max_agents = 20 # 
+            
+            top_n = st.slider(
+                "Select number of agents to show:",
+                min_value=3,
+                max_value=max_agents,
+                value=5, # 
+                key="top_n_slider"
+            )
+
+            # 3. 
+            top_agents = agent_performance.sort_values(by="Done_Leads", ascending=False).head(top_n)
+            bottom_agents = agent_performance.sort_values(by="Done_Leads", ascending=True).head(top_n)
+
+            # 4. 
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown("#### 🥇 Top Agents")
+                chart_top_agents = alt.Chart(top_agents).mark_bar(color="#28a745").encode(
+                    x=alt.X('Done_Leads', title='Number of "Done" Leads'),
+                    y=alt.Y('Assign To_clean', title='O Plan Agent', sort='-x'),
+                    tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
+                ).interactive()
+                st.altair_chart(chart_top_agents, use_container_width=True, theme="streamlit")
+
+            with col2:
+                st.markdown("#### 🥉 Bottom Agents")
+                chart_bottom_agents = alt.Chart(bottom_agents).mark_bar(color="#dc3545").encode(
+                    x=alt.X('Done_Leads', title='Number of "Done" Leads'),
+                    y=alt.Y('Assign To_clean', title='O Plan Agent', sort='x'), # 👈 (FIXED) 
+                    tooltip=['Assign To_clean', 'Done_Leads', 'Total_Leads', alt.Tooltip('Done Rate', format='.1f')]
+                ).interactive()
+                st.altair_chart(chart_bottom_agents, use_container_width=True, theme="streamlit")
+            
+            # --- 🔼🔼🔼 END OF EDITED SECTION 🔼🔼🔼 ---
+            
+    else:
+        st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
+    # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
