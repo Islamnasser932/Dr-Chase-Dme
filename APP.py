@@ -153,41 +153,49 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
         
         # 1. Find "Closing Status" column (case-insensitive)
         closing_status_syns = ["Closing Status", "closing status", "status"]
-        actual_closing_col = find_col(df.columns, closing_status_syns) # 👈 Use find_col
+        actual_closing_col = find_col(df.columns, closing_status_syns) 
         
         if actual_closing_col:
             df["Closing Status_clean"] = df[actual_closing_col].fillna('').astype(str).str.strip().str.lower()
+            if actual_closing_col != "Closing Status_clean":
+                df = df.drop(columns=[actual_closing_col])
         else:
             st.warning("Column 'Closing Status' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
             
         # 2. Find "Assign To" column (case-insensitive)
         assign_to_syns = ["Assign To", "Assign to", "assigned to", "agent", "Assigned To"]
-        actual_assign_col = find_col(df.columns, assign_to_syns) # 👈 Use find_col
+        actual_assign_col = find_col(df.columns, assign_to_syns) 
         
         if actual_assign_col:
             df["Assign To_clean"] = df[actual_assign_col].fillna("Unassigned").astype(str).str.strip()
+            if actual_assign_col != "Assign To_clean":
+                df = df.drop(columns=[actual_assign_col])
         else:
             st.warning("Column 'Assign To' not found in O_Plan_Leads.csv. Cannot perform agent analysis.")
         
         # 3. Find "MCN" column (case-insensitive)
         mcn_syns = ["MCN", "mcn"]
-        actual_mcn_col = find_col(df.columns, mcn_syns) # 👈 Use find_col
+        actual_mcn_col = find_col(df.columns, mcn_syns) 
 
         if actual_mcn_col:
             df["MCN_clean"] = df[actual_mcn_col].astype(str).str.strip()
+            if actual_mcn_col != "MCN_clean":
+                df = df.drop(columns=[actual_mcn_col])
         else:
             st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
         
         # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
         # 4. 
         client_syns = ["Client", "client"]
-        actual_client_col = find_col(df.columns, client_syns) # 👈 Use find_col
+        actual_client_col = find_col(df.columns, client_syns) 
 
         if actual_client_col:
-            df["Client_OPlan"] = df[actual_client_col].fillna("Unknown Client").astype(str).str.strip() # 
+            # 
+            df = df.rename(columns={actual_client_col: "Client_OPlan"})
+            df["Client_OPlan"] = df["Client_OPlan"].fillna("Unknown Client").astype(str).str.strip()
         else:
             st.warning("Column 'Client' not found in O_Plan_Leads.csv.")
-            df["Client_OPlan"] = "Unknown Client" # 
+            df["Client_OPlan"] = "Unknown Client" 
         # --- 🔼🔼🔼 END OF EDITED SECTION (FIX) 🔼🔼🔼 ---
             
         st.success("✅ O Plan file loaded successfully! (Cached for speed)")
@@ -198,7 +206,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
     except Exception as e:
         st.error(f"An error occurred while loading O_Plan_Leads.csv: {e}")
         return pd.DataFrame()
-
 
 # ================== EXECUTE DATA LOAD ==================
 df_cleaned = load_and_clean_data(df_raw, name_map, cols_map, samy_chasers)
@@ -1400,7 +1407,7 @@ elif selected == "Data Analysis":
 # --- 🔽🔽🔽Agent Performance on Dr Chase Leads Section🔽🔽🔽 ---
     st.markdown("---")
     st.subheader("📊 Agent Performance on Dr Chase Leads")
-    
+
     df_merged_final = pd.DataFrame()
     if (not df_oplan.empty and 
         "MCN_clean" in df_ts.columns and 
@@ -1413,16 +1420,15 @@ elif selected == "Data Analysis":
             how="inner", # 
             suffixes=('_DrChase', '_OPlan') # 
         )
-            
+
     if not df_merged_final.empty:
-        st.markdown(f"Found **{len(df_merged_final)}** matching leads between the two files.")
+        st.markdown(f"Found **{len(df_merged_final)}** matching leads between the two files (based on your filters).")
         with st.expander("🔍 View Merged Data"):
             st.dataframe(df_merged_final, use_container_width=True)
             
     else:
         st.warning("Could not find any matching leads (MCN) between the filtered Dr. Chase data and the O Plan file.")
     # --- 🔼🔼🔼 END OF NEW MERGE SECTION 🔼🔼🔼 ---
-
 
 
    # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
@@ -1486,3 +1492,4 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
