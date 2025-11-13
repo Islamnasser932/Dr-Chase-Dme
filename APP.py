@@ -1472,22 +1472,18 @@ elif selected == "Data Analysis":
 
         # --- 5. Chart Section ---
         
-    
-                
-                # 1. 
-            agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
+        agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
                 Total_Leads=('MCN_clean', 'count'),
                 Done_Leads=('is_done', 'sum')
             ).reset_index()
-            agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']).fillna(0) * 100
+        agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']).fillna(0) * 100
             
-            # 2. 
-            agent_performance = agent_performance.sort_values(by="Done_Leads", ascending=False)
-    
-            # 3. 
-            st.markdown("### 📊 Total 'Done' Leads by Agent")
-            
-            fig = px.bar(
+        # 2. 
+        agent_performance = agent_performance.sort_values(by="Done_Leads", ascending=False)
+
+         # 3. 
+        st.markdown("### 📊 Total 'Done' Leads by Agent")
+        fig = px.bar(
                 agent_performance[agent_performance['Done_Leads'] > 0], # 
                 x="Done_Leads", 
                 y="Assign To_clean", 
@@ -1495,30 +1491,15 @@ elif selected == "Data Analysis":
                 title="Total 'Done' Leads (Hot, Pending, Passed) by Agent",
                 text='Done_Leads' # 
             )
-            fig.update_traces(textposition='outside')
+        fig.update_traces(textposition='outside')
             fig.update_layout(
                 template="plotly_dark",
                 yaxis_title="O Plan Agent",
                 xaxis_title="Total Done Leads Count",
                 yaxis=dict(autorange="reversed") # 
             )
-            st.plotly_chart(fig, use_container_width=True)
-    
-            
-        st.markdown("### 📈 Agent Done Leads Rankings")
-        
-        # 
-        agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
-            Total_Leads=('MCN_clean', 'count'),
-            Done_Leads=('is_done', 'sum')
-        ).reset_index()
-        
-        # 
-        agent_performance['Done Rate'] = 0.0
-        agent_performance.loc[agent_performance['Total_Leads'] > 0, 'Done Rate'] = \
-            (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
-            
-        
+        st.plotly_chart(fig, use_container_width=True)
+
         # --- 🔽🔽🔽 START OF EDITED SECTION (Display as DataFrames) 🔽🔽🔽 ---
         
         # 
@@ -1621,6 +1602,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
