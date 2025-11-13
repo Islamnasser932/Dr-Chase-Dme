@@ -1477,35 +1477,38 @@ elif selected == "Data Analysis":
                 Done_Leads=('is_done', 'sum')
             ).reset_index()
         agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']).fillna(0) * 100
-            
-        # 2. 
-        df_pie_data = agent_performance[agent_performance['Done_Leads'] > 0] 
-        if not df_pie_data.empty:
-                # 3. 
-                fig = px.pie(
-                    df_pie_data, 
-                    names='Assign To_clean', 
-                    values='Done_Leads',
-                    title="Share of 'Done' Leads by Agent"
-                )
-                
-                # 
-                fig.update_traces(
-                    textposition='outside', # 
-                    textinfo='percent+value+label', # 
-                    pull=[0.05 if row['Done_Leads'] == df_pie_data['Done_Leads'].max() else 0 for i, row in df_pie_data.iterrows()] # 
-                )
-                
-                fig.update_layout(
-                    template="plotly_dark",
-                    legend_title="O Plan Agent",
-                    uniformtext_minsize=10, # 
-                    uniformtext_mode='hide' # 
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-        else:
-                st.info("No 'Done' leads found to display in Pie Chart.")
+        agent_performance_chart_data = agent_performance.sort_values(by="Done_Leads", ascending=False)
+        
+          
+        fig = px.bar(
+            agent_performance_chart_data[agent_performance_chart_data['Done_Leads'] > 0], # 
+            x="Done_Leads", 
+            y="Assign To_clean", 
+            orientation='h',
+            title="Total 'Done' Leads (Hot, Pending, Passed) by Agent",
+            text='Done_Leads' # 
+        )
+        
+        # 
+        fig.update_traces(
+            textposition='outside', 
+            textfont_size=14 # 
+        )
+        fig.update_layout(
+            template="plotly_dark",
+            yaxis_title="O Plan Agent",
+            xaxis_title="Total Done Leads Count",
+            yaxis=dict(
+                autorange="reversed",
+                tickfont_size=12, # 
+                automargin=True # 
+            ),
+            xaxis=dict(
+                tickfont_size=12 # 
+            )
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
 
         # --- 🔽🔽🔽 START OF EDITED SECTION (Display as DataFrames) 🔽🔽🔽 ---
         
@@ -1609,6 +1612,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
