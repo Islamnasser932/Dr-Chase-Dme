@@ -1343,7 +1343,7 @@ elif selected == "Data Analysis":
                     "Chasing Disposition"
                 ]
                 
-                available_dup_cols = [c for c in required_cols if c in dup_same_product.columns]
+                available_dup_cols = [c for c in required_cols if c in df_filtered.columns]
                 
                 st.markdown("### 📋 Duplicate Leads (MCN & Product) Details")
                 st.dataframe(
@@ -1382,3 +1382,9 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
+
+    # --- 🔽🔽🔽 SECTION REMOVED AS REQUESTED 🔽🔽🔽 ---
+    # st.markdown("---") 
+    # st.subheader("📊 O Plan Agent vs. Dr. Chase Status Analysis")
+    # ... (All code for this section has been removed) ...
+    # --- 🔼🔼🔼 SECTION REMOVED AS REQUESTED 🔼🔼🔼 ---
