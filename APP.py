@@ -1479,37 +1479,33 @@ elif selected == "Data Analysis":
         agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']).fillna(0) * 100
             
         # 2. 
-        agent_performance = agent_performance.sort_values(by="Done_Leads", ascending=False)
-        max_agents = len(agent_performance[agent_performance['Done_Leads'] > 0])
-        if max_agents < 3:
-            max_agents = 3
-        if max_agents > 15:
-            max_agents=15
-
-        top_n = st.slider(
-                "Select number of Top agents to show in Pie Chart:",
-                min_value=3,
-                max_value=max_agents,
-                value=5, # 
-                key="top_n_slider"
-            )
-        top_agents = agent_performance.sort_values(by="Done_Leads", ascending=False).head(top_n)
-        base = alt.Chart(top_agents).encode(theta=alt.Theta("Done_Leads", stack=True) )
-        pie = base.mark_arc(outerRadius=120, innerRadius=0).encode(
-                color=alt.Color("Assign To_clean", title="O Plan Agent"),
-                order=alt.Order("Done_Leads", sort="descending"),
-                tooltip=["Assign To_clean", "Done_Leads", "Total_Leads", alt.Tooltip("Done Rate", format=".1f")]
-            )
-        text = base.mark_text(radius=140).encode(
-                text=alt.Text("Done_Leads", format=",.0f"),
-                order=alt.Order("Done_Leads", sort="descending"),
-                color=alt.value("white") # 
-            )
-
-        chart_pie = pie + text
-        st.altair_chart(chart_pie, use_container_width=True, theme="streamlit")
-        
-
+        df_pie_data = agent_performance[agent_performance['Done_Leads'] > 0] 
+        if not df_pie_data.empty:
+                # 3. 
+                fig = px.pie(
+                    df_pie_data, 
+                    names='Assign To_clean', 
+                    values='Done_Leads',
+                    title="Share of 'Done' Leads by Agent"
+                )
+                
+                # 
+                fig.update_traces(
+                    textposition='outside', # 
+                    textinfo='percent+value+label', # 
+                    pull=[0.05 if row['Done_Leads'] == df_pie_data['Done_Leads'].max() else 0 for i, row in df_pie_data.iterrows()] # 
+                )
+                
+                fig.update_layout(
+                    template="plotly_dark",
+                    legend_title="O Plan Agent",
+                    uniformtext_minsize=10, # 
+                    uniformtext_mode='hide' # 
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+        else:
+                st.info("No 'Done' leads found to display in Pie Chart.")
 
         # --- 🔽🔽🔽 START OF EDITED SECTION (Display as DataFrames) 🔽🔽🔽 ---
         
@@ -1613,6 +1609,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
