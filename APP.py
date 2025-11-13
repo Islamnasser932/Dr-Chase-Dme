@@ -1480,27 +1480,36 @@ elif selected == "Data Analysis":
             
         # 2. 
         agent_performance = agent_performance.sort_values(by="Done_Leads", ascending=False)
+        max_agents = len(agent_performance[agent_performance['Done_Leads'] > 0])
+        if max_agents < 3:
+            max_agents = 3
+        if max_agents > 15:
+            max_agents=15
 
-         # 3. 
-        st.markdown("### 📊 Total 'Done' Leads by Agent")
-        fig = px.bar(
-                agent_performance[agent_performance['Done_Leads'] > 0], # 
-                x="Done_Leads", 
-                y="Assign To_clean", 
-                orientation='h',
-                title="Total 'Done' Leads (Hot, Pending, Passed) by Agent",
-                text='Done_Leads' # 
+        top_n = st.slider(
+                "Select number of Top agents to show in Pie Chart:",
+                min_value=3,
+                max_value=max_agents,
+                value=5, # 
+                key="top_n_slider"
             )
-        fig.update_traces(textposition='outside',textfont_size=14)
-        fig.update_layout(
-                template="plotly_dark",
-                yaxis_title="O Plan Agent",
-                xaxis_title="Total Done Leads Count",
-                yaxis=dict(autorange="reversed",tickfont_size=14),
-                xaxis=dict(tickfont_size=14),
-                margin=dict(l=200)# 
+        top_agents = agent_performance.sort_values(by="Done_Leads", ascending=False).head(top_n)
+        base = alt.Chart(top_agents).encode(theta=alt.Theta("Done_Leads", stack=True) )
+        pie = base.mark_arc(outerRadius=120, innerRadius=0).encode(
+                color=alt.Color("Assign To_clean", title="O Plan Agent"),
+                order=alt.Order("Done_Leads", sort="descending"),
+                tooltip=["Assign To_clean", "Done_Leads", "Total_Leads", alt.Tooltip("Done Rate", format=".1f")]
             )
-        st.plotly_chart(fig, use_container_width=True)
+        text = base.mark_text(radius=140).encode(
+                text=alt.Text("Done_Leads", format=",.0f"),
+                order=alt.Order("Done_Leads", sort="descending"),
+                color=alt.value("white") # 
+            )
+
+        chart_pie = pie + text
+        st.altair_chart(chart_pie, use_container_width=True, theme="streamlit")
+        
+
 
         # --- 🔽🔽🔽 START OF EDITED SECTION (Display as DataFrames) 🔽🔽🔽 ---
         
@@ -1604,6 +1613,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
