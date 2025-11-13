@@ -1470,8 +1470,7 @@ elif selected == "Data Analysis":
             border_color="#444",
             box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
         )
-# --- 5. Chart Section ---
-            
+
             # --- 🔽🔽🔽 START OF NEW SECTION (Plotly Chart & Summary) 🔽🔽🔽 ---
             
             st.markdown("### 📊 Done Leads Distribution (Agent vs. Status)")
@@ -1534,7 +1533,7 @@ elif selected == "Data Analysis":
             
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
-
+    # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
     
 
    # --- 🔽🔽🔽 START OF Difference leads 🔽🔽🔽 ---
@@ -1596,6 +1595,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
