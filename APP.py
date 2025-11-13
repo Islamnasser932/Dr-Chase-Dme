@@ -1027,14 +1027,14 @@ elif selected == "Data Analysis":
                     ).dt.days
                 
                 pending_mask = (
-                    (df_filtered["Days Since Created"] > 7) &
+                    (df_filtered["Days Since Created"] > 5) &
                     (df_filtered["Chasing Disposition_clean"].isin(["dr chase"])) # 
                 )
                 pending_leads_dr_chase = df_filtered[pending_mask] # 
                 
                 if not pending_leads_dr_chase.empty: # 
-                    st.warning(f"⚠️ Found {len(pending_leads_dr_chase)} leads pending for more than 7 days (Dr Chase).") # 
-                    with st.expander("🔍 View Pending Leads > 7 Days (Dr Chase)"): # 
+                    st.warning(f"⚠️ Found {len(pending_leads_dr_chase)} leads pending for more than 5 days (Dr Chase).") # 
+                    with st.expander("🔍 View Pending Leads > 5 Days (Dr Chase)"): # 
                         st.dataframe(
                             pending_leads_dr_chase[[ # 
                                 "MCN",
@@ -1617,6 +1617,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
