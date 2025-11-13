@@ -991,7 +991,8 @@ elif selected == "Data Analysis":
                                 "Upload Date (Date)",
                                 "Completion Date (Date)",
                                 "Chaser Name",
-                                "Client"
+                                "Client",
+                                "Next Follow-up Date"
                             ]],
                             use_container_width=True
                         )
@@ -1382,3 +1383,32 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
+
+
+# --- 🔽🔽🔽 START OF NEW MERGE SECTION 🔽🔽🔽 ---
+    st.markdown("---")
+    st.subheader("📊 Merged Data (Dr. Chase + O Plan)")
+    st.info("This section shows all leads that are present in *both* the filtered Dr. Chase data (from above) and the O Plan file, based on MCN.")
+    
+    # 1. 
+    df_merged_final = pd.DataFrame()
+    if (not df_oplan.empty and 
+        "MCN_clean" in df_ts.columns and 
+        "MCN_clean" in df_oplan.columns):
+        
+        df_merged_final = pd.merge(
+            df_ts, 
+            df_oplan, # 
+            on="MCN_clean", 
+            how="inner", # 
+            suffixes=('_DrChase', '_OPlan') # 
+        )
+            
+    if not df_merged_final.empty:
+        st.markdown(f"Found **{len(df_merged_final)}** matching leads between the two files (based on your filters).")
+        with st.expander("🔍 View Merged Data"):
+            st.dataframe(df_merged_final, use_container_width=True)
+            
+    else:
+        st.warning("Could not find any matching leads (MCN) between the filtered Dr. Chase data and the O Plan file.")
+    # --- 🔼🔼🔼 END OF NEW MERGE SECTION 🔼🔼🔼 ---
