@@ -6,6 +6,7 @@ from streamlit_option_menu import option_menu
 from streamlit_extras.metric_cards import style_metric_cards
 import math
 import plotly.express as px
+
 # ================== PAGE CONFIG ==================
 st.set_page_config(
     page_title="DR Chase Leads Dashboard",
@@ -141,6 +142,14 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     if "Chasing Disposition" in df_cleaned.columns:
         df_cleaned["Chasing Disposition_clean"] = df_cleaned["Chasing Disposition"].fillna('').astype(str).str.strip().str.lower()
     
+    # --- 🔽🔽🔽 (FIX) 
+    if "Created Time (Date)" in df_cleaned.columns:
+        today = pd.Timestamp.now().normalize()
+        df_cleaned["Days Since Created"] = (
+            today - pd.to_datetime(df_cleaned["Created Time (Date)"], errors="coerce")
+        ).dt.days
+    # --- 🔼🔼🔼 ---
+    
     return df_cleaned
 
 
@@ -184,7 +193,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
         else:
             st.warning("Column 'MCN' not found in O_Plan_Leads.csv. Cannot perform conflict check.")
         
-        # --- 🔽🔽🔽 START OF EDITED SECTION (FIX) 🔽🔽🔽 ---
         # 4. 
         client_syns = ["Client", "client"]
         actual_client_col = find_col(df.columns, client_syns) 
@@ -196,7 +204,6 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
         else:
             st.warning("Column 'Client' not found in O_Plan_Leads.csv.")
             df["Client_OPlan"] = "Unknown Client" 
-        # --- 🔼🔼🔼 END OF EDITED SECTION (FIX) 🔼🔼🔼 ---
             
         st.success("✅ O Plan file loaded successfully! (Cached for speed)")
         return df
@@ -647,7 +654,7 @@ elif selected == "Data Analysis":
     original_time_col = time_col.replace(" (Date)", "") 
     
     # Prepare df_ts
-    df_ts = df_filtered.copy()
+    df_ts = df_filtered.copy() # 
     if original_time_col in df_ts.columns:
         df_ts = df_ts[df_ts[original_time_col].notna()].copy()
 
@@ -949,26 +956,22 @@ elif selected == "Data Analysis":
                             use_container_width=True
                         )
                 
-            # 🚨 Leads pending too long (Fax / Dr Call)
+            # --- 🔽🔽🔽 (FIX) 
+            # 
             if "Created Time (Date)" in df_filtered.columns and "Chasing Disposition_clean" in df_filtered.columns:
-                today = pd.Timestamp.now().normalize()
                 
-                if "Days Since Created" not in df_filtered.columns: # Avoid re-creating column
-                    df_filtered["Days Since Created"] = (
-                        today - pd.to_datetime(df_filtered["Created Time (Date)"], errors="coerce")
-                    ).dt.days
-                
-                pending_mask = (
+                # 
+                pending_mask_fax_call = (
                     (df_filtered["Days Since Created"] > 5) &
                     (df_filtered["Chasing Disposition_clean"].isin(["pending fax", "pending dr call"])) 
                 )
-                pending_leads = df_filtered[pending_mask]
+                pending_leads_fax_call = df_filtered[pending_mask_fax_call]
                 
-                if not pending_leads.empty:
-                    st.warning(f"⚠️ Found {len(pending_leads)} leads pending for more than 5 days (Fax/Dr Call).")
+                if not pending_leads_fax_call.empty:
+                    st.warning(f"⚠️ Found {len(pending_leads_fax_call)} leads pending for more than 5 days (Fax/Dr Call).")
                     with st.expander("🔍 View Pending Leads > 5 Days (Fax/Dr Call)"): 
                         st.dataframe(
-                            pending_leads[[
+                            pending_leads_fax_call[[
                                 "MCN",
                                 "Created Time (Date)",
                                 "Days Since Created",
@@ -983,26 +986,18 @@ elif selected == "Data Analysis":
                             use_container_width=True
                         )
 
-            # 🚨 Leads pending too long (Faxed)
-            if "Created Time (Date)" in df_filtered.columns and "Chasing Disposition_clean" in df_filtered.columns:
-                today = pd.Timestamp.now().normalize()
-                
-                if "Days Since Created" not in df_filtered.columns: # Avoid re-creating column
-                    df_filtered["Days Since Created"] = (
-                        today - pd.to_datetime(df_filtered["Created Time (Date)"], errors="coerce")
-                    ).dt.days
-                
-                pending_mask = (
+                # 
+                pending_mask_faxed = (
                     (df_filtered["Days Since Created"] > 7) &
-                    (df_filtered["Chasing Disposition_clean"].isin(["faxed"])) # 
+                    (df_filtered["Chasing Disposition_clean"].isin(["faxed"])) 
                 )
-                pending_leads_faxed = df_filtered[pending_mask] # 
+                pending_leads_faxed = df_filtered[pending_mask_faxed] 
                 
-                if not pending_leads_faxed.empty: # 
-                    st.warning(f"⚠️ Found {len(pending_leads_faxed)} leads pending for more than 7 days (Faxed).") # 
-                    with st.expander("🔍 View Pending Leads > 7 Days (Faxed)"): # 
+                if not pending_leads_faxed.empty: 
+                    st.warning(f"⚠️ Found {len(pending_leads_faxed)} leads pending for more than 7 days (Faxed).") 
+                    with st.expander("🔍 View Pending Leads > 7 Days (Faxed)"): 
                         st.dataframe(
-                            pending_leads_faxed[[ # 
+                            pending_leads_faxed[[ 
                                 "MCN",
                                 "Created Time (Date)",
                                 "Days Since Created",
@@ -1017,26 +1012,18 @@ elif selected == "Data Analysis":
                             use_container_width=True
                         )
 
-            # 🚨 Leads pending too long (Dr Chase)
-            if "Created Time (Date)" in df_filtered.columns and "Chasing Disposition_clean" in df_filtered.columns:
-                today = pd.Timestamp.now().normalize()
-                
-                if "Days Since Created" not in df_filtered.columns: # Avoid re-creating column
-                    df_filtered["Days Since Created"] = (
-                        today - pd.to_datetime(df_filtered["Created Time (Date)"], errors="coerce")
-                    ).dt.days
-                
-                pending_mask = (
+                # 
+                pending_mask_dr_chase = (
                     (df_filtered["Days Since Created"] > 5) &
-                    (df_filtered["Chasing Disposition_clean"].isin(["dr chase"])) # 
+                    (df_filtered["Chasing Disposition_clean"].isin(["dr chase"])) 
                 )
-                pending_leads_dr_chase = df_filtered[pending_mask] # 
+                pending_leads_dr_chase = df_filtered[pending_mask_dr_chase] 
                 
-                if not pending_leads_dr_chase.empty: # 
-                    st.warning(f"⚠️ Found {len(pending_leads_dr_chase)} leads pending for more than 5 days (Dr Chase).") # 
-                    with st.expander("🔍 View Pending Leads > 5 Days (Dr Chase)"): # 
+                if not pending_leads_dr_chase.empty: 
+                    st.warning(f"⚠️ Found {len(pending_leads_dr_chase)} leads pending for more than 5 days (Dr Chase).") 
+                    with st.expander("🔍 View Pending Leads > 5 Days (Dr Chase)"): 
                         st.dataframe(
-                            pending_leads_dr_chase[[ # 
+                            pending_leads_dr_chase[[ 
                                 "MCN",
                                 "Created Time (Date)",
                                 "Days Since Created",
@@ -1050,6 +1037,8 @@ elif selected == "Data Analysis":
                             ]],
                             use_container_width=True
                         )
+            # --- 🔼🔼🔼 ---
+
             # --- Row-level logic checks with expanders ---
             if "Completion Date" in df_time.columns and "Assigned date" in df_time.columns:
                 bad_rows = df_time[df_time["Completion Date"].notna() & df_time["Assigned date"].isna()]
@@ -1617,38 +1606,3 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
