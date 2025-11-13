@@ -1413,24 +1413,26 @@ elif selected == "Data Analysis":
 
 
 # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
+
     st.markdown("---")
-    st.subheader("📊Difference in (Dr. Chase vs. O Plan)")
+    st.subheader("📊 Agent Performance In Dr Chase Leads")
+
     # 1. 
     df_discrepancy_analysis = pd.DataFrame()
     if (not df_oplan.empty and 
         "MCN_clean" in df_ts.columns and 
-        "MCN_clean" in df_oplan.columns) and 
-        "Client" in df_ts.columns) :
+        "MCN_clean" in df_oplan.columns and
+        "Client" in df_ts.columns): # 
         
         # 
         # 
-        df_ts_mcn = df_ts[["MCN_clean", "Client"]]
-        df_oplan_mcn = df_oplan[["MCN_clean", "Client"]]
+        df_ts_subset = df_ts[["MCN_clean", "Client"]]
+        df_oplan_mcn = df_oplan[["MCN_clean"]]
 
         # 
         # 
         df_discrepancy_analysis = pd.merge(
-            df_ts_mcn, 
+            df_ts_subset, 
             df_oplan_mcn, 
             on="MCN_clean", 
             how="outer", # 
@@ -1468,12 +1470,9 @@ elif selected == "Data Analysis":
         if not df_oplan_only.empty:
             with st.expander(f"🔍 View {len(df_oplan_only)} Leads: In O Plan ONLY (Not in Dr. Chase)"):
                 # 
-                st.dataframe(df_oplan_only[["MCN_clean", "Client"]], use_container_width=True)
+                st.dataframe(df_oplan_only[["MCN_clean"]], use_container_width=True)
             
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
-
-
-
-
+    
