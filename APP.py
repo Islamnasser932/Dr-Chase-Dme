@@ -1540,63 +1540,63 @@ elif selected == "Data Analysis":
 
             # --- 🔽🔽🔽 START OF NEW SECTION (Plotly Chart & Summary) 🔽🔽🔽 ---
             
-         st.markdown("### 📊 Done Leads Distribution (Agent vs. Status)")
+     st.markdown("### 📊 Done Leads Distribution (Agent vs. Status)")
+        
+        # 1. 
+        df_done_leads = df_agent_analysis[df_agent_analysis['is_done'] == True]
+        
+        if not df_done_leads.empty:
+            # 2. 
+            df_plotly_chart = df_done_leads.groupby(["Assign To_clean", "Chasing Disposition_clean"]).size().reset_index(name="Count")
             
-            # 1. 
-            df_done_leads = df_agent_analysis[df_agent_analysis['is_done'] == True]
-            
-            if not df_done_leads.empty:
-                # 2. 
-                df_plotly_chart = df_done_leads.groupby(["Assign To_clean", "Chasing Disposition_clean"]).size().reset_index(name="Count")
-                
-                # 3. 
-                fig = px.bar(
-                    df_plotly_chart, 
-                    x="Assign To_clean", 
-                    y="Count", 
-                    color="Chasing Disposition_clean", 
-                    title="Done Leads Breakdown by Agent and Status"
-                )
-                fig.update_layout(template="plotly_dark") # 
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No 'Done' leads found for the selected agent(s) to display this chart.")
+            # 3. 
+            fig = px.bar(
+                df_plotly_chart, 
+                x="Assign To_clean", 
+                y="Count", 
+                color="Chasing Disposition_clean", 
+                title="Done Leads Breakdown by Agent and Status"
+            )
+            fig.update_layout(template="plotly_dark") # 
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No 'Done' leads found for the selected agent(s) to display this chart.")
 
-            # 4. 
-        st.markdown("### 📈 Agent Done Rate Rankings")
-            
-            # 
-            agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
-                Total_Leads=('MCN_clean', 'count'),
-                Done_Leads=('is_done', 'sum')
-            ).reset_index()
-            # 
-            agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
-            
-            # 
-            top_20 = agent_performance.sort_values(by="Done Rate", ascending=False).head(20)
-            bottom_20 = agent_performance.sort_values(by="Done Rate", ascending=True).head(20)
+        # 4. 
+    st.markdown("### 📈 Agent Done Rate Rankings")
+        
+        # 
+        agent_performance = df_agent_analysis.groupby('Assign To_clean').agg(
+            Total_Leads=('MCN_clean', 'count'),
+            Done_Leads=('is_done', 'sum')
+        ).reset_index()
+        # 
+        agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
+        
+        # 
+        top_20 = agent_performance.sort_values(by="Done Rate", ascending=False).head(20)
+        bottom_20 = agent_performance.sort_values(by="Done Rate", ascending=True).head(20)
 
+        # 
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("#### 🏆 Top 20 Agents (by Done Rate %)")
             # 
-            col1, col2 = st.columns(2)
+            top_20_strings = []
+            for i, row in top_20.iterrows():
+                top_20_strings.append(f"{i+1}. **{row['Assign To_clean']}**: {row['Done Rate']:.1f}% ({row['Done_Leads']} / {row['Total_Leads']})")
+            st.markdown("\n".join(top_20_strings))
             
-            with col1:
-                st.markdown("#### 🏆 Top 20 Agents (by Done Rate %)")
-                # 
-                top_20_strings = []
-                for i, row in top_20.iterrows():
-                    top_20_strings.append(f"{i+1}. **{row['Assign To_clean']}**: {row['Done Rate']:.1f}% ({row['Done_Leads']} / {row['Total_Leads']})")
-                st.markdown("\n".join(top_20_strings))
-                
-            with col2:
-                st.markdown("#### 📉 Bottom 20 Agents (by Done Rate %)")
-                # 
-                bottom_20_strings = []
-                for i, row in bottom_20.iterrows():
-                    bottom_20_strings.append(f"{i+1}. **{row['Assign To_clean']}**: {row['Done Rate']:.1f}% ({row['Done_Leads']} / {row['Total_Leads']})")
-                st.markdown("\n".join(bottom_20_strings))
+        with col2:
+            st.markdown("#### 📉 Bottom 20 Agents (by Done Rate %)")
+            # 
+            bottom_20_strings = []
+            for i, row in bottom_20.iterrows():
+                bottom_20_strings.append(f"{i+1}. **{row['Assign To_clean']}**: {row['Done Rate']:.1f}% ({row['Done_Leads']} / {row['Total_Leads']})")
+            st.markdown("\n".join(bottom_20_strings))
 
-            # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+        # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
             
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
