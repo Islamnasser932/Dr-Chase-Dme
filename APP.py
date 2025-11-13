@@ -199,6 +199,7 @@ def load_oplan_data(file_path="O_Plan_Leads.csv"):
         st.error(f"An error occurred while loading O_Plan_Leads.csv: {e}")
         return pd.DataFrame()
 
+
 # ================== EXECUTE DATA LOAD ==================
 df_cleaned = load_and_clean_data(df_raw, name_map, cols_map, samy_chasers)
 df_oplan = load_oplan_data("O_Plan_Leads.csv") # 🆕 Load O Plan data
@@ -1423,11 +1424,12 @@ elif selected == "Data Analysis":
     # --- 🔼🔼🔼 END OF NEW MERGE SECTION 🔼🔼🔼 ---
 
 
-# --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
 
-    # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
+   # --- 🔽🔽🔽 START OF NEW SECTION (Discrepancy Analysis) 🔽🔽🔽 ---
     st.markdown("---")
     st.subheader("📊 Data Discrepancy Analysis (Dr. Chase vs. O Plan)")
+    st.info("This section finds leads present in one file but not the other, based on MCN. This respects all sidebar filters *except* 'Chasing Disposition'.")
+
     # 1. 
     df_discrepancy_analysis = pd.DataFrame()
     if (not df_oplan.empty and 
