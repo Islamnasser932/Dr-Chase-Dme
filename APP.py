@@ -1491,12 +1491,14 @@ elif selected == "Data Analysis":
                 title="Total 'Done' Leads (Hot, Pending, Passed) by Agent",
                 text='Done_Leads' # 
             )
-        fig.update_traces(textposition='outside')
+        fig.update_traces(textposition='outside',textfont_size=14)
         fig.update_layout(
                 template="plotly_dark",
                 yaxis_title="O Plan Agent",
                 xaxis_title="Total Done Leads Count",
-                yaxis=dict(autorange="reversed") # 
+                yaxis=dict(autorange="reversed",tickfont_size=14),
+                xaxis=dict(tickfont_size=14),
+                margin=dict(l=200)# 
             )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -1602,6 +1604,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
