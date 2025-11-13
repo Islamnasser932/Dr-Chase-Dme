@@ -1492,7 +1492,7 @@ elif selected == "Data Analysis":
                 text='Done_Leads' # 
             )
         fig.update_traces(textposition='outside')
-            fig.update_layout(
+        fig.update_layout(
                 template="plotly_dark",
                 yaxis_title="O Plan Agent",
                 xaxis_title="Total Done Leads Count",
@@ -1602,6 +1602,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
