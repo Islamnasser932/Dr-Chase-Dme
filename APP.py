@@ -1509,8 +1509,8 @@ elif selected == "Data Analysis":
         agent_performance['Done Rate'] = (agent_performance['Done_Leads'] / agent_performance['Total_Leads']) * 100
         
         # 
-        top_20 = agent_performance.sort_values(by="Done_Leads", ascending=False).head(30)
-        bottom_40 = agent_performance.sort_values(by="Done_Leads", ascending=True).head(40)
+        top_20 = agent_performance.sort_values(by="Done_Leads", ascending=False).head(20)
+        bottom_20 = agent_performance.sort_values(by="Done_Leads", ascending=True).head(20)
 
         # 
         col1, col2 = st.columns(2)
@@ -1526,10 +1526,10 @@ elif selected == "Data Analysis":
         with col2:
             st.markdown("#### 📉 Bottom 20 Agents (by Done Rate %)")
             # 
-            bottom_40_strings = []
-            for i, row in bottom_40.iterrows():
+            bottom_20_strings = []
+            for i, row in bottom_20.iterrows():
                 bottom_20_strings.append(f"{i+1}. **{row['Assign To_clean']}**: {row['Done_Leads']} Leads ({row['Done Rate']:.1f}%)")
-            st.markdown("\n".join(bottom_40_strings))
+            st.markdown("\n".join(bottom_20_strings))
             
     else:
         st.warning("Could not perform O Plan Agent analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains 'MCN' and 'Assign To' columns that match the Dr. Chase file.")
@@ -1595,6 +1595,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
