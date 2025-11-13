@@ -605,7 +605,7 @@ if selected == "Dataset Overview":
 # ================== MAIN DASHBOARD (Data Analysis) ==================
 elif selected == "Data Analysis":
     st.title("📊 Data Analysis – Advanced Insights")
-    st.info("This page provides **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
+    st.info("This page is for **deeper analysis** including time-series trends, insights summaries, and lead age analysis by Chaser / Client.")
 
     # --- Allowed columns for analysis ---
     allowed_columns = [
@@ -1382,5 +1382,3 @@ elif selected == "Data Analysis":
         
         else:
             st.info("ℹ️ Columns **MCN** and/or **Products** not found in dataset.")
-
- 
