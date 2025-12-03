@@ -631,7 +631,7 @@ if selected == "Dataset Overview":
         # 4. دمجهم وعرضهم
         st.altair_chart(bars + text, use_container_width=True)
 
-   elif selected_col in df_filtered.select_dtypes(include=["datetime64[ns]"]).columns:
+    elif selected_col in df_filtered.select_dtypes(include=["datetime64[ns]"]).columns:
         st.markdown(f"### 📈 Time Series of {selected_col}")
         ts_data = df_filtered[selected_col].value_counts().reset_index()
         ts_data.columns = [selected_col, "Count"]
@@ -1640,6 +1640,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
