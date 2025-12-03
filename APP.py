@@ -631,7 +631,7 @@ if selected == "Dataset Overview":
         # 4. دمجهم وعرضهم
         st.altair_chart(bars + text, use_container_width=True)
 
-    elif selected_col in df_filtered.select_dtypes(include=["datetime64[ns]"]).columns:
+   elif selected_col in df_filtered.select_dtypes(include=["datetime64[ns]"]).columns:
         st.markdown(f"### 📈 Time Series of {selected_col}")
         ts_data = df_filtered[selected_col].value_counts().reset_index()
         ts_data.columns = [selected_col, "Count"]
@@ -639,23 +639,16 @@ if selected == "Dataset Overview":
 
         # 1. الأساس (Base Chart)
         base = alt.Chart(ts_data).encode(
-            x=alt.X(
-                selected_col, 
-                axis=alt.Axis(
-                    format='%d-%m-%Y',  # شكل التاريخ (يوم-شهر-سنة)
-                    labelAngle=-45,      # إمالة التاريخ عشان ميزحمش
-                    tickMinStep=1,       # أقل خطوة هي يوم واحد
-                    # tickCount=len(ts_data) # (اختياري) حاول تفتح السطر ده لو لسه مش ظاهرين كلهم
-                )
-            ),
+            x=alt.X(selected_col, title=selected_col), # رجعناه للطبيعي عشان ميبقاش زحمة
             y="Count",
-            tooltip=[alt.Tooltip(selected_col, format='%d-%m-%Y'), "Count"]
+            # هنا بنظبط التاريخ يظهر بوضوح (يوم-شهر-سنة) لما تقف عليه
+            tooltip=[alt.Tooltip(selected_col, format='%d-%m-%Y', title="Date"), "Count"]
         )
 
-        # 2. الخط والنقط (Line with Points)
+        # 2. الخط والنقط
         line = base.mark_line(point=True, color="#ff7f0e")
 
-        # 3. الأرقام (Labels)
+        # 3. الأرقام (Labels) - تظهر فوق النقطة
         text = base.mark_text(
             align='center',
             baseline='bottom',
@@ -668,7 +661,6 @@ if selected == "Dataset Overview":
 
         # 4. دمج الطبقتين وعرضهم
         st.altair_chart(line + text, use_container_width=True)
-
 
 # ================== MAIN DASHBOARD (Data Analysis) ==================
 elif selected == "Data Analysis":
@@ -1648,6 +1640,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
