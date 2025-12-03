@@ -577,40 +577,65 @@ if selected == "Dataset Overview":
             df_filtered[col] = pd.to_datetime(df_filtered[col], errors="coerce")
 
     # --- Extra Visualization (same logic you already have) ---
+    # --- Extra Visualization ---
     if selected_col in df_filtered.select_dtypes(include=["object"]).columns:
         st.markdown(f"### 📊 Distribution of {selected_col}")
         chart_data = df_filtered[selected_col].value_counts().reset_index()
         chart_data.columns = [selected_col, "Count"]
 
-        chart = (
-            alt.Chart(chart_data)
-            .mark_bar(color="#16eff7")
-            .encode(
-                x=alt.X(selected_col, sort="-y"),
-                y="Count",
-                tooltip=[selected_col, "Count"]
-            )
+        # 1. الأساس (Base)
+        base = alt.Chart(chart_data).encode(
+            x=alt.X(selected_col, sort="-y"),
+            y=alt.Y("Count"),
+            tooltip=[selected_col, "Count"]
         )
-        st.altair_chart(chart, use_container_width=True)
+
+        # 2. الأعمدة (Bars)
+        bars = base.mark_bar(color="#16eff7")
+
+        # 3. الأرقام (Labels)
+        text = base.mark_text(
+            align='center',
+            baseline='bottom',
+            dy=-5,  # يطلع الرقم فوق العمود بـ 5 درجات
+            color='white' # لون الرقم
+        ).encode(
+            text='Count'
+        )
+
+        # 4. دمجهم وعرضهم
+        st.altair_chart(bars + text, use_container_width=True)
 
     elif selected_col in df_filtered.select_dtypes(include=["number"]).columns:
         st.markdown(f"### 📊 Distribution of {selected_col}")
 
-        chart = (
-            alt.Chart(df_filtered)
-            .mark_bar(color="#0eff87")
-            .encode(
-                x=alt.X(selected_col, bin=alt.Bin(maxbins=30)),
-                y='count()',
-                tooltip=[selected_col, "count()"]
-            )
+        # 1. الأساس (Base)
+        base = alt.Chart(df_filtered).encode(
+            x=alt.X(selected_col, bin=alt.Bin(maxbins=30)),
         )
-        st.altair_chart(chart, use_container_width=True)
 
+        # 2. الأعمدة (Bars)
+        bars = base.mark_bar(color="#0eff87").encode(
+            y='count()',
+            tooltip=[selected_col, "count()"]
+        )
 
+        # 3. الأرقام (Labels)
+        text = base.mark_text(
+            align='center',
+            baseline='bottom',
+            dy=-5,
+            color='white'
+        ).encode(
+            y='count()',
+            text='count()'
+        )
 
+        # 4. دمجهم وعرضهم
+        st.altair_chart(bars + text, use_container_width=True)
 
     elif selected_col in df_filtered.select_dtypes(include=["datetime64[ns]"]).columns:
+        # (Line Chart زي ما هو مفيهوش تغيير)
         st.markdown(f"### 📈 Time Series of {selected_col}")
         ts_data = df_filtered[selected_col].value_counts().reset_index()
         ts_data.columns = [selected_col, "Count"]
@@ -1606,3 +1631,4 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
