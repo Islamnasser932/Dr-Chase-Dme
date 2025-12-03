@@ -609,18 +609,15 @@ if selected == "Dataset Overview":
     elif selected_col in df_filtered.select_dtypes(include=["number"]).columns:
         st.markdown(f"### 📊 Distribution of {selected_col}")
 
-        # 1. الأساس (Base)
         base = alt.Chart(df_filtered).encode(
             x=alt.X(selected_col, bin=alt.Bin(maxbins=30)),
         )
 
-        # 2. الأعمدة (Bars)
         bars = base.mark_bar(color="#0eff87").encode(
             y='count()',
             tooltip=[selected_col, "count()"]
         )
 
-        # 3. الأرقام (Labels)
         text = base.mark_text(
             align='center',
             baseline='bottom',
@@ -635,22 +632,34 @@ if selected == "Dataset Overview":
         st.altair_chart(bars + text, use_container_width=True)
 
     elif selected_col in df_filtered.select_dtypes(include=["datetime64[ns]"]).columns:
-        # (Line Chart زي ما هو مفيهوش تغيير)
         st.markdown(f"### 📈 Time Series of {selected_col}")
         ts_data = df_filtered[selected_col].value_counts().reset_index()
         ts_data.columns = [selected_col, "Count"]
         ts_data = ts_data.sort_values(selected_col)
 
-        chart = (
-            alt.Chart(ts_data)
-            .mark_line(point=True, color="#ff7f0e")
-            .encode(
-                x=selected_col,
-                y="Count",
-                tooltip=[selected_col, "Count"]
-            )
+        # 1. الأساس (Base Chart)
+        base = alt.Chart(ts_data).encode(
+            x=selected_col,
+            y="Count",
+            tooltip=[selected_col, "Count"]
         )
-        st.altair_chart(chart, use_container_width=True)
+
+        # 2. الخط والنقط (Line with Points)
+        line = base.mark_line(point=True, color="#ff7f0e")
+
+        # 3. الأرقام (Labels)
+        text = base.mark_text(
+            align='center',
+            baseline='bottom',
+            dy=-10,       # يرفع الرقم فوق النقطة بـ 10 بكسل
+            color='white', # لون الرقم (عشان الخلفية السوداء)
+            fontSize=12
+        ).encode(
+            text='Count'
+        )
+
+        # 4. دمج الطبقتين وعرضهم
+        st.altair_chart(line + text, use_container_width=True)
 
 
 # ================== MAIN DASHBOARD (Data Analysis) ==================
@@ -1631,4 +1640,5 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
