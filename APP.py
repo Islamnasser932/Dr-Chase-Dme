@@ -639,9 +639,17 @@ if selected == "Dataset Overview":
 
         # 1. الأساس (Base Chart)
         base = alt.Chart(ts_data).encode(
-            x=selected_col,
+            x=alt.X(
+                selected_col, 
+                axis=alt.Axis(
+                    format='%d-%m-%Y',  # شكل التاريخ (يوم-شهر-سنة)
+                    labelAngle=-45,      # إمالة التاريخ عشان ميزحمش
+                    tickMinStep=1,       # أقل خطوة هي يوم واحد
+                    # tickCount=len(ts_data) # (اختياري) حاول تفتح السطر ده لو لسه مش ظاهرين كلهم
+                )
+            ),
             y="Count",
-            tooltip=[selected_col, "Count"]
+            tooltip=[alt.Tooltip(selected_col, format='%d-%m-%Y'), "Count"]
         )
 
         # 2. الخط والنقط (Line with Points)
@@ -651,8 +659,8 @@ if selected == "Dataset Overview":
         text = base.mark_text(
             align='center',
             baseline='bottom',
-            dy=-10,       # يرفع الرقم فوق النقطة بـ 10 بكسل
-            color='white', # لون الرقم (عشان الخلفية السوداء)
+            dy=-10,       
+            color='white', 
             fontSize=12
         ).encode(
             text='Count'
@@ -1640,5 +1648,6 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
