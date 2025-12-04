@@ -639,16 +639,15 @@ if selected == "Dataset Overview":
 
         # 1. الأساس (Base Chart)
         base = alt.Chart(ts_data).encode(
-            x=alt.X(selected_col, title=selected_col), # رجعناه للطبيعي عشان ميبقاش زحمة
+            x=alt.X(selected_col, title=selected_col),
             y="Count",
-            # هنا بنظبط التاريخ يظهر بوضوح (يوم-شهر-سنة) لما تقف عليه
             tooltip=[alt.Tooltip(selected_col, format='%d-%m-%Y', title="Date"), "Count"]
         )
 
         # 2. الخط والنقط
         line = base.mark_line(point=True, color="#ff7f0e")
 
-        # 3. الأرقام (Labels) - تظهر فوق النقطة
+        # 3. الأرقام (Labels)
         text = base.mark_text(
             align='center',
             baseline='bottom',
@@ -659,8 +658,26 @@ if selected == "Dataset Overview":
             text='Count'
         )
 
-        # 4. دمج الطبقتين وعرضهم
+        # 4. عرض الرسم البياني
         st.altair_chart(line + text, use_container_width=True)
+
+        # --- 🔽🔽🔽 الإضافة الجديدة: زرار تحميل الداتا 🔽🔽🔽 ---
+        
+        # تحويل الداتا لـ CSV
+        csv = ts_data.to_csv(index=False).encode('utf-8')
+
+        col_dl1, col_dl2 = st.columns([1, 4])
+        with col_dl1:
+            st.download_button(
+                label="📥 Download Data as CSV",
+                data=csv,
+                file_name=f"{selected_col}_trends.csv",
+                mime='text/csv',
+            )
+        
+        # عرض الجدول للأرقام (اختياري - لو عايز تشوفهم قدامك)
+        with st.expander("🔍 View Data Table (Numbers)"):
+            st.dataframe(ts_data, use_container_width=True)
 
 
     
@@ -1643,6 +1660,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
