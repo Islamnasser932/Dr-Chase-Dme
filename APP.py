@@ -859,42 +859,63 @@ elif selected == "Data Analysis":
             final_chart = chart_disp + text
             st.altair_chart(final_chart, use_container_width=True)
 
-        # --- 🔽🔽🔽 START OF NEW TREEMAP (Chaser Name) 🔽🔽🔽 ---
+# --- 🔽🔽🔽 START OF NEW TREEMAP (Chaser Name -> Status WITH COLORS) 🔽🔽🔽 ---
             st.markdown("---")
-            st.markdown("### 🌳 Dr. Chase Agents Treemap (Chaser Name ➡️ Status)")
-            st.info("This chart visualizes the Chasing Disposition distribution for each Dr. Chase Agent (based on filtered data).")
+            st.markdown("###  Dr. Chase Agents Treemap (Chaser Name ➡️ Chasing Disposition)")
 
             # 1. تجهيز الداتا (من df_filtered عشان نجيب Chaser Name)
             if "Chaser Name" in df_filtered.columns and "Chasing Disposition" in df_filtered.columns:
                 
                 # تجميع الداتا
                 df_treemap_chaser = df_filtered.groupby(['Chaser Name', 'Chasing Disposition']).size().reset_index(name='Count')
-                
-                # نشيل الأصفار عشان الشكل يكون نضيف
                 df_treemap_chaser = df_treemap_chaser[df_treemap_chaser['Count'] > 0]
 
-                # 2. رسم الـ Treemap
+                # 2. تجهيز خريطة الألوان (Color Map)
+                # بنشوف كل الحالات الموجودة ونديها لون
+                unique_statuses = df_treemap_chaser['Chasing Disposition'].unique()
+                custom_colors = {}
+                
+                for status in unique_statuses:
+                    s_lower = str(status).lower().strip()
+                    
+                    # الحالات السيئة (أحمر)
+                    if s_lower in ["dead lead", "dr denied", "rejected by dr chase"]:
+                        custom_colors[status] = "#FF4B4B" # Red
+                    
+                    # الحالات الجيدة (أخضر)
+                    elif s_lower in ["pending shipping", "hot lead", "passed review"]:
+                        custom_colors[status] = "#00CC00" # Green
+                        
+                    # حالة الفاكس (برتقالي - اختياري عشان نميزها)
+                    elif "fax" in s_lower:
+                        custom_colors[status] = "#FFA500" # Orange
+                        
+                    # باقي الحالات (رمادي غامق/أزرق - عشان العين تركز على المهم)
+                    else:
+                        custom_colors[status] = "#636EFA" # Default Plotly Blue
+
+                # 3. رسم الـ Treemap
                 fig_tree = px.treemap(
                     df_treemap_chaser,
-                    path=[px.Constant("All Chasers"), 'Chaser Name', 'Chasing Disposition'], # التسلسل: الكل -> الايجنت -> الحالة
+                    path=[px.Constant("All Chasers"), 'Chaser Name', 'Chasing Disposition'], 
                     values='Count',
-                    color='Chaser Name', # كل ايجنت ياخد لون مميز
-                    title="Hierarchical View: Chaser Name -> Disposition",
-                    color_discrete_sequence=px.colors.qualitative.Prism # ألوان زاهية
+                    color='Chasing Disposition', # التلوين بناءً على الحالة
+                    color_discrete_map=custom_colors, # تطبيق خريطة الألوان بتاعتنا
+                    title="Hierarchical View: Chaser Name -> Disposition"
                 )
 
-                # 3. تظبيط الشكل
+                # 4. تظبيط الشكل
                 fig_tree.update_traces(
                     root_color="lightgrey",
-                    textinfo="label+value+percent parent", # يظهر الاسم والعدد والنسبة من إجمالي الايجنت
-                    textfont=dict(size=15),
+                    textinfo="label+value+percent parent", 
+                    textfont=dict(size=14),
                     marker=dict(line=dict(width=1, color='black'))
                 )
 
                 fig_tree.update_layout(
                     template="plotly_dark",
                     margin=dict(t=50, l=10, r=10, b=10),
-                    height=500
+                    height=600
                 )
 
                 st.plotly_chart(fig_tree, use_container_width=True)
@@ -1706,6 +1727,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
