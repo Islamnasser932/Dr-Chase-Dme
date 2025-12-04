@@ -859,66 +859,90 @@ elif selected == "Data Analysis":
             final_chart = chart_disp + text
             st.altair_chart(final_chart, use_container_width=True)
 
-# --- 🔽🔽🔽 START OF NEW TREEMAP (Chaser Name -> Status WITH COLORS) 🔽🔽🔽 ---
+# --- 🔽🔽🔽 START OF NEW TREEMAP (Custom Colors for Parents) 🔽🔽🔽 ---
             st.markdown("---")
             st.markdown("###  Dr. Chase Agents Treemap (Chaser Name ➡️ Chasing Disposition)")
 
-            # 1. تجهيز الداتا (من df_filtered عشان نجيب Chaser Name)
             if "Chaser Name" in df_filtered.columns and "Chasing Disposition" in df_filtered.columns:
                 
-                # تجميع الداتا
-                df_treemap_chaser = df_filtered.groupby(['Chaser Name', 'Chasing Disposition']).size().reset_index(name='Count')
-                df_treemap_chaser = df_treemap_chaser[df_treemap_chaser['Count'] > 0]
+                # 1. تجهيز الداتا
+                df_tree = df_filtered.groupby(['Chaser Name', 'Chasing Disposition']).size().reset_index(name='Count')
+                df_tree = df_tree[df_tree['Count'] > 0] # نشيل الأصفار
 
-                # 2. تجهيز خريطة الألوان (Color Map)
-                # بنشوف كل الحالات الموجودة ونديها لون
-                unique_statuses = df_treemap_chaser['Chasing Disposition'].unique()
-                custom_colors = {}
-                
-                for status in unique_statuses:
+                # 2. تحضير القوائم لبناء الشجرة يدوياً (عشان نتحكم في الألوان)
+                import plotly.graph_objects as go
+
+                labels = []
+                parents = []
+                values = []
+                colors = []
+                ids = []
+
+                # --- Level 1: الجذر (All Agents) ---
+                root_id = "All Agents"
+                ids.append(root_id)
+                labels.append("All Agents")
+                parents.append("")
+                values.append(df_tree['Count'].sum())
+                colors.append("#37474F") # لون هادي جداً (رمادي غامق) للجذر
+
+                # --- Level 2: الايجنت (Chaser Name) ---
+                unique_chasers = df_tree['Chaser Name'].unique()
+                for chaser in unique_chasers:
+                    chaser_total = df_tree[df_tree['Chaser Name'] == chaser]['Count'].sum()
+                    ids.append(f"{root_id}/{chaser}")
+                    labels.append(chaser)
+                    parents.append(root_id)
+                    values.append(chaser_total)
+                    colors.append("#546E7A") # لون هادي (أزرق رمادي) للايجنت
+
+                # --- Level 3: الحالة (Status) ---
+                for _, row in df_tree.iterrows():
+                    chaser = row['Chaser Name']
+                    status = row['Chasing Disposition']
+                    count = row['Count']
+                    
+                    # تحديد لون الحالة
                     s_lower = str(status).lower().strip()
+                    node_color = "#636EFA" # اللون الافتراضي (أزرق)
                     
-                    # الحالات السيئة (أحمر)
                     if s_lower in ["dead lead", "dr denied", "rejected by dr chase"]:
-                        custom_colors[status] = "#FF4B4B" # Red
-                    
-                    # الحالات الجيدة (أخضر)
+                        node_color = "#EF553B" # أحمر
                     elif s_lower in ["pending shipping", "hot lead", "passed review"]:
-                        custom_colors[status] = "#00CC00" # Green
-                        
-                    # حالة الفاكس (برتقالي - اختياري عشان نميزها)
+                        node_color = "#00CC96" # أخضر
                     elif "fax" in s_lower:
-                        custom_colors[status] = "#FFA500" # Orange
-                        
-                    # باقي الحالات (رمادي غامق/أزرق - عشان العين تركز على المهم)
-                    else:
-                        custom_colors[status] = "#636EFA" # Default Plotly Blue
+                        node_color = "#FFA15A" # برتقالي
+
+                    ids.append(f"{root_id}/{chaser}/{status}")
+                    labels.append(status)
+                    parents.append(f"{root_id}/{chaser}")
+                    values.append(count)
+                    colors.append(node_color)
 
                 # 3. رسم الـ Treemap
-                fig_tree = px.treemap(
-                    df_treemap_chaser,
-                    path=[px.Constant("All Chasers"), 'Chaser Name', 'Chasing Disposition'], 
-                    values='Count',
-                    color='Chasing Disposition', # التلوين بناءً على الحالة
-                    color_discrete_map=custom_colors, # تطبيق خريطة الألوان بتاعتنا
-                    title="Hierarchical View: Chaser Name -> Disposition"
-                )
-
-                # 4. تظبيط الشكل
-                fig_tree.update_traces(
-                    root_color="lightgrey",
-                    textinfo="label+value+percent parent", 
-                    textfont=dict(size=14),
-                    marker=dict(line=dict(width=1, color='black'))
-                )
+                fig_tree = go.Figure(go.Treemap(
+                    ids=ids,
+                    labels=labels,
+                    parents=parents,
+                    values=values,
+                    marker=dict(
+                        colors=colors, # هنا بنطبق قايمة الألوان بتاعتنا
+                        line=dict(width=1, color='black') # حدود سوداء خفيفة
+                    ),
+                    branchvalues="total",
+                    textinfo="label+value+percent parent",
+                    textfont=dict(size=14)
+                ))
 
                 fig_tree.update_layout(
                     template="plotly_dark",
                     margin=dict(t=50, l=10, r=10, b=10),
-                    height=600
+                    height=600,
+                    title="Hierarchical View: All Agents (Grey) ➡️ Status (Colored)"
                 )
 
                 st.plotly_chart(fig_tree, use_container_width=True)
+            
             else:
                 st.warning("Column 'Chaser Name' not found in the dataset.")
             # --- 🔼🔼🔼 END OF NEW TREEMAP 🔼🔼🔼 ---
@@ -1727,6 +1751,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
