@@ -662,6 +662,50 @@ if selected == "Dataset Overview":
         # 4. دمج الطبقتين وعرضهم
         st.altair_chart(line + text, use_container_width=True)
 
+
+    # --- 🔽🔽🔽 START OF NEW CHART (Daily Trend) 🔽🔽🔽 ---
+    st.markdown("### 📈 Daily 'Done' Leads Progress by Agent")
+    st.info("This chart shows how many 'Done' leads each agent achieved per day.")
+
+    # 1. تجهيز الداتا باليوم
+    # لازم نتأكد إن عندنا عمود التاريخ
+    if "Created Time (Date)" in df_agent_analysis.columns:
+        
+        # نفلتر على الـ Done بس
+        df_daily_trend = df_agent_analysis[df_agent_analysis['is_done'] == True]
+        
+        # نجمع الداتا باليوم والايجنت
+        daily_data = df_daily_trend.groupby(['Created Time (Date)', 'Assign To_clean']).size().reset_index(name='Count')
+        
+        # عشان الزحمة، ممكن نعرض بس الـ Top 10 agents في الرسم ده
+        top_10_agents_list = df_daily_trend['Assign To_clean'].value_counts().head(10).index.tolist()
+        daily_data_filtered = daily_data[daily_data['Assign To_clean'].isin(top_10_agents_list)]
+
+        # 2. رسم الـ Line Chart
+        fig_line = px.line(
+            daily_data_filtered, 
+            x='Created Time (Date)', 
+            y='Count', 
+            color='Assign To_clean',
+            markers=True, # يضيف نقط عشان تشوف "يوم 7" بوضوح
+            title="Daily Performance for Top 10 Agents"
+        )
+        
+        fig_line.update_layout(
+            template="plotly_dark",
+            xaxis_title="Date",
+            yaxis_title="Done Leads Count",
+            hovermode="x unified" # لما تقف على يوم يجيبلك كل الايجنتس عملوا إيه في اليوم ده
+        )
+        
+        st.plotly_chart(fig_line, use_container_width=True)
+    else:
+        st.warning("Date column not found for daily trend analysis.")
+    # --- 🔼🔼🔼 END OF NEW CHART 🔼🔼🔼 ---
+
+    # 4. st.markdown("### 📈 Agent Done Leads Rankings (Text)") ... (باقي الكود زي ما هو)
+
+
 # ================== MAIN DASHBOARD (Data Analysis) ==================
 elif selected == "Data Analysis":
     st.title("📊 Data Analysis – Advanced Insights")
@@ -1640,6 +1684,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
