@@ -859,6 +859,52 @@ elif selected == "Data Analysis":
             final_chart = chart_disp + text
             st.altair_chart(final_chart, use_container_width=True)
 
+        # --- 🔽🔽🔽 START OF NEW TREEMAP (Chaser Name) 🔽🔽🔽 ---
+            st.markdown("---")
+            st.markdown("### 🌳 Dr. Chase Agents Treemap (Chaser Name ➡️ Status)")
+            st.info("This chart visualizes the Chasing Disposition distribution for each Dr. Chase Agent (based on filtered data).")
+
+            # 1. تجهيز الداتا (من df_filtered عشان نجيب Chaser Name)
+            if "Chaser Name" in df_filtered.columns and "Chasing Disposition" in df_filtered.columns:
+                
+                # تجميع الداتا
+                df_treemap_chaser = df_filtered.groupby(['Chaser Name', 'Chasing Disposition']).size().reset_index(name='Count')
+                
+                # نشيل الأصفار عشان الشكل يكون نضيف
+                df_treemap_chaser = df_treemap_chaser[df_treemap_chaser['Count'] > 0]
+
+                # 2. رسم الـ Treemap
+                fig_tree = px.treemap(
+                    df_treemap_chaser,
+                    path=[px.Constant("All Chasers"), 'Chaser Name', 'Chasing Disposition'], # التسلسل: الكل -> الايجنت -> الحالة
+                    values='Count',
+                    color='Chaser Name', # كل ايجنت ياخد لون مميز
+                    title="Hierarchical View: Chaser Name -> Disposition",
+                    color_discrete_sequence=px.colors.qualitative.Prism # ألوان زاهية
+                )
+
+                # 3. تظبيط الشكل
+                fig_tree.update_traces(
+                    root_color="lightgrey",
+                    textinfo="label+value+percent parent", # يظهر الاسم والعدد والنسبة من إجمالي الايجنت
+                    textfont=dict(size=15),
+                    marker=dict(line=dict(width=1, color='black'))
+                )
+
+                fig_tree.update_layout(
+                    template="plotly_dark",
+                    margin=dict(t=50, l=10, r=10, b=10),
+                    height=500
+                )
+
+                st.plotly_chart(fig_tree, use_container_width=True)
+            else:
+                st.warning("Column 'Chaser Name' not found in the dataset.")
+            # --- 🔼🔼🔼 END OF NEW TREEMAP 🔼🔼🔼 ---
+
+
+        
+
 
             # ================== Client Distribution (MODIFIED: Compact Metric) ==================
         if "Client" in df_ts.columns:
@@ -1660,6 +1706,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
