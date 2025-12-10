@@ -90,7 +90,7 @@ def load_and_clean_data(df, name_map, cols_map, samy_chasers):
     columns_to_remove = [
         "Is Converted From Lead", "Height", "Weight", "Waist Size", "Dr Phone Number", "Dr Fax",
         "Dr Alternative Phone", "Dr Address", "Dr City", "Dr ZIP Code", "NPI", "Dr Info Extra Comments",
-        "Dr. Name", "Exception", "Initial Agent", "Full Name", "Last Name", "Secondary Phone", "Address",
+        "Dr. Name", "Exception", "Initial Agent", "Secondary Phone", "Address",
         "Gender", "ZIP Code", "City", "Phase","First Name","LOMN?","Source","Brace Size","Extra Comments" ,"CBA","Primary Phone"
     ]
     df_cleaned = df_cleaned.drop(columns=[c for c in columns_to_remove if c in df_cleaned.columns], errors="ignore")
@@ -1751,6 +1751,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
