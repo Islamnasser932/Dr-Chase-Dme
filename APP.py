@@ -1537,10 +1537,10 @@ elif selected == "Data Analysis":
                 st.altair_chart(chart_grouped_client, use_container_width=True)
 
 
-            st.markdown("---")
-            st.markdown("### 🕰️Not touched Leads Alerts")
-            
-            today = pd.Timestamp.now().normalize()
+        st.markdown("---")
+        st.markdown("### 🕰️Not touched Leads Alerts")
+        
+        today = pd.Timestamp.now().normalize()
 
         # 1. Leads Assigned > 5 Days ago (Active/Not Completed)
         if "Assigned date" in df_filtered.columns and "Completion Date" in df_filtered.columns:
@@ -1855,6 +1855,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
