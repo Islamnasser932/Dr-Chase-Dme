@@ -1074,25 +1074,18 @@ elif selected == "Data Analysis":
             st.subheader("🚨 Data Quality Warnings")
             today = pd.Timestamp.now().normalize()
 
-            # 🚨 Check: Date of Sale BEFORE Created Time or Assigned Date
-            # التأكد من وجود الأعمدة المطلوبة
-            # 🚨 Check: Date of Sale is MORE THAN 7 DAYS BEFORE Created Time or Assigned Date
-            cols_check_sale = ["Date of Sale", "Created Time", "Assigned date"]
-            if all(col in df_filtered.columns for col in cols_check_sale):
+            # 🚨 Check: Date of Sale is MORE THAN 7 DAYS BEFORE Created Time ONLY
+            if "Date of Sale" in df_filtered.columns and "Created Time" in df_filtered.columns:
                 
                 # 1. تحديد فترة السماحية (7 أيام)
                 buffer_days = pd.Timedelta(days=7)
                 
-                # 2. تجهيز التواريخ (بدون ساعات) للمقارنة
+                # 2. تجهيز التواريخ للمقارنة
                 sale_date = df_filtered["Date of Sale"].dt.normalize()
                 created_minus_7 = df_filtered["Created Time"].dt.normalize() - buffer_days
-                assigned_minus_7 = df_filtered["Assigned date"].dt.normalize() - buffer_days
                 
-                # 3. الشرط: لو تاريخ البيع أقدم من (الإنشاء - 7 أيام) أو (الإسناد - 7 أيام)
-                mask_invalid_sale = (
-                    (sale_date < created_minus_7) | 
-                    (sale_date < assigned_minus_7)
-                )
+                # 3. الشرط: لو تاريخ البيع أقدم من (الإنشاء - 7 أيام)
+                mask_invalid_sale = (sale_date < created_minus_7)
                 
                 # 4. الفلترة
                 invalid_sales = df_filtered[
@@ -1100,17 +1093,15 @@ elif selected == "Data Analysis":
                 ]
 
                 if not invalid_sales.empty:
-                    st.warning(f"⚠️ Found {len(invalid_sales)} leads where **Date of Sale** is more than **7 days BEFORE** Created/Assigned Date.")
-                    with st.expander("🔍 View Illogical Sale Dates (>7 days backdated)"):
+                    st.warning(f"⚠️ Found {len(invalid_sales)} leads where **Date of Sale** is more than **7 days BEFORE** Created Time.")
+                    with st.expander("🔍 View Illogical Sale Dates (>7 days before Creation)"):
+                        # بنعرض الأعمدة المهمة (بما فيها Assigned date لو موجود عشان السياق)
+                        cols_to_show = ["MCN", "Client", "Chaser Name", "Created Time (Date)", "Date of Sale (Date)"]
+                        if "Assigned date (Date)" in df_filtered.columns:
+                            cols_to_show.insert(4, "Assigned date (Date)")
+                            
                         st.dataframe(
-                            invalid_sales[[
-                                "MCN", 
-                                "Client", 
-                                "Chaser Name", 
-                                "Created Time (Date)", 
-                                "Assigned date (Date)", 
-                                "Date of Sale (Date)"
-                            ]],
+                            invalid_sales[cols_to_show],
                             use_container_width=True
                         )
 
@@ -1790,6 +1781,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
