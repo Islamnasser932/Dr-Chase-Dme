@@ -1074,6 +1074,35 @@ elif selected == "Data Analysis":
             st.subheader("🚨 Data Quality Warnings")
             today = pd.Timestamp.now().normalize()
 
+            # 🚨 Check: Date of Sale BEFORE Created Time or Assigned Date
+            # التأكد من وجود الأعمدة المطلوبة
+            cols_check_sale = ["Date of Sale", "Created Time", "Assigned date"]
+            if all(col in df_filtered.columns for col in cols_check_sale):
+                
+                mask_invalid_sale = (
+                    (df_filtered["Date of Sale"].dt.normalize() < df_filtered["Created Time"].dt.normalize()) | 
+                    (df_filtered["Date of Sale"].dt.normalize() < df_filtered["Assigned date"].dt.normalize())
+                )
+                
+                invalid_sales = df_filtered[
+                    df_filtered["Date of Sale"].notna() & mask_invalid_sale
+                ]
+
+                if not invalid_sales.empty:
+                    st.warning(f"⚠️ Found {len(invalid_sales)} leads where **Date of Sale** is BEFORE **Created Time** or **Assigned Date**.")
+                    with st.expander("🔍 View Leads with Invalid Sale Dates (Illogical Logic)"):
+                        st.dataframe(
+                            invalid_sales[[
+                                "MCN", 
+                                "Client", 
+                                "Chaser Name", 
+                                "Created Time (Date)", 
+                                "Assigned date (Date)", 
+                                "Date of Sale (Date)"
+                            ]],
+                            use_container_width=True
+                        )
+
 
             # 🚨 Leads with Pending Shipping but no Upload Date
             if "Chasing Disposition_clean" in df_filtered.columns and "Upload Date" in df_filtered.columns:
@@ -1751,6 +1780,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
