@@ -1537,8 +1537,82 @@ elif selected == "Data Analysis":
                 st.altair_chart(chart_grouped_client, use_container_width=True)
 
 
-        
-        
+            st.markdown("---")
+            st.markdown("### 🕰️Not touched Leads Alerts")
+            
+            today = pd.Timestamp.now().normalize()
+
+            # 1. Leads Assigned > 5 Days ago (Active/Not Completed)
+            if "Assigned date" in df_filtered.columns and "Completion Date" in df_filtered.columns:
+                
+                # التاريخ من 5 أيام
+                threshold_5_days = today - pd.Timedelta(days=5)
+                
+                # الشرط: تاريخ الإسناد أقدم من 5 أيام + لسه مخلصتش (Completion Date فاضي)
+                mask_assign_5 = (
+                    (df_filtered["Assigned date"].dt.normalize() < threshold_5_days) &
+                    (df_filtered["Completion Date"].isna())
+                )
+                leads_assign_5 = df_filtered[mask_assign_5]
+
+                if not leads_assign_5.empty:
+                    st.warning(f"⚠️ Found **{len(leads_assign_5)}** active leads assigned more than **5 days** ago.")
+                    with st.expander("🔍 View Leads (Assigned > 5 Days & Pending)"):
+                        st.dataframe(
+                            leads_assign_5[[
+                                "MCN", "Client", "Chaser Name", "Assigned date (Date)", 
+                                "Chasing Disposition", "Days Since Created"
+                            ]], 
+                            use_container_width=True
+                        )
+
+            # 2. Leads Last Modified > 5 Days ago (Stagnant)
+            if "Modified Time" in df_filtered.columns and "Completion Date" in df_filtered.columns:
+                
+                threshold_mod_5 = today - pd.Timedelta(days=5)
+                
+                # الشرط: آخر تعديل أقدم من 5 أيام + لسه مخلصتش
+                mask_mod_5 = (
+                    (df_filtered["Modified Time"].dt.normalize() < threshold_mod_5) &
+                    (df_filtered["Completion Date"].isna())
+                )
+                leads_mod_5 = df_filtered[mask_mod_5]
+
+                if not leads_mod_5.empty:
+                    st.warning(f"⚠️ Found **{len(leads_mod_5)}** active leads not modified for more than **5 days** (Stagnant).")
+                    with st.expander("🔍 View Stagnant Leads (Last Modified > 5 Days)"):
+                        st.dataframe(
+                            leads_mod_5[[
+                                "MCN", "Client", "Chaser Name", "Modified Time", 
+                                "Chasing Disposition", "Last Modified By"
+                            ]], 
+                            use_container_width=True
+                        )
+
+            # 3. Leads Assigned > 14 Days ago (Critical Aging)
+            if "Assigned date" in df_filtered.columns and "Completion Date" in df_filtered.columns:
+                
+                threshold_14_days = today - pd.Timedelta(days=14)
+                
+                mask_assign_14 = (
+                    (df_filtered["Assigned date"].dt.normalize() < threshold_14_days) &
+                    (df_filtered["Completion Date"].isna())
+                )
+                leads_assign_14 = df_filtered[mask_assign_14]
+
+                if not leads_assign_14.empty:
+                    st.error(f"🚨 Found **{len(leads_assign_14)}** active leads assigned more than **14 days** ago!")
+                    with st.expander("🔍 View Critical Leads (Assigned > 14 Days)"):
+                        st.dataframe(
+                            leads_assign_14[[
+                                "MCN", "Client", "Chaser Name", "Assigned date (Date)", 
+                                "Chasing Disposition", "Days Since Created"
+                            ]], 
+                            use_container_width=True
+                        )
+            
+            st.markdown("---")
+
             # ================== DUPLICATES CHECK WITH PRODUCT (MODIFIED: Removed Grouped by Key Dates) ==================
         st.subheader("🔍 Duplicate Leads by MCN (Considering Product)")
         
@@ -1781,6 +1855,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
