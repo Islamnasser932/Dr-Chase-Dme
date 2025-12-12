@@ -1583,7 +1583,7 @@ elif selected == "Data Analysis":
             leads_mod_7 = df_filtered[mask_mod_7]
 
             if not leads_mod_7.empty:
-                st.warning(f"⚠️ Found **{len(leads_mod_7)}** active leads not modified for > **7 days** (Stagnant).")
+                st.warning(f"⚠️ Found **{len(leads_mod_7)}** active leads not modified for > **7 days**.")
                 with st.expander("🔍 View Stagnant Leads (Last Modified > 7 Days - Group 2)"):
                     st.dataframe(
                         leads_mod_7[[
@@ -1859,6 +1859,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
