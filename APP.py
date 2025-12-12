@@ -1536,21 +1536,15 @@ elif selected == "Data Analysis":
                 )
                 st.altair_chart(chart_grouped_client, use_container_width=True)
 
-     # ... (بعد رسمة chart_grouped_client مباشرة) ...
-
         st.markdown("---")
         st.markdown("### 🕰️ Aging & Stagnation Alerts (Since Oct 1st, 2025)")
         
         today = pd.Timestamp.now().normalize()
         
-        # 🆕 (FIXED) تحديد تاريخ البداية (1/10/2025)
         start_date_filter = pd.Timestamp("2025-10-01").normalize()
 
-        # تحديد قوائم الحالات (Statuses)
         group_1_statuses = ["pending dr call", "pending fax", "pending dr visit"]
         group_2_statuses = ["pending dr call", "pending fax", "pending dr visit", "faxed", "dr chase"]
-
-        # التأكد من وجود الأعمدة
         required_cols = ["Assigned date", "Modified Time", "Created Time", "Completion Date", "Chasing Disposition_clean"]
         
         if all(col in df_filtered.columns for col in required_cols):
@@ -1622,7 +1616,6 @@ elif selected == "Data Analysis":
                     )
         
         st.markdown("---")
-        # ... (هنا بيبدأ الجزء بتاع Duplicate Leads القديم) ...
 
             # ================== DUPLICATES CHECK WITH PRODUCT (MODIFIED: Removed Grouped by Key Dates) ==================
         st.subheader("🔍 Duplicate Leads by MCN (Considering Product)")
@@ -1866,6 +1859,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
