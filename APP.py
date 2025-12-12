@@ -1584,7 +1584,7 @@ elif selected == "Data Analysis":
 
             if not leads_mod_7.empty:
                 st.warning(f"⚠️ Found **{len(leads_mod_7)}** active leads not modified for > **7 days**.")
-                with st.expander("🔍 View Stagnant Leads (Last Modified > 7 Days - Group 2)"):
+                with st.expander("🔍 View  Leads (Last Modified > 7 Days - Group 2)"):
                     st.dataframe(
                         leads_mod_7[[
                             "MCN", "Client", "Chaser Name", "Modified Time", 
@@ -1605,8 +1605,8 @@ elif selected == "Data Analysis":
             leads_assign_14 = df_filtered[mask_assign_14]
 
             if not leads_assign_14.empty:
-                st.error(f"🚨 Found **{len(leads_assign_14)}** active leads assigned > **14 days** ago (Critical)!")
-                with st.expander("🔍 View Critical Leads (Assigned > 14 Days - Group 2)"):
+                st.error(f"🚨 Found **{len(leads_assign_14)}** active leads assigned > **14 days** ago !")
+                with st.expander("🔍 View Leads (Assigned > 14 Days - Group 2)"):
                     st.dataframe(
                         leads_assign_14[[
                             "MCN", "Client", "Chaser Name", "Assigned date (Date)", 
@@ -1859,6 +1859,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
