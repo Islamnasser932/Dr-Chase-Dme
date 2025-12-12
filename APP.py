@@ -1537,81 +1537,93 @@ elif selected == "Data Analysis":
                 st.altair_chart(chart_grouped_client, use_container_width=True)
 
 
+       # ... (بعد رسمة chart_grouped_client مباشرة) ...
+
         st.markdown("---")
-        st.markdown("### 🕰️Not touched Leads Alerts")
+        st.markdown("### 🕰️ Aging & Stagnation Alerts (Since Oct 1st, 2025)")
         
         today = pd.Timestamp.now().normalize()
+        
+        # 🆕 (FIXED) تحديد تاريخ البداية (1/10/2025)
+        start_date_filter = pd.Timestamp("2025-10-01").normalize()
 
-        # 1. Leads Assigned > 5 Days ago (Active/Not Completed)
-        if "Assigned date" in df_filtered.columns and "Completion Date" in df_filtered.columns:
+        # تحديد قوائم الحالات (Statuses)
+        group_1_statuses = ["pending dr call", "pending fax", "pending dr visit"]
+        group_2_statuses = ["pending dr call", "pending fax", "pending dr visit", "faxed", "dr chase"]
+
+        # التأكد من وجود الأعمدة
+        required_cols = ["Assigned date", "Modified Time", "Created Time", "Completion Date", "Chasing Disposition_clean"]
+        
+        if all(col in df_filtered.columns for col in required_cols):
+
+            # 1. Leads Assigned > 7 Days ago (Group 1 Statuses)
+            threshold_7_days = today - pd.Timedelta(days=7)
             
-            # التاريخ من 5 أيام
-            threshold_5_days = today - pd.Timedelta(days=5)
-            
-            # الشرط: تاريخ الإسناد أقدم من 5 أيام + لسه مخلصتش (Completion Date فاضي)
-            mask_assign_5 = (
-                (df_filtered["Assigned date"].dt.normalize() < threshold_5_days) &
-                (df_filtered["Completion Date"].isna())
+            mask_assign_7 = (
+                (df_filtered["Assigned date"].dt.normalize() < threshold_7_days) & # فات 7 أيام
+                (df_filtered["Completion Date"].isna()) & # لسه مفتوحة
+                (df_filtered["Created Time"] >= start_date_filter) & # 🆕 من بعد 1/10/2025
+                (df_filtered["Chasing Disposition_clean"].isin(group_1_statuses)) # الحالات المحددة
             )
-            leads_assign_5 = df_filtered[mask_assign_5]
+            leads_assign_7 = df_filtered[mask_assign_7]
 
-            if not leads_assign_5.empty:
-                st.warning(f"⚠️ Found **{len(leads_assign_5)}** active leads assigned more than **5 days** ago.")
-                with st.expander("🔍 View Leads (Assigned > 5 Days & Pending)"):
+            if not leads_assign_7.empty:
+                st.warning(f"⚠️ Found **{len(leads_assign_7)}** active leads assigned > **7 days** ago (Pending Call/Fax/Visit).")
+                with st.expander("🔍 View Leads (Assigned > 7 Days - Group 1)"):
                     st.dataframe(
-                        leads_assign_5[[
+                        leads_assign_7[[
                             "MCN", "Client", "Chaser Name", "Assigned date (Date)", 
-                            "Chasing Disposition", "Days Since Created"
+                            "Chasing Disposition", "Created Time (Date)"
                         ]], 
                         use_container_width=True
                     )
 
-        # 2. Leads Last Modified > 5 Days ago (Stagnant)
-        if "Modified Time" in df_filtered.columns and "Completion Date" in df_filtered.columns:
+            # 2. Leads Last Modified > 7 Days ago (Group 2 Statuses)
+            threshold_mod_7 = today - pd.Timedelta(days=7)
             
-            threshold_mod_5 = today - pd.Timedelta(days=5)
-            
-            # الشرط: آخر تعديل أقدم من 5 أيام + لسه مخلصتش
-            mask_mod_5 = (
-                (df_filtered["Modified Time"].dt.normalize() < threshold_mod_5) &
-                (df_filtered["Completion Date"].isna())
+            mask_mod_7 = (
+                (df_filtered["Modified Time"].dt.normalize() < threshold_mod_7) & # ماتعدلتش من 7 أيام
+                (df_filtered["Completion Date"].isna()) & 
+                (df_filtered["Created Time"] >= start_date_filter) & # 🆕 من بعد 1/10/2025
+                (df_filtered["Chasing Disposition_clean"].isin(group_2_statuses)) # الحالات الأوسع
             )
-            leads_mod_5 = df_filtered[mask_mod_5]
+            leads_mod_7 = df_filtered[mask_mod_7]
 
-            if not leads_mod_5.empty:
-                st.warning(f"⚠️ Found **{len(leads_mod_5)}** active leads not modified for more than **5 days** (Stagnant).")
-                with st.expander("🔍 View Stagnant Leads (Last Modified > 5 Days)"):
+            if not leads_mod_7.empty:
+                st.warning(f"⚠️ Found **{len(leads_mod_7)}** active leads not modified for > **7 days** (Stagnant).")
+                with st.expander("🔍 View Stagnant Leads (Last Modified > 7 Days - Group 2)"):
                     st.dataframe(
-                        leads_mod_5[[
+                        leads_mod_7[[
                             "MCN", "Client", "Chaser Name", "Modified Time", 
                             "Chasing Disposition", "Last Modified By"
                         ]], 
                         use_container_width=True
                     )
 
-        # 3. Leads Assigned > 14 Days ago (Critical Aging)
-        if "Assigned date" in df_filtered.columns and "Completion Date" in df_filtered.columns:
-            
+            # 3. Leads Assigned > 14 Days ago (Group 2 Statuses - Critical)
             threshold_14_days = today - pd.Timedelta(days=14)
             
             mask_assign_14 = (
-                (df_filtered["Assigned date"].dt.normalize() < threshold_14_days) &
-                (df_filtered["Completion Date"].isna())
+                (df_filtered["Assigned date"].dt.normalize() < threshold_14_days) & # فات 14 يوم
+                (df_filtered["Completion Date"].isna()) & 
+                (df_filtered["Created Time"] >= start_date_filter) & # 🆕 من بعد 1/10/2025
+                (df_filtered["Chasing Disposition_clean"].isin(group_2_statuses)) # الحالات الأوسع
             )
             leads_assign_14 = df_filtered[mask_assign_14]
 
             if not leads_assign_14.empty:
-                st.error(f"🚨 Found **{len(leads_assign_14)}** active leads assigned more than **14 days** ago!")
-                with st.expander("🔍 View Critical Leads (Assigned > 14 Days)"):
+                st.error(f"🚨 Found **{len(leads_assign_14)}** active leads assigned > **14 days** ago (Critical)!")
+                with st.expander("🔍 View Critical Leads (Assigned > 14 Days - Group 2)"):
                     st.dataframe(
                         leads_assign_14[[
                             "MCN", "Client", "Chaser Name", "Assigned date (Date)", 
-                            "Chasing Disposition", "Days Since Created"
+                            "Chasing Disposition", "Created Time (Date)"
                         ]], 
                         use_container_width=True
                     )
         
         st.markdown("---")
+        # ... (هنا بيبدأ الجزء بتاع Duplicate Leads القديم) ...
 
             # ================== DUPLICATES CHECK WITH PRODUCT (MODIFIED: Removed Grouped by Key Dates) ==================
         st.subheader("🔍 Duplicate Leads by MCN (Considering Product)")
@@ -1855,6 +1867,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
