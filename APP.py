@@ -1536,8 +1536,7 @@ elif selected == "Data Analysis":
                 )
                 st.altair_chart(chart_grouped_client, use_container_width=True)
 
-
-       # ... (بعد رسمة chart_grouped_client مباشرة) ...
+     # ... (بعد رسمة chart_grouped_client مباشرة) ...
 
         st.markdown("---")
         st.markdown("### 🕰️ Aging & Stagnation Alerts (Since Oct 1st, 2025)")
@@ -1867,6 +1866,7 @@ elif selected == "Data Analysis":
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
     # --- 🔼🔼🔼 END OF NEW SECTION 🔼🔼🔼 ---
+
 
 
 
