@@ -391,7 +391,7 @@ with st.sidebar.expander("📅 Date Range", expanded=False):
                 "Select date range (based on Available Dates)",
                 value=(min_date, max_date),
                 min_value=min_date,
-                max_value=max_date
+                max_value=datetime.date(2026,12,31)
             )
         else:
             st.warning("No valid dates found in the dataset.")
