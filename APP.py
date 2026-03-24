@@ -1,4 +1,5 @@
 import streamlit as st
+import datetime
 import pandas as pd
 import altair as alt
 import re
@@ -384,6 +385,7 @@ with st.sidebar.expander("📅 Date Range", expanded=False):
             
             min_date = min_ts.date()
             max_date = max_ts.date()
+            datetime.date(2026,12,31)
             
             date_range = st.date_input(
                 "Select date range (based on Available Dates)",
