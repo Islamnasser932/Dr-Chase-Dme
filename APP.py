@@ -1811,29 +1811,23 @@ elif selected == "Data Analysis":
         "MCN_clean" in df_oplan.columns and
         "Client" in df_ts.columns): 
         
-        # تحضير البيانات
         df_ts_subset = df_ts[["MCN_clean", "Client"]]
         df_oplan_mcn = df_oplan[["MCN_clean"]]
 
-        # عملية الدمج (Merge)
         df_discrepancy_analysis = pd.merge(
-            df_ts_subset, 
+            df_ts, 
             df_oplan_mcn, 
             on="MCN_clean", 
             how="outer", 
             indicator=True 
         )
 
-        # 2. البيانات الموجودة في ملف Chase فقط
         df_chase_only = df_discrepancy_analysis[df_discrepancy_analysis['_merge'] == 'left_only']
         
-        # 3. البيانات الموجودة في ملف O Plan فقط
         df_oplan_only = df_discrepancy_analysis[df_discrepancy_analysis['_merge'] == 'right_only']
 
-        # 4. البيانات المتطابقة (الموجودة في الاثنين)
         df_matched = df_discrepancy_analysis[df_discrepancy_analysis['_merge'] == 'both']
 
-        # 5. عرض المؤشرات (KPIs)
         st.markdown("### 📈 Difference leads")
         kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
         kpi_col1.metric("✅ Leads in Both Files", len(df_matched))
@@ -1847,7 +1841,6 @@ elif selected == "Data Analysis":
             box_shadow="2px 2px 10px rgba(0,0,0,0.5)"
         )
 
-        # 6. عرض جداول الاختلافات
         if not df_chase_only.empty:
             with st.expander(f"🔍 View {len(df_chase_only)} Leads: In Dr. Chase ONLY"):
                 st.dataframe(df_chase_only[["MCN_clean", "Client"]], use_container_width=True)
@@ -1856,11 +1849,10 @@ elif selected == "Data Analysis":
             with st.expander(f"🔍 View {len(df_oplan_only)} Leads: In O Plan ONLY"):
                 st.dataframe(df_oplan_only[["MCN_clean"]], use_container_width=True)
 
-        # 7. الجزء المطلوب: عرض البيانات المتطابقة في جدول
         if not df_matched.empty:
-            with st.expander(f"✅ View {len(df_matched)} Leads: Found in BOTH Files"):
-                # عرض الأعمدة الأساسية (MCN و Client)
-                st.dataframe(df_matched[["MCN_clean", "Client"]], use_container_width=True)
+            with st.expander(f"✅ View {len(df_matched)} Leads: Found in BOTH Files (Full Data)"):
+                display_matched = df_matched.drop(columns=['_merge'])
+                st.dataframe(display_matched, use_container_width=True)
             
     else:
         st.warning("Could not perform Discrepancy analysis. Ensure 'O_Plan_Leads.csv' is loaded and contains an 'MCN' column.")
